@@ -2,11 +2,13 @@
  * FocusFlow Web - Services: Real-Time Dynamic Notification & Desktop System Scheduler
  * Gestión precisa segundo a segundo de alarmas, sincronización con modal activo,
  * notificaciones de escritorio (OS) y despacho de correos electrónicos automáticos (Gmail SMTP).
+ * Con persistencia exacta de intervalos de hidratación para evitar reinicios al recargar la página.
  */
 
 import { store } from '../core/store.js';
 import { soundService } from './sound.service.js';
 import { apiService } from './api.service.js';
+import { StorageService } from './storage.service.js';
 import { toast } from '../components/toast.component.js';
 import { getTodayISO, formatCleanTime } from '../utils/date.utils.js';
 import { $, escapeHTML } from '../utils/dom.utils.js';
@@ -15,13 +17,17 @@ class NotificationSchedulerService {
   constructor() {
     this.firedAlarms = new Set();
     this.checkInterval = null;
-    this.lastWaterCheck = Date.now();
     this.currentActiveAlarmTaskId = null;
   }
 
   init() {
     this.requestDesktopPermission();
     this._bindAlarmModalEvents();
+
+    // Inicializar timestamp de hidratación si no existe
+    if (!StorageService.get('last_water_check_ts')) {
+      StorageService.set('last_water_check_ts', Date.now());
+    }
 
     if (this.checkInterval) clearInterval(this.checkInterval);
     // Verificación precisa cada 1 segundo (1000ms)
@@ -40,6 +46,10 @@ class NotificationSchedulerService {
         console.warn('Permisos de notificación:', e);
       }
     }
+  }
+
+  resetWaterTimer() {
+    StorageService.set('last_water_check_ts', Date.now());
   }
 
   getNotifications() {
@@ -107,13 +117,19 @@ class NotificationSchedulerService {
       }
     });
 
-    // 2. Revisión de recordatorio de hidratación
+    // 2. Revisión de recordatorio de hidratación con persistencia de tiempo
     const hydration = store.getState().hydration;
     if (hydration.reminder && hydration.reminder.enabled) {
-      const intervalMs = (hydration.reminder.intervalHours || 1) * 3600 * 1000;
-      if (Date.now() - this.lastWaterCheck >= intervalMs) {
-        this.lastWaterCheck = Date.now();
-        
+      const intervalHours = parseFloat(hydration.reminder.intervalHours) || 1;
+      const intervalMs = intervalHours * 3600 * 1000;
+      
+      const lastCheck = StorageService.get('last_water_check_ts', Date.now());
+      const elapsed = Date.now() - lastCheck;
+
+      if (elapsed >= intervalMs) {
+        // Actualizar marca de tiempo persistente
+        StorageService.set('last_water_check_ts', Date.now());
+
         this.addNotification({
           id: `notif-water-${Date.now()}`,
           title: 'Recordatorio de Hidratación',

@@ -327,14 +327,15 @@ export class HydrationView extends BaseView {
         });
 
         if (enabled) {
+          notificationScheduler.resetWaterTimer();
           notificationScheduler.addNotification({
             id: 'notif-water-reminder',
             title: 'Recordatorio de Hidratación Activado',
-            description: `Avisos programados cada ${interval} horas en tu computadora${emailNotification ? ` y a ${targetEmail}` : ''}.`,
+            description: `Avisos programados cada ${interval * 60} minutos en tu computadora${emailNotification ? ` y a ${targetEmail}` : ''}.`,
             priority: 'medium',
             type: 'hydration'
           });
-          toast.success(`Recordatorio de hidratación guardado para ${targetEmail}`);
+          toast.success(`Recordatorio de hidratación guardado para ${targetEmail} (cada ${interval * 60} min)`);
         } else {
           notificationScheduler.removeNotification('notif-water-reminder');
           toast.info('Recordatorio de hidratación desactivado');
