@@ -157,12 +157,14 @@ export class HydrationView extends BaseView {
 
             <div style="display: flex; gap: var(--space-3); align-items: center; margin-bottom: var(--space-3);">
               <label for="reminder-interval-select" style="font-size: var(--text-xs); color: var(--text-secondary);">Frecuencia:</label>
-              <select id="reminder-interval-select" class="form-control" style="max-width: 175px; padding: 6px 10px; font-size: var(--text-xs); cursor: pointer;">
+              <select id="reminder-interval-select" class="form-control" style="max-width: 185px; padding: 6px 10px; font-size: var(--text-xs); cursor: pointer;">
                 <option value="0.25" ${reminder.intervalHours === 0.25 ? 'selected' : ''}>Cada 15 minutos</option>
                 <option value="0.5" ${reminder.intervalHours === 0.5 ? 'selected' : ''}>Cada 30 minutos</option>
                 <option value="0.75" ${reminder.intervalHours === 0.75 ? 'selected' : ''}>Cada 45 minutos</option>
                 <option value="1" ${reminder.intervalHours === 1 ? 'selected' : ''}>Cada 1 hora</option>
+                <option value="1.5" ${reminder.intervalHours === 1.5 ? 'selected' : ''}>Cada 1 hora y media</option>
                 <option value="2" ${reminder.intervalHours === 2 ? 'selected' : ''}>Cada 2 horas</option>
+                <option value="3" ${reminder.intervalHours === 3 ? 'selected' : ''}>Cada 3 horas</option>
               </select>
             </div>
 

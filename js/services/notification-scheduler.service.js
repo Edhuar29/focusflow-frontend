@@ -52,6 +52,29 @@ class NotificationSchedulerService {
     StorageService.set('last_water_check_ts', Date.now());
   }
 
+  getWaterTimeRemaining() {
+    const hydration = store.getState().hydration;
+    if (!hydration.reminder || !hydration.reminder.enabled) return null;
+
+    const intervalHours = parseFloat(hydration.reminder.intervalHours) || 1;
+    const intervalMs = Math.round(intervalHours * 3600 * 1000);
+    const lastCheck = StorageService.get('last_water_check_ts', Date.now());
+    const elapsed = Date.now() - lastCheck;
+    const remainingMs = Math.max(0, intervalMs - elapsed);
+
+    const totalSeconds = Math.ceil(remainingMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return {
+      minutes,
+      seconds,
+      totalSeconds,
+      remainingMs,
+      intervalHours
+    };
+  }
+
   getNotifications() {
     return store.getNotifications();
   }
