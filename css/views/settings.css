@@ -29,6 +29,87 @@
   padding-bottom: var(--space-3);
 }
 
+/* Selector de Modo de Correo (Cuenta vs Personalizado) */
+.email-choice-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+@media (max-width: 640px) {
+  .email-choice-group {
+    grid-template-columns: 1fr;
+  }
+}
+
+.email-choice-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+}
+
+.email-choice-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.email-choice-card.active {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: var(--accent-primary);
+}
+
+.email-choice-radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.email-choice-card.active .email-choice-radio {
+  border-color: var(--accent-primary);
+  background: var(--accent-primary);
+}
+
+.email-choice-radio-inner {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  display: none;
+}
+
+.email-choice-card.active .email-choice-radio-inner {
+  display: block;
+}
+
+.email-choice-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: block;
+}
+
+.email-choice-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 1px;
+}
+
+/* Paleta de Acentos de Color */
 .color-swatches-grid {
   display: flex;
   gap: var(--space-3);

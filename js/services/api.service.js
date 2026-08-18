@@ -48,110 +48,195 @@ class ApiService {
         localStorage.removeItem('focusflow_auth_token');
       }
 
+      const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(data.error || data.message || `Error ${response.status}: ${response.statusText}`);
       }
 
       this.isBackendAvailable = true;
-      return await response.json();
+      return data;
     } catch (err) {
-      // Backend no disponible (modo offline silencioso sin romper la UI)
+      console.warn(`[ApiService] Request to ${endpoint} failed:`, err.message);
       this.isBackendAvailable = false;
-      return null;
+      throw err;
     }
   }
 
-  /* --- Autenticación Demo / Usuario --- */
-  async ensureDemoAuth() {
-    if (this.token) return this.token;
-
+  /* --- Autenticación de Usuario --- */
+  async login(email, password) {
     const res = await this._request('/auth/login', {
       method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (res && res.data && res.data.token) {
+      this.setToken(res.data.token);
+      return res.data;
+    }
+    return null;
+  }
+
+  async register(userData) {
+    const res = await this._request('/auth/register', {
+      method: 'POST',
       body: JSON.stringify({
-        email: 'demo@focusflow.app',
-        password: 'Password123!',
+        name: userData.name,
+        email: userData.email,
+        password: userData.password,
       }),
     });
 
     if (res && res.data && res.data.token) {
       this.setToken(res.data.token);
-      return res.data.token;
+      return res.data;
+    }
+    return null;
+  }
+
+  async googleLogin(payload) {
+    const res = await this._request('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    if (res && res.data && res.data.token) {
+      this.setToken(res.data.token);
+      return res.data;
     }
     return null;
   }
 
   /* --- Tareas --- */
   async getTasks() {
-    await this.ensureDemoAuth();
-    const res = await this._request('/tasks');
-    return res ? res.data : null;
+    try {
+      const res = await this._request('/tasks');
+      return res ? res.data : null;
+    } catch {
+      return null;
+    }
   }
 
   async createTask(taskData) {
-    await this.ensureDemoAuth();
-    const payload = {
-      title: taskData.title,
-      description: taskData.description || '',
-      date: taskData.date,
-      time: taskData.time,
-      category: taskData.category || 'General',
-      priority: taskData.priorities ? (taskData.priorities[0] === 'high' ? 'Alto' : (taskData.priorities[0] === 'low' ? 'Bajo' : 'Medio')) : 'Medio',
-      is_alarm_enabled: !!taskData.alarm,
-    };
+    try {
+      const payload = {
+        title: taskData.title,
+        description: taskData.description || '',
+        date: taskData.date,
+        time: taskData.time,
+        category: taskData.category || 'General',
+        priority: taskData.priorities ? (taskData.priorities[0] === 'high' ? 'Alto' : (taskData.priorities[0] === 'low' ? 'Bajo' : 'Medio')) : 'Medio',
+        is_alarm_enabled: !!taskData.alarm,
+      };
 
-    const res = await this._request('/tasks', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    return res ? res.data : null;
+      const res = await this._request('/tasks', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      return res ? res.data : null;
+    } catch {
+      return null;
+    }
   }
 
   async updateTask(id, updates) {
-    await this.ensureDemoAuth();
-    const res = await this._request(`/tasks/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(updates),
-    });
-    return res ? res.data : null;
+    try {
+      const res = await this._request(`/tasks/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates),
+      });
+      return res ? res.data : null;
+    } catch {
+      return null;
+    }
   }
 
   async deleteTask(id) {
-    await this.ensureDemoAuth();
-    const res = await this._request(`/tasks/${id}`, {
-      method: 'DELETE',
-    });
-    return res ? res.data : null;
+    try {
+      const res = await this._request(`/tasks/${id}`, {
+        method: 'DELETE',
+      });
+      return res ? res.data : null;
+    } catch {
+      return null;
+    }
   }
 
-  /* --- Inteligencia Artificial (Gemini API) --- */
-  async sendChatMessage(message) {
-    await this.ensureDemoAuth();
-    const res = await this._request('/ai/chat', {
-      method: 'POST',
-      body: JSON.stringify({ message }),
-    });
-    return res ? res.data : null;
+  /* --- Pomodoro & Hidratación --- */
+  async logPomodoroSession(sessionData) {
+    try {
+      const res = await this._request('/pomodoro/sessions', {
+        method: 'POST',
+        body: JSON.stringify(sessionData),
+      });
+      return res ? res.data : null;
+    } catch {
+      return null;
+    }
   }
 
-  /* --- Hidratación --- */
-  async logWater(amountMl, date) {
-    await this.ensureDemoAuth();
-    const res = await this._request('/water/logs', {
-      method: 'POST',
-      body: JSON.stringify({ amount_ml: amountMl, date }),
-    });
-    return res ? res.data : null;
+  async logWater(amountMl) {
+    try {
+      const res = await this._request('/water/logs', {
+        method: 'POST',
+        body: JSON.stringify({ amount_ml: amountMl }),
+      });
+      return res ? res.data : null;
+    } catch {
+      return null;
+    }
   }
 
-  /* --- Pomodoro --- */
-  async logPomodoroSession(durationMinutes, taskId = null) {
-    await this.ensureDemoAuth();
-    const res = await this._request('/pomodoro/sessions', {
+  /* --- Gemini AI Assistant --- */
+  async askGemini(prompt, history = []) {
+    try {
+      const res = await this._request('/ai/chat', {
+        method: 'POST',
+        body: JSON.stringify({ message: prompt, history }),
+      });
+      return res ? res.data : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /* --- Recordatorios por Correo --- */
+  async sendTaskEmailReminder(email, taskTitle, taskTime, category) {
+    try {
+      const res = await this._request('/reminders/task-email', {
+        method: 'POST',
+        body: JSON.stringify({ email, task_title: taskTitle, task_time: taskTime, category }),
+      });
+      return res;
+    } catch (err) {
+      console.warn('[ApiService] Error sending task email reminder:', err.message);
+      return null;
+    }
+  }
+
+  async sendHydrationEmailReminder(email) {
+    try {
+      const res = await this._request('/reminders/hydration-email', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      });
+      return res;
+    } catch (err) {
+      console.warn('[ApiService] Error sending hydration email reminder:', err.message);
+      return null;
+    }
+  }
+
+  async sendTestEmail(email) {
+    const res = await this._request('/reminders/task-email', {
       method: 'POST',
-      body: JSON.stringify({ duration_minutes: durationMinutes, task_id: taskId }),
+      body: JSON.stringify({
+        email,
+        task_title: 'Notificación de Prueba FocusFlow',
+        task_time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        category: 'Sistema'
+      }),
     });
-    return res ? res.data : null;
+    return res;
   }
 }
 

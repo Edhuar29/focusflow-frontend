@@ -31,6 +31,8 @@ export class DashboardView extends BaseView {
     const waterPercentage = Math.min(100, Math.round((hydration.currentMl / hydration.goalMl) * 100));
 
     const greeting = getGreetingForNow();
+    const currentUser = store.getUser();
+    const userName = currentUser && currentUser.name ? currentUser.name.split(' ')[0] : 'Francisco';
 
     this.container.innerHTML = `
       <div class="dashboard-container">
@@ -38,7 +40,7 @@ export class DashboardView extends BaseView {
         <!-- Welcome Hero Banner -->
         <div class="dashboard-hero">
           <div>
-            <h2 class="dashboard-hero-title">${greeting}, Francisco</h2>
+            <h2 class="dashboard-hero-title">${greeting}, ${escapeHTML(userName)}</h2>
             <p class="dashboard-hero-subtitle">
               Tienes <strong>${totalTasks - completedTasks} tareas pendientes</strong> para hoy.
             </p>
@@ -180,8 +182,15 @@ export class DashboardView extends BaseView {
   _renderTimelineHTML(tasks) {
     if (tasks.length === 0) {
       return `
-        <div style="text-align: center; color: var(--text-muted); padding: var(--space-6);">
-          No hay tareas programadas para hoy.
+        <div style="text-align: center; color: var(--text-secondary); padding: var(--space-8); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="color: var(--text-muted);">
+            <polyline points="9 11 12 14 22 4"></polyline>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          </svg>
+          <span style="font-size: var(--text-sm); font-weight: 500;">No tienes tareas pendientes para hoy</span>
+          <a href="#/tasks" class="btn btn-secondary" style="font-size: 11px; padding: 4px 10px; margin-top: 2px;">
+            Crear Primera Tarea
+          </a>
         </div>
       `;
     }

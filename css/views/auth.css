@@ -1,0 +1,533 @@
+/**
+ * FocusFlow Web - Styles: Dedicated Authentication Screen & View
+ * Basado fielmente en el diseño visual de referencia en Dark Mode ejecutivo.
+ */
+
+.auth-screen-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background-color: #0A0E17;
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(14, 165, 233, 0.06) 0%, transparent 50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+  opacity: 1;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+
+.auth-screen-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.auth-container-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  max-width: 1040px;
+  width: 100%;
+  gap: 48px;
+  margin: auto;
+}
+
+/* ==========================================================================
+   Columna Izquierda: Branding y Propuesta de Valor
+   ========================================================================== */
+.auth-hero-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* Orbe / Logo Futurista Brillante */
+.auth-orb-wrapper {
+  margin-bottom: 28px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-glowing-orb {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #0F172A 35%, #1E293B 60%, rgba(14, 165, 233, 0.4) 90%);
+  box-shadow: 
+    0 0 25px rgba(56, 189, 248, 0.4),
+    inset 0 0 15px rgba(56, 189, 248, 0.6),
+    0 0 50px rgba(59, 130, 246, 0.25);
+  border: 3px solid rgba(56, 189, 248, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  animation: orbPulse 4s infinite ease-in-out;
+}
+
+.auth-glowing-orb::after {
+  content: '';
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #38BDF8 0%, #1E40AF 100%);
+  box-shadow: 0 0 12px #38BDF8;
+}
+
+@keyframes orbPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.4), inset 0 0 15px rgba(56, 189, 248, 0.6);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 0 35px rgba(56, 189, 248, 0.65), inset 0 0 22px rgba(56, 189, 248, 0.85);
+  }
+}
+
+.auth-brand-name {
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: -0.5px;
+  margin-bottom: 12px;
+}
+
+.auth-brand-name span {
+  color: #94A3B8;
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.auth-tagline {
+  font-size: 2.15rem;
+  font-weight: 800;
+  color: #F8FAFC;
+  line-height: 1.22;
+  letter-spacing: -0.75px;
+  margin-bottom: 32px;
+  max-width: 380px;
+}
+
+.auth-feature-chips {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.auth-chip {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94A3B8;
+  font-size: 0.82rem;
+  font-weight: 500;
+  backdrop-filter: blur(8px);
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.auth-chip:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #E2E8F0;
+}
+
+/* ==========================================================================
+   Columna Derecha: Tarjeta de Autenticación
+   ========================================================================== */
+.auth-card-col {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 36px 32px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  position: relative;
+}
+
+.auth-card-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.auth-card-title {
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 6px;
+}
+
+.auth-card-subtitle {
+  font-size: 0.88rem;
+  color: #94A3B8;
+}
+
+/* Botón Oficial Continuar con Google */
+.btn-google-auth {
+  width: 100%;
+  height: 46px;
+  border-radius: 10px;
+  background: #1F2937;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #F9FAFB;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
+}
+
+.btn-google-auth:hover {
+  background: #283548;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-google-auth:active {
+  transform: scale(0.985);
+}
+
+/* Selector Multicuenta de Google */
+.google-account-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.google-account-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  width: 100%;
+}
+
+.google-account-item:hover {
+  background: rgba(66, 133, 244, 0.12);
+  border-color: rgba(66, 133, 244, 0.4);
+  transform: translateY(-1px);
+}
+
+.google-account-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.google-account-info {
+  margin-left: 10px;
+  flex: 1;
+}
+
+.google-account-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #F8FAFC;
+  margin-bottom: 2px;
+}
+
+.google-account-email {
+  font-size: 11px;
+  color: #94A3B8;
+}
+
+.google-account-badge {
+  font-size: 10px;
+  font-weight: 500;
+  color: #38BDF8;
+  background: rgba(56, 189, 248, 0.12);
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.google-add-account-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  cursor: pointer;
+  width: 100%;
+  color: #94A3B8;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+  margin-bottom: 12px;
+}
+
+.google-add-account-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #F8FAFC;
+}
+
+/* Divisor elegante "o con tu correo" */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 22px 0;
+  color: #64748B;
+  font-size: 0.8rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.auth-divider span {
+  padding: 0 12px;
+}
+
+/* Formulario */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.auth-input-group label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #CBD5E1;
+}
+
+.auth-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-input-control {
+  width: 100%;
+  height: 44px;
+  background: #0B0F19;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 0 14px;
+  color: #F8FAFC;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.auth-input-control:focus {
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.auth-input-control::placeholder {
+  color: #64748B;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #94A3B8;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.auth-password-toggle:hover {
+  color: #F8FAFC;
+}
+
+/* Feedback de Error e Inputs Inválidos */
+.auth-input-control.is-invalid {
+  border-color: #EF4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+}
+
+.auth-inline-error {
+  color: #F87171;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-top: 3px;
+  display: block;
+}
+
+.auth-alert-banner {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #FCA5A5;
+  font-size: 0.82rem;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.35;
+}
+
+.auth-alert-banner.hidden {
+  display: none;
+}
+
+/* Fila de Recordar sesión y Olvidé mi clave */
+.auth-options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  margin-top: -4px;
+}
+
+.auth-remember-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #94A3B8;
+  cursor: pointer;
+  user-select: none;
+}
+
+.auth-remember-label input[type="checkbox"] {
+  accent-color: #3B82F6;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.auth-forgot-link {
+  color: #38BDF8;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.auth-forgot-link:hover {
+  color: #60A5FA;
+  text-decoration: underline;
+}
+
+/* Botón Principal (INICIAR SESIÓN / CREAR CUENTA) */
+.btn-auth-submit {
+  width: 100%;
+  height: 46px;
+  border-radius: 10px;
+  background: #3B82F6;
+  border: none;
+  color: #FFFFFF;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  margin-top: 8px;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+  transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+}
+
+.btn-auth-submit:hover {
+  background: #2563EB;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.5);
+}
+
+.btn-auth-submit:active {
+  transform: scale(0.985);
+}
+
+.btn-auth-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Pie de tarjeta (Conmutador Registro / Login) */
+.auth-switch-footer {
+  text-align: center;
+  margin-top: 22px;
+  font-size: 0.84rem;
+  color: #94A3B8;
+}
+
+.auth-switch-link {
+  color: #38BDF8;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 4px;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.auth-switch-link:hover {
+  color: #60A5FA;
+  text-decoration: underline;
+}
+
+/* Responsividad para móviles y tablets */
+@media (max-width: 860px) {
+  .auth-container-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .auth-hero-col {
+    align-items: center;
+    text-align: center;
+    padding: 0;
+  }
+
+  .auth-tagline {
+    font-size: 1.65rem;
+    max-width: 100%;
+  }
+
+  .auth-feature-chips {
+    justify-content: center;
+  }
+}

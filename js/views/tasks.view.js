@@ -205,10 +205,21 @@ export class TasksView extends BaseView {
 
     if (tasks.length === 0) {
       return `
-        <div style="grid-column: 1 / -1; padding: var(--space-8); text-align: center; color: var(--text-muted); background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border-subtle);">
-          <p style="margin-bottom: var(--space-2); font-size: var(--text-sm);">No hay tareas para este filtro o fecha.</p>
-          <button class="btn btn-secondary" id="btn-empty-add-task" style="font-size: var(--text-xs);">
-            + Crear una tarea
+        <div style="grid-column: 1 / -1; padding: var(--space-8); text-align: center; color: var(--text-secondary); background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border-subtle); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="color: var(--text-muted);">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 14 14"></polyline>
+          </svg>
+          <div>
+            <strong style="display: block; font-size: var(--text-sm); color: var(--text-primary); margin-bottom: 2px;">No tienes tareas programadas</strong>
+            <span style="font-size: var(--text-xs); color: var(--text-muted);">Comienza organizando tu día o añade una nueva actividad</span>
+          </div>
+          <button class="btn btn-primary" id="btn-empty-add-task" style="font-size: var(--text-xs); margin-top: 4px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 4px;">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Crear Nueva Tarea
           </button>
         </div>
       `;

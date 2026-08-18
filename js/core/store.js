@@ -1,6 +1,7 @@
 /**
  * FocusFlow Web - Core: Reactive Global Store
- * Manejo centralizado del estado, persistencia, sinergia de módulos y notificaciones únicas.
+ * Manejo centralizado del estado, aislamiento por usuario (Fresh Zero-State),
+ * sinergia de módulos y preferencias de notificaciones por correo.
  */
 
 import { eventBus } from './event-bus.js';
@@ -10,6 +11,7 @@ import { getTodayISO } from '../utils/date.utils.js';
 class Store {
   constructor() {
     const today = getTodayISO();
+    const currentUser = StorageService.get('user', null);
 
     this.state = {
       theme: StorageService.get('theme', 'dark'),
@@ -19,41 +21,52 @@ class Store {
       viewMode: StorageService.get('viewMode', 'grid'), // 'grid' | 'list'
       activeFilter: 'all',
       searchQuery: '',
-      activeFocusTask: StorageService.get('activeFocusTask', null),
-      tasks: StorageService.get('tasks', null),
+      activeFocusTask: null,
       notifications: StorageService.get('notifications', []),
-      pomodoro: StorageService.get('pomodoro', {
-        mode: 'focus',
-        duration: 25 * 60,
-        cyclesCompletedToday: 4,
-        totalFocusMinutes: 100
-      }),
-      hydration: StorageService.get('hydration', {
-        currentMl: 0,
-        goalMl: 2000,
-        logsToday: 0
-      }),
+      user: currentUser,
+      tasks: currentUser && currentUser.id 
+        ? StorageService.get(`user_${currentUser.id}_tasks`, [])
+        : StorageService.get('tasks', []),
+      pomodoro: currentUser && currentUser.id
+        ? StorageService.get(`user_${currentUser.id}_pomodoro`, {
+            mode: 'focus',
+            duration: 25 * 60,
+            cyclesCompletedToday: 0,
+            totalFocusMinutes: 0
+          })
+        : StorageService.get('pomodoro', {
+            mode: 'focus',
+            duration: 25 * 60,
+            cyclesCompletedToday: 0,
+            totalFocusMinutes: 0
+          }),
+      hydration: currentUser && currentUser.id
+        ? StorageService.get(`user_${currentUser.id}_hydration`, {
+            currentMl: 0,
+            goalMl: 2000,
+            logsToday: 0
+          })
+        : StorageService.get('hydration', {
+            currentMl: 0,
+            goalMl: 2000,
+            logsToday: 0
+          }),
       settings: StorageService.get('settings', {
         soundEnabled: true,
         notificationsEnabled: true
-      })
+      }),
+      emailPreferences: currentUser && currentUser.id
+        ? StorageService.get(`user_${currentUser.id}_email_pref`, {
+            notificationEmail: currentUser.email || '',
+            emailTaskAlerts: true,
+            emailWaterAlerts: true
+          })
+        : StorageService.get('email_preferences', {
+            notificationEmail: '',
+            emailTaskAlerts: true,
+            emailWaterAlerts: true
+          })
     };
-
-    // Asegurar que existan tareas asignadas a la fecha de hoy
-    if (!this.state.tasks || this.state.tasks.length === 0) {
-      this.state.tasks = StorageService.getInitialTasks();
-      StorageService.set('tasks', this.state.tasks);
-    } else {
-      // Si las tareas existentes pertenecían a fechas antiguas de prueba, sincronizar a la fecha de hoy
-      const hasTodayTasks = this.state.tasks.some(t => t.date === today);
-      if (!hasTodayTasks) {
-        this.state.tasks = this.state.tasks.map((t, idx) => {
-          if (idx < 5) return { ...t, date: today };
-          return t;
-        });
-        StorageService.set('tasks', this.state.tasks);
-      }
-    }
   }
 
   /* Getters */
@@ -73,6 +86,15 @@ class Store {
     return [...(this.state.notifications || [])];
   }
 
+  getEmailPreferences() {
+    return { ...this.state.emailPreferences };
+  }
+
+  setEmailPreferences(prefs) {
+    this.state.emailPreferences = { ...this.state.emailPreferences, ...prefs };
+    this._persistAndNotify('email_pref', this.state.emailPreferences, 'emailPreferences:updated');
+  }
+
   getFilteredTasks() {
     const filtered = this.state.tasks.filter(task => {
       if (this.state.searchQuery.trim()) {
@@ -83,13 +105,13 @@ class Store {
       }
 
       if (this.state.activeFilter === 'high') {
-        return task.priorities.includes('high');
+        return task.priorities && task.priorities.includes('high');
       }
       if (this.state.activeFilter === 'medium') {
-        return task.priorities.includes('medium');
+        return task.priorities && task.priorities.includes('medium');
       }
       if (this.state.activeFilter === 'low') {
-        return task.priorities.includes('low');
+        return task.priorities && task.priorities.includes('low');
       }
       if (this.state.activeFilter === 'due-today') {
         return task.date === this.state.selectedDate;
@@ -101,7 +123,6 @@ class Store {
       return true;
     });
 
-    // Ordenamiento inteligente: Tareas pendientes primero, tareas completadas al final
     const pending = filtered.filter(t => !t.completed);
     const completed = filtered.filter(t => t.completed);
 
@@ -110,73 +131,90 @@ class Store {
 
   getFilterCounts() {
     const all = this.state.tasks.length;
-    const high = this.state.tasks.filter(t => t.priorities.includes('high')).length;
-    const medium = this.state.tasks.filter(t => t.priorities.includes('medium')).length;
-    const low = this.state.tasks.filter(t => t.priorities.includes('low')).length;
+    const high = this.state.tasks.filter(t => t.priorities && t.priorities.includes('high')).length;
+    const medium = this.state.tasks.filter(t => t.priorities && t.priorities.includes('medium')).length;
+    const low = this.state.tasks.filter(t => t.priorities && t.priorities.includes('low')).length;
     const dueToday = this.state.tasks.filter(t => t.date === this.state.selectedDate).length;
 
     return { all, high, medium, low, dueToday };
   }
 
   getTaskStatsForDate(dateStr) {
-    const forDay = this.state.tasks.filter(t => t.date === dateStr);
-    const completed = forDay.filter(t => t.completed).length;
-    const total = forDay.length;
-    return {
-      total,
-      completed,
-      pending: total - completed
-    };
+    const tasks = this.state.tasks.filter(t => t.date === dateStr);
+    const completed = tasks.filter(t => t.completed).length;
+    const pending = tasks.length - completed;
+    return { completed, pending, total: tasks.length };
   }
 
   getDailyProgress() {
-    const forDay = this.state.tasks.filter(t => t.date === this.state.selectedDate);
-    const completed = forDay.filter(t => t.completed).length;
-    const total = forDay.length;
+    const today = getTodayISO();
+    const todayTasks = this.state.tasks.filter(t => t.date === today);
+    const total = todayTasks.length;
+    const completed = todayTasks.filter(t => t.completed).length;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
     return { total, completed, percentage };
   }
 
-  /* Acciones de Tareas */
+  /* Mutaciones de Tareas */
   addTask(taskData) {
     const newTask = {
-      id: `task-${Date.now()}`,
-      title: taskData.title.trim(),
-      priorities: taskData.priorities || ['medium'],
-      time: taskData.time || '12:00 PM',
-      date: taskData.date || this.state.selectedDate,
+      id: crypto.randomUUID ? crypto.randomUUID() : 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+      title: taskData.title || 'Nueva Tarea',
+      description: taskData.description || '',
       category: taskData.category || 'General',
+      priorities: taskData.priorities || ['medium'],
+      date: taskData.date || this.state.selectedDate,
+      time: taskData.time || '12:00 PM',
+      alarm: !!taskData.alarm,
+      emailAlert: !!taskData.emailAlert,
       completed: false,
-      alarm: !!taskData.alarm
+      createdAt: new Date().toISOString()
     };
 
-    // Insertar al inicio para máxima visibilidad inmediata
     this.state.tasks.unshift(newTask);
     this._persistAndNotify('tasks', this.state.tasks, 'tasks:updated');
-    eventBus.emit('tasks:created', newTask);
+
+    if (newTask.alarm) {
+      eventBus.emit('alarm:registered', newTask);
+    }
+
     return newTask;
   }
 
-  editTask(taskId, updatedData) {
-    const idx = this.state.tasks.findIndex(t => t.id === taskId);
-    if (idx !== -1) {
-      this.state.tasks[idx] = { ...this.state.tasks[idx], ...updatedData };
+  updateTask(taskId, updates) {
+    const index = this.state.tasks.findIndex(t => t.id === taskId);
+    if (index !== -1) {
+      this.state.tasks[index] = { ...this.state.tasks[index], ...updates };
       this._persistAndNotify('tasks', this.state.tasks, 'tasks:updated');
+
+      if (updates.alarm) {
+        eventBus.emit('alarm:registered', this.state.tasks[index]);
+      }
     }
+  }
+
+  editTask(taskId, updates) {
+    return this.updateTask(taskId, updates);
   }
 
   postponeTask(taskId) {
     const task = this.state.tasks.find(t => t.id === taskId);
     if (task) {
-      const parts = task.date.split('-');
-      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      const baseDate = task.date || getTodayISO();
+      const d = new Date(baseDate + 'T12:00:00');
       d.setDate(d.getDate() + 1);
-      const nextY = d.getFullYear();
-      const nextM = String(d.getMonth() + 1).padStart(2, '0');
-      const nextD = String(d.getDate()).padStart(2, '0');
-      task.date = `${nextY}-${nextM}-${nextD}`;
+      task.date = d.toISOString().split('T')[0];
       this._persistAndNotify('tasks', this.state.tasks, 'tasks:updated');
     }
+  }
+
+  deleteTask(taskId) {
+    this.state.tasks = this.state.tasks.filter(t => t.id !== taskId);
+    if (this.state.activeFocusTask && this.state.activeFocusTask.id === taskId) {
+      this.clearActiveFocusTask();
+    }
+    this._persistAndNotify('tasks', this.state.tasks, 'tasks:updated');
+    eventBus.emit('alarm:cancelled', taskId);
   }
 
   toggleTaskCompletion(taskId) {
@@ -184,46 +222,39 @@ class Store {
     if (task) {
       task.completed = !task.completed;
       this._persistAndNotify('tasks', this.state.tasks, 'tasks:updated');
-      eventBus.emit('tasks:toggled', task);
+      eventBus.emit('task:toggled', task);
     }
   }
 
-  deleteTask(taskId) {
-    this.state.tasks = this.state.tasks.filter(t => t.id !== taskId);
-    this._persistAndNotify('tasks', this.state.tasks, 'tasks:updated');
-    eventBus.emit('tasks:deleted', taskId);
-  }
-
-  /* Notificaciones Globales con Deduplicación Inteligente */
+  /* Notificaciones en Campana */
   addNotification(notif) {
-    const id = notif.id || `notif-${Date.now()}`;
     const newNotif = {
-      id,
-      title: notif.title,
-      description: notif.description,
+      id: notif.id || 'notif_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      title: notif.title || 'Notificación',
+      description: notif.description || '',
+      type: notif.type || 'reminder',
       priority: notif.priority || 'medium',
-      type: notif.type || 'task',
-      time: notif.time || 'Ahora',
       taskId: notif.taskId || null,
-      createdAt: Date.now()
+      timestamp: new Date().toISOString(),
+      read: false
     };
 
-    if (!this.state.notifications) this.state.notifications = [];
-    
-    const existingIndex = this.state.notifications.findIndex(n => n.id === id || (n.type === 'hydration' && notif.type === 'hydration'));
-    if (existingIndex !== -1) {
-      this.state.notifications[existingIndex] = newNotif;
+    const existingIdx = this.state.notifications.findIndex(n => n.taskId && n.taskId === newNotif.taskId);
+    if (existingIdx !== -1) {
+      this.state.notifications[existingIdx] = newNotif;
     } else {
       this.state.notifications.unshift(newNotif);
     }
 
+    if (this.state.notifications.length > 20) {
+      this.state.notifications = this.state.notifications.slice(0, 20);
+    }
+
     this._persistAndNotify('notifications', this.state.notifications, 'notifications:updated');
-    return newNotif;
   }
 
-  removeNotification(id) {
-    if (!this.state.notifications) this.state.notifications = [];
-    this.state.notifications = this.state.notifications.filter(n => n.id !== id);
+  removeNotification(notifId) {
+    this.state.notifications = this.state.notifications.filter(n => n.id !== notifId);
     this._persistAndNotify('notifications', this.state.notifications, 'notifications:updated');
   }
 
@@ -245,10 +276,6 @@ class Store {
   clearActiveFocusTask() {
     this.state.activeFocusTask = null;
     this._persistAndNotify('activeFocusTask', null, 'focus:cleared');
-  }
-
-  clearFocusTask() {
-    this.clearActiveFocusTask();
   }
 
   /* Vistas y Filtros */
@@ -286,7 +313,86 @@ class Store {
     eventBus.emit('theme:accentChanged', accentName);
   }
 
+  /* Gestión de Autenticación y Aislamiento de Usuario */
+  getUser() {
+    return this.state.user;
+  }
+
+  getUserAvatar() {
+    const user = this.state.user;
+    if (!user) return null;
+    return user.avatarUrl || StorageService.get(`user_${user.id}_avatar`, null);
+  }
+
+  setUserAvatar(avatarUrl) {
+    if (!this.state.user) return;
+    this.state.user.avatarUrl = avatarUrl;
+    StorageService.set('user', this.state.user);
+    if (this.state.user.id) {
+      StorageService.set(`user_${this.state.user.id}_avatar`, avatarUrl);
+    }
+    eventBus.emit('user:avatarChanged', avatarUrl);
+  }
+
+  setUser(user) {
+    this.state.user = user;
+    StorageService.set('user', user);
+
+    if (user && user.id) {
+      // Carga aislada para el usuario (los nuevos usuarios inician en cero absoluto)
+      const savedAvatar = StorageService.get(`user_${user.id}_avatar`, null);
+      if (savedAvatar) {
+        this.state.user.avatarUrl = savedAvatar;
+      }
+      this.state.tasks = StorageService.get(`user_${user.id}_tasks`, []);
+      this.state.pomodoro = StorageService.get(`user_${user.id}_pomodoro`, {
+        mode: 'focus',
+        duration: 25 * 60,
+        cyclesCompletedToday: 0,
+        totalFocusMinutes: 0
+      });
+      this.state.hydration = StorageService.get(`user_${user.id}_hydration`, {
+        currentMl: 0,
+        goalMl: 2000,
+        logsToday: 0
+      });
+      this.state.emailPreferences = StorageService.get(`user_${user.id}_email_pref`, {
+        notificationEmail: user.email || '',
+        emailTaskAlerts: true,
+        emailWaterAlerts: true
+      });
+    }
+
+    eventBus.emit('user:changed', user);
+    eventBus.emit('user:avatarChanged', this.getUserAvatar());
+    eventBus.emit('tasks:updated', this.state.tasks);
+    eventBus.emit('hydration:updated', this.state.hydration);
+    eventBus.emit('pomodoro:updated', this.state.pomodoro);
+    eventBus.emit('emailPreferences:updated', this.state.emailPreferences);
+  }
+
+  logout() {
+    this.state.user = null;
+    this.state.tasks = [];
+    this.state.pomodoro = { mode: 'focus', duration: 25 * 60, cyclesCompletedToday: 0, totalFocusMinutes: 0 };
+    this.state.hydration = { currentMl: 0, goalMl: 2000, logsToday: 0 };
+    StorageService.remove('user');
+    localStorage.removeItem('focusflow_auth_token');
+    eventBus.emit('user:loggedOut');
+    eventBus.emit('tasks:updated', this.state.tasks);
+    eventBus.emit('hydration:updated', this.state.hydration);
+    eventBus.emit('pomodoro:updated', this.state.pomodoro);
+  }
+
+  isAuthenticated() {
+    return !!this.state.user && !!localStorage.getItem('focusflow_auth_token');
+  }
+
   _persistAndNotify(key, value, eventName) {
+    const user = this.state.user;
+    if (user && user.id) {
+      StorageService.set(`user_${user.id}_${key}`, value);
+    }
     StorageService.set(key, value);
     if (eventName) {
       eventBus.emit(eventName, value);

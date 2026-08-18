@@ -4,13 +4,14 @@
 
 .hydration-container {
   display: grid;
-  grid-template-columns: 1fr 1.2fr;
+  grid-template-columns: 1fr 1.25fr;
   gap: var(--space-8);
   max-width: 960px;
   margin: var(--space-4) auto;
   align-items: start;
 }
 
+.hydration-bottle-card,
 .bottle-visual-card {
   background-color: var(--bg-card);
   border: 1px solid var(--border-card);
@@ -20,13 +21,16 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 420px;
+  text-align: center;
+  min-height: 480px;
 }
 
 .hydration-bottle-svg {
-  width: 150px;
+  width: 160px;
   height: 290px;
-  filter: drop-shadow(0 8px 24px rgba(56, 189, 248, 0.25));
+  margin: 0 auto;
+  display: block;
+  filter: drop-shadow(0 8px 28px rgba(56, 189, 248, 0.3));
 }
 
 .hydration-info-panel {
@@ -57,11 +61,13 @@
   font-size: var(--text-2xl);
   font-weight: var(--fw-extrabold);
   color: var(--text-primary);
+  letter-spacing: -0.5px;
 }
 
 .hydration-goal-label {
   font-size: var(--text-sm);
   color: var(--text-secondary);
+  margin-top: 4px;
 }
 
 /* Single Large Drink Button */

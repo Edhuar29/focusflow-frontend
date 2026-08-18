@@ -1,5 +1,5 @@
 /**
- * FocusFlow Web - Components: Topbar Header with Dropdowns, Presence & DND
+ * FocusFlow Web - Components: Topbar Header with Dropdowns, Presence, DND & Profile Avatar
  */
 
 .app-topbar {
@@ -152,6 +152,10 @@
   overflow: hidden;
   position: relative;
   transition: border-color var(--transition-fast), transform var(--transition-fast);
+  background-color: #1E293B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .topbar-avatar-wrapper:hover .topbar-avatar {
@@ -159,10 +163,12 @@
   transform: scale(1.04);
 }
 
-.topbar-avatar img {
+.topbar-avatar img,
+.topbar-avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .presence-dot {
@@ -218,14 +224,126 @@
   justify-content: space-between;
 }
 
-.popover-title {
-  font-family: var(--font-heading);
-  font-size: var(--text-sm);
-  font-weight: var(--fw-bold);
-  color: var(--text-primary);
+/* Profile Header Card in Popover */
+.popover-profile-header {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: rgba(255, 255, 255, 0.02);
 }
 
-/* DND Row */
+.popover-avatar-container {
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.popover-avatar-box {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-circle);
+  border: 2px solid var(--accent-primary);
+  overflow: hidden;
+  background-color: #1E293B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease;
+}
+
+.popover-avatar-container:hover .popover-avatar-box {
+  transform: scale(1.05);
+}
+
+.popover-avatar-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar-edit-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-circle);
+  background: var(--accent-primary);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg-card);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.popover-user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.popover-user-name {
+  color: var(--text-primary);
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.popover-user-email {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Presets & Avatar Modal */
+.avatar-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.avatar-preset-item {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid var(--border-subtle);
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1E293B;
+}
+
+.avatar-preset-item:hover {
+  transform: scale(1.1);
+  border-color: var(--accent-primary);
+}
+
+.avatar-preset-item.selected {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 14px rgba(59, 130, 246, 0.6);
+}
+
+.avatar-preset-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .popover-dnd-row {
   padding: 0.75rem var(--space-4);
   background-color: var(--bg-input);

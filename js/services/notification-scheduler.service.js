@@ -1,10 +1,12 @@
 /**
  * FocusFlow Web - Services: Real-Time Dynamic Notification & Desktop System Scheduler
- * Gestión precisa segundo a segundo de alarmas, sincronización con modal activo y notificaciones de escritorio.
+ * Gestión precisa segundo a segundo de alarmas, sincronización con modal activo,
+ * notificaciones de escritorio (OS) y despacho de correos electrónicos automáticos (Gmail SMTP).
  */
 
 import { store } from '../core/store.js';
 import { soundService } from './sound.service.js';
+import { apiService } from './api.service.js';
 import { toast } from '../components/toast.component.js';
 import { getTodayISO, formatCleanTime } from '../utils/date.utils.js';
 import { $, escapeHTML } from '../utils/dom.utils.js';
@@ -30,7 +32,10 @@ class NotificationSchedulerService {
   async requestDesktopPermission() {
     if ('Notification' in window && Notification.permission === 'default') {
       try {
-        await Notification.requestPermission();
+        const perm = await Notification.requestPermission();
+        if (perm === 'granted') {
+          console.log('[NotificationScheduler] Permisos de notificaciones concedidos.');
+        }
       } catch (e) {
         console.warn('Permisos de notificación:', e);
       }
@@ -73,7 +78,7 @@ class NotificationSchedulerService {
       if (parsed) {
         if (parsed.hours === currentHours && parsed.minutes === currentMinutes) {
           this.firedAlarms.add(alarmKey);
-          const priority = task.priorities[0] || 'medium';
+          const priority = (task.priorities && task.priorities[0]) || 'medium';
 
           const notif = this.addNotification({
             id: `notif-task-${task.id}`,
@@ -87,6 +92,17 @@ class NotificationSchedulerService {
 
           // Abrir modal destacado en pantalla
           this._showActiveAlarmModal(task, priority);
+
+          // Despacho de Correo Electrónico para Tareas
+          const emailPrefs = store.getEmailPreferences();
+          const currentUser = store.getUser();
+          const targetEmail = emailPrefs.notificationEmail || (currentUser ? currentUser.email : '');
+
+          if (targetEmail && (task.emailAlert || emailPrefs.emailTaskAlerts !== false)) {
+            apiService.sendTaskEmailReminder(targetEmail, task.title, task.time, task.category || 'General')
+              .then(() => console.log(`[NotificationScheduler] Correo de tarea enviado a ${targetEmail}`))
+              .catch(err => console.warn('[NotificationScheduler] Fallo de correo de tarea:', err));
+          }
         }
       }
     });
@@ -97,6 +113,7 @@ class NotificationSchedulerService {
       const intervalMs = (hydration.reminder.intervalHours || 1) * 3600 * 1000;
       if (Date.now() - this.lastWaterCheck >= intervalMs) {
         this.lastWaterCheck = Date.now();
+        
         this.addNotification({
           id: `notif-water-${Date.now()}`,
           title: 'Recordatorio de Hidratación',
@@ -105,6 +122,17 @@ class NotificationSchedulerService {
           type: 'hydration',
           time: 'Ahora'
         });
+
+        // Despacho de Correo Electrónico para Hidratación
+        const emailPrefs = store.getEmailPreferences();
+        const currentUser = store.getUser();
+        const targetEmail = hydration.reminder.email || emailPrefs.notificationEmail || (currentUser ? currentUser.email : '');
+
+        if (targetEmail && hydration.reminder.emailNotification !== false) {
+          apiService.sendHydrationEmailReminder(targetEmail)
+            .then(() => console.log(`[NotificationScheduler] Correo de hidratación enviado a ${targetEmail}`))
+            .catch(err => console.warn('[NotificationScheduler] Fallo de correo de hidratación:', err));
+        }
       }
     }
   }
@@ -201,7 +229,7 @@ class NotificationSchedulerService {
     const isMuted = soundService.isMuted();
     const priority = notif.priority || 'medium';
 
-    // 🔴 1. PRIORIDAD ALTA (Modo Alarma Crítica)
+    // 1. PRIORIDAD ALTA (Modo Alarma Crítica)
     if (priority === 'high') {
       soundService.playUrgentAlarm();
 
@@ -218,7 +246,7 @@ class NotificationSchedulerService {
       }
     }
 
-    // 🟡 2. PRIORIDAD MEDIA (Alerta Estándar)
+    // 2. PRIORIDAD MEDIA (Alerta Estándar)
     else if (priority === 'medium') {
       soundService.playSoftChime();
 
@@ -235,7 +263,7 @@ class NotificationSchedulerService {
       }
     }
 
-    // 🟢 3. PRIORIDAD BAJA (Aviso Silencioso)
+    // 3. PRIORIDAD BAJA (Aviso Silencioso)
     else if (priority === 'low') {
       if ('Notification' in window && Notification.permission === 'granted') {
         try {

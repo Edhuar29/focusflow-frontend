@@ -173,9 +173,10 @@
 
           <!-- Profile Avatar -->
           <div class="topbar-avatar-wrapper" id="btn-profile-avatar" title="Estado de Cuenta y Presencia">
-            <div class="topbar-avatar">
+            <div class="topbar-avatar" id="header-avatar-box">
               <img 
-                src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%236366f1'><rect width='100' height='100' fill='%231e293b'/><circle cx='50' cy='38' r='20' fill='%2394a3b8'/><path d='M20 90c0-18 14-30 30-30s30 12 30 30' fill='%2394a3b8'/></svg>" 
+                id="header-avatar-img"
+                src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231e293b'/><circle cx='50' cy='38' r='20' fill='%2394a3b8'/><path d='M20 90c0-18 14-30 30-30s30 12 30 30' fill='%2394a3b8'/></svg>" 
                 alt="Profile" 
               />
             </div>
@@ -183,14 +184,35 @@
           </div>
 
           <!-- Profile Floating Popover -->
-          <div class="topbar-popover" id="profile-popover" style="width: 290px;">
-            <div class="popover-header" style="flex-direction: column; align-items: flex-start; gap: 4px;">
-              <strong style="color: var(--text-primary); font-size: var(--text-sm);">Francisco</strong>
-              <span style="font-size: 11px; color: var(--text-muted);">demo@focusflow.app</span>
-              <div style="margin-top: 4px; display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; background: rgba(16, 185, 129, 0.15); color: var(--color-success); font-size: 10.5px; font-weight: 600;">
-                <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--color-success);"></span>
-                Almacenamiento Local Activo
+          <div class="topbar-popover" id="profile-popover" style="width: 310px;">
+            <div class="popover-profile-header">
+              <div class="popover-avatar-container" id="btn-open-avatar-picker" title="Cambiar foto de perfil">
+                <div class="popover-avatar-box" id="popover-avatar-box">
+                  <img id="popover-avatar-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231e293b'/><circle cx='50' cy='38' r='20' fill='%2394a3b8'/><path d='M20 90c0-18 14-30 30-30s30 12 30 30' fill='%2394a3b8'/></svg>" alt="Perfil" />
+                </div>
+                <div class="avatar-edit-badge" title="Cambiar foto">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                  </svg>
+                </div>
               </div>
+
+              <div class="popover-user-details">
+                <span class="popover-user-name" id="popover-user-name">Danny Eduardo</span>
+                <span class="popover-user-email" id="popover-user-email">dannyeduardoanasi@gmail.com</span>
+              </div>
+            </div>
+
+            <!-- Botón de Acción de Perfil -->
+            <div style="padding: 8px 12px; border-bottom: 1px solid var(--border-subtle);">
+              <button class="btn btn-secondary" id="btn-open-edit-profile" style="width: 100%; font-size: 11.5px; padding: 7px 10px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                <span>Editar Perfil</span>
+              </button>
             </div>
 
             <div style="padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle);">
@@ -213,9 +235,15 @@
               </div>
             </div>
 
-            <div class="popover-footer" style="justify-content: center;">
+            <div class="popover-footer" style="flex-direction: column; gap: 6px;">
+              <button class="btn btn-secondary" id="btn-profile-auth-switch" style="font-size: 11.5px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 2l-2 2m-1.5 1.5L14 9l-1.5-1.5L11 9l-1.5-1.5L8 9 3 14v7h7l5-5 1.5 1.5 1.5-1.5 1.5 1.5 1.5-1.5 2-2z"></path>
+                </svg>
+                <span>Iniciar Sesión / Cuenta</span>
+              </button>
               <button class="btn btn-ghost" id="btn-profile-logout" style="color: var(--color-danger); font-size: 11.5px; width: 100%;">
-                Cerrar Sesión / Reiniciar Demo
+                Cerrar Sesión
               </button>
             </div>
           </div>
@@ -707,6 +735,348 @@
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
             Marcar Hecha
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dedicated Authentication Screen / View (Fiel al diseño de referencia) -->
+  <div id="auth-screen-overlay" class="auth-screen-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="auth-container-grid">
+      
+      <!-- Columna Izquierda: Branding y Propuesta de Valor -->
+      <div class="auth-hero-col">
+        <div class="auth-orb-wrapper">
+          <div class="auth-glowing-orb"></div>
+        </div>
+        <div class="auth-brand-name">FocusFlow <span>Web</span></div>
+        <h1 class="auth-tagline">Tu suite de productividad y hábitos</h1>
+        <div class="auth-feature-chips">
+          <span class="auth-chip">Pomodoro</span>
+          <span class="auth-chip">Hidratación</span>
+          <span class="auth-chip">Tareas</span>
+          <span class="auth-chip">Asistente IA</span>
+        </div>
+      </div>
+
+      <!-- Columna Derecha: Tarjeta de Autenticación -->
+      <div class="auth-card-col">
+        <div class="auth-card" id="auth-card-box">
+          
+          <!-- Vista de Iniciar Sesión (Login) -->
+          <div id="auth-view-login">
+            <div class="auth-card-header">
+              <h2 class="auth-card-title">Bienvenido de nuevo</h2>
+              <p class="auth-card-subtitle">Ingresa tus credenciales</p>
+            </div>
+
+            <button type="button" class="btn-google-auth" id="btn-login-google">
+              <svg width="18" height="18" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              <span>Continuar con Google</span>
+            </button>
+
+            <div class="auth-divider">
+              <span>o con tu correo</span>
+            </div>
+
+            <form id="form-auth-login" class="auth-form">
+              <div class="auth-input-group">
+                <div class="auth-input-wrapper">
+                  <input type="email" id="login-email-input" class="auth-input-control" placeholder="Correo electrónico" required autocomplete="email" />
+                </div>
+              </div>
+
+              <div class="auth-input-group">
+                <div class="auth-input-wrapper">
+                  <input type="password" id="login-password-input" class="auth-input-control" placeholder="Contraseña" required autocomplete="current-password" />
+                  <button type="button" class="auth-password-toggle" id="toggle-login-pass" aria-label="Mostrar/ocultar contraseña">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="auth-options-row">
+                <label class="auth-remember-label">
+                  <input type="checkbox" id="login-remember-me" checked />
+                  <span>Recordar sesión</span>
+                </label>
+                <a href="javascript:void(0)" class="auth-forgot-link" id="btn-forgot-password">¿Olvidaste tu clave?</a>
+              </div>
+
+              <button type="submit" class="btn-auth-submit" id="btn-submit-login">
+                INICIAR SESIÓN
+              </button>
+            </form>
+
+            <div class="auth-switch-footer">
+              ¿No tienes cuenta? <a href="javascript:void(0)" class="auth-switch-link" id="btn-switch-to-register">Registrarse gratis</a>
+            </div>
+          </div>
+
+          <!-- Vista de Crear Cuenta (Registro) -->
+          <div id="auth-view-register" style="display: none;">
+            <div class="auth-card-header">
+              <h2 class="auth-card-title">Crea tu cuenta</h2>
+              <p class="auth-card-subtitle">Comienza a gestionar tu productividad</p>
+            </div>
+
+            <button type="button" class="btn-google-auth" id="btn-register-google">
+              <svg width="18" height="18" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              <span>Registrarse con Google</span>
+            </button>
+
+            <div class="auth-divider">
+              <span>o con tus datos</span>
+            </div>
+
+            <form id="form-auth-register" class="auth-form">
+              <div class="auth-input-group">
+                <div class="auth-input-wrapper">
+                  <input type="text" id="register-name-input" class="auth-input-control" placeholder="Nombre completo" required autocomplete="name" />
+                </div>
+              </div>
+
+              <div class="auth-input-group">
+                <div class="auth-input-wrapper">
+                  <input type="email" id="register-email-input" class="auth-input-control" placeholder="Correo electrónico" required autocomplete="email" />
+                </div>
+              </div>
+
+              <div class="auth-input-group">
+                <div class="auth-input-wrapper">
+                  <input type="password" id="register-password-input" class="auth-input-control" placeholder="Contraseña (mínimo 6 caracteres)" required autocomplete="new-password" minlength="6" />
+                  <button type="button" class="auth-password-toggle" id="toggle-register-pass" aria-label="Mostrar/ocultar contraseña">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="auth-input-group">
+                <div class="auth-input-wrapper">
+                  <input type="password" id="register-confirm-password-input" class="auth-input-control" placeholder="Confirmar contraseña" required autocomplete="new-password" minlength="6" />
+                </div>
+              </div>
+
+              <button type="submit" class="btn-auth-submit" id="btn-submit-register">
+                CREAR CUENTA GRATIS
+              </button>
+            </form>
+
+            <div class="auth-switch-footer">
+              ¿Ya tienes cuenta? <a href="javascript:void(0)" class="auth-switch-link" id="btn-switch-to-login">Iniciar sesión</a>
+            </div>
+          </div>
+
+          <!-- Vista Ejecutiva de Selector de Cuentas de Google -->
+          <div id="auth-view-google" style="display: none;">
+            <div class="auth-card-header">
+              <div style="display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-subtle); border-radius: 12px; margin-bottom: 10px;">
+                <svg width="22" height="22" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+              </div>
+              <h2 class="auth-card-title">Elegir una cuenta</h2>
+              <p class="auth-card-subtitle">para continuar en FocusFlow</p>
+            </div>
+
+            <!-- Lista Dinámica de Cuentas de Google Guardadas/Detectadas -->
+            <div id="google-accounts-list" class="google-account-list">
+              <!-- Renderizado dinámico desde auth.modal.js -->
+            </div>
+
+            <!-- Botón para Agregar / Usar Otra Cuenta de Google -->
+            <button type="button" class="google-add-account-btn" id="btn-google-add-another">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+              </svg>
+              <span>Usar otra cuenta de Google</span>
+            </button>
+
+            <!-- Sección Expandible para Ingresar Otra Cuenta -->
+            <div id="google-custom-input-section" style="display: none; margin-bottom: 12px;">
+              <form id="form-auth-google" class="auth-form">
+                <div class="auth-input-group">
+                  <div class="auth-input-wrapper">
+                    <input type="email" id="google-email-input" class="auth-input-control" placeholder="tu_otra_cuenta@gmail.com" autocomplete="email" />
+                  </div>
+                </div>
+
+                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                  <button type="button" class="btn btn-secondary" id="btn-cancel-custom-google" style="flex: 1; padding: 10px; border-radius: 10px; font-size: 12px; font-weight: 600;">
+                    Ocultar
+                  </button>
+                  <button type="submit" class="btn-auth-submit" id="btn-submit-google-auth" style="flex: 2; margin: 0; padding: 10px; border-radius: 10px; font-size: 12px;">
+                    AGREGAR Y ENTRAR
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div class="auth-switch-footer" style="margin-top: 14px;">
+              ¿Prefieres usar correo y contraseña? <a href="javascript:void(0)" class="auth-switch-link" id="btn-back-to-login-from-google">Volver al inicio</a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Editar Perfil (Nombre, Correo, Rol) -->
+  <div class="modal-backdrop" id="edit-profile-modal" aria-hidden="true" role="dialog">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Editar Perfil</h3>
+        <button class="btn-modal-close" id="btn-close-edit-profile-modal" aria-label="Cerrar ventana">&times;</button>
+      </div>
+
+      <form id="form-edit-profile" class="modal-body">
+        <!-- Foto y Botón de Cambio Rápido -->
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 18px; padding: 12px 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);">
+          <div style="width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--accent-primary); overflow: hidden; background: #1E293B; flex-shrink: 0;">
+            <img id="edit-profile-avatar-preview" src="" alt="Avatar actual" style="width: 100%; height: 100%; object-fit: cover;" />
+          </div>
+          <div style="flex: 1; text-align: left;">
+            <strong style="display: block; font-size: 13px; color: var(--text-primary);">Foto de Perfil</strong>
+            <button type="button" class="btn btn-secondary" id="btn-switch-to-avatar-modal" style="font-size: 11px; padding: 3px 8px; margin-top: 4px;">
+              Cambiar imagen
+            </button>
+          </div>
+        </div>
+
+        <!-- Nombre y Apellido Separados -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; text-align: left;">
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label" for="input-profile-firstname">Nombre</label>
+            <input type="text" id="input-profile-firstname" class="form-control" placeholder="ej: Danny" required maxlength="40" autocomplete="given-name" />
+            <span class="profile-field-error" id="error-profile-firstname" style="display: none; color: var(--color-danger); font-size: 11px; margin-top: 3px;"></span>
+          </div>
+
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label" for="input-profile-lastname">Apellido</label>
+            <input type="text" id="input-profile-lastname" class="form-control" placeholder="ej: Eduardo" required maxlength="40" autocomplete="family-name" />
+            <span class="profile-field-error" id="error-profile-lastname" style="display: none; color: var(--color-danger); font-size: 11px; margin-top: 3px;"></span>
+          </div>
+        </div>
+
+        <!-- Sección Especial: Gestión y Actualización de Correo -->
+        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 14px; margin-bottom: 16px; text-align: left;">
+          
+          <!-- Correo Actual -->
+          <div class="form-group" style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+              <label class="form-label" style="margin: 0;">Correo Actual de la Cuenta</label>
+              <span style="font-size: 10.5px; color: #38BDF8; font-weight: 600; background: rgba(56, 189, 248, 0.12); padding: 2px 7px; border-radius: 999px;">
+                Activo
+              </span>
+            </div>
+            <input type="email" id="input-profile-current-email" class="form-control" value="dannyeduardoanasi@gmail.com" readonly style="opacity: 0.85; cursor: default; background: rgba(0, 0, 0, 0.2);" />
+          </div>
+
+          <!-- Nuevo Correo Electrónico y Botón de Actualización -->
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="input-profile-new-email">Ingresa tu nuevo correo electrónico</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="email" id="input-profile-new-email" class="form-control" placeholder="nuevo_correo@gmail.com" maxlength="60" autocomplete="email" style="flex: 1;" />
+              <button type="button" class="btn btn-primary" id="btn-action-update-email" style="font-size: 11.5px; padding: 0 14px; white-space: nowrap; display: flex; align-items: center; gap: 5px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Actualizar Correo</span>
+              </button>
+            </div>
+            <span class="profile-field-error" id="error-profile-new-email" style="display: none; color: var(--color-danger); font-size: 11px; margin-top: 4px;"></span>
+            <span id="help-profile-new-email" style="font-size: 11px; color: var(--text-muted); margin-top: 4px; display: block;">
+              Al pulsar "Actualizar Correo", tu cuenta y alertas se transferirán a la nueva dirección.
+            </span>
+          </div>
+
+        </div>
+
+        <div style="display: flex; gap: 8px; justify-content: flex-end; border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-edit-profile">
+            Cerrar
+          </button>
+          <button type="submit" class="btn btn-primary" id="btn-save-profile">
+            Guardar Cambios de Perfil
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal para Cambiar / Personalizar Foto de Perfil -->
+  <div class="modal-backdrop" id="avatar-picker-modal" aria-hidden="true" role="dialog">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Foto de Perfil</h3>
+        <button class="btn-modal-close" id="btn-close-avatar-modal" aria-label="Cerrar ventana">&times;</button>
+      </div>
+
+      <div class="modal-body" style="text-align: center;">
+        <!-- Vista previa de foto actual -->
+        <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 16px;">
+          <div style="width: 84px; height: 84px; border-radius: 50%; border: 3px solid var(--accent-primary); overflow: hidden; background: #1E293B; margin-bottom: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.4);">
+            <img id="avatar-modal-preview-img" src="" alt="Vista previa de perfil" style="width: 100%; height: 100%; object-fit: cover;" />
+          </div>
+          <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);" id="avatar-modal-user-label">Danny Eduardo</span>
+        </div>
+
+        <!-- 1. Subir imagen local desde la computadora -->
+        <div style="margin-bottom: 16px;">
+          <input type="file" id="input-avatar-upload" accept="image/png, image/jpeg, image/webp, image/gif" style="display: none;" />
+          <button type="button" class="btn btn-primary" id="btn-trigger-upload-file" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <span>Subir foto desde mi equipo</span>
+          </button>
+          <span style="display: block; font-size: 11px; color: var(--text-muted); margin-top: 5px;">
+            Compatible con JPG, PNG o WebP (guardado offline automático)
+          </span>
+        </div>
+
+        <!-- 2. Colección de Avatares Ilustrados -->
+        <div style="border-top: 1px solid var(--border-subtle); padding-top: 14px; margin-bottom: 14px; text-align: left;">
+          <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+            O elige un avatar ilustrado:
+          </span>
+          <div class="avatar-preset-grid" id="avatar-presets-container">
+            <!-- Renderizado interactivo -->
+          </div>
+        </div>
+
+        <!-- 3. Acciones de restablecimiento y Google -->
+        <div style="display: flex; gap: 8px; border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+          <button type="button" class="btn btn-secondary" id="btn-use-google-avatar-style" style="flex: 1; font-size: 11.5px; padding: 8px;">
+            Inicial de Google
+          </button>
+          <button type="button" class="btn btn-ghost" id="btn-reset-avatar-default" style="flex: 1; font-size: 11.5px; padding: 8px; color: var(--text-muted);">
+            Restablecer
           </button>
         </div>
       </div>

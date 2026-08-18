@@ -1,13 +1,13 @@
 /**
- * FocusFlow Web - View: Hydration View Controller
- * Actualizaciones visuales fluidas sin bloqueo ni destrucción del DOM.
+ * FocusFlow Web - Views: Hydration View Controller
+ * Manejo de la botella reactiva, registro de tomas y recordatorios por correo (cuenta creada vs personalizado).
  */
 
 import { BaseView } from './base.view.js';
-import { soundService } from '../services/sound.service.js';
-import { toast } from '../components/toast.component.js';
 import { store } from '../core/store.js';
 import { eventBus } from '../core/event-bus.js';
+import { soundService } from '../services/sound.service.js';
+import { toast } from '../components/toast.component.js';
 import { notificationScheduler } from '../services/notification-scheduler.service.js';
 import { $, escapeHTML } from '../utils/dom.utils.js';
 
@@ -23,55 +23,64 @@ export class HydrationView extends BaseView {
     const data = store.getState().hydration;
     const goal = data.goalMl || 2000;
     const consumed = data.currentMl || 0;
-    
-    const remainingMl = Math.max(0, goal - consumed);
-    const remainingPercent = Math.min(100, Math.max(0, Math.round((remainingMl / goal) * 100)));
-
-    // Coordenadas SVG en viewBox 0 0 100 200
-    const totalCavityHeight = 152;
-    const waterHeight = (totalCavityHeight * remainingPercent) / 100;
-    const waterY = 186 - waterHeight;
-
     const reminder = data.reminder || {
       enabled: false,
       intervalHours: 1,
       emailNotification: false,
-      email: 'demo@focusflow.app'
+      email: ''
     };
+
+    const currentUser = store.getUser();
+    const emailPrefs = store.getEmailPreferences();
+    const accountEmail = (currentUser && currentUser.email) ? currentUser.email : 'dannyeduardoanasi@gmail.com';
+    
+    // Determinar si usa el correo de la cuenta o personalizado
+    const isCustomEmail = reminder.useCustomEmail === true || (reminder.email && reminder.email !== accountEmail);
+    const activeEmail = isCustomEmail ? (reminder.email || emailPrefs.notificationEmail || '') : accountEmail;
+
+    // Métricas del agua restante
+    const remainingMl = Math.max(0, goal - consumed);
+    const remainingPercent = Math.min(100, Math.max(0, Math.round((remainingMl / goal) * 100)));
+
+    // Cálculo dinámico de altura SVG para la botella (Total 148px de span)
+    const waterHeight = (remainingPercent / 100) * 148;
+    const waterY = 38 + (148 - waterHeight);
 
     this.container.innerHTML = `
       <div class="hydration-container">
         
-        <!-- Bottle Graphic Card with Realistic Emptying Physics -->
-        <div class="bottle-visual-card">
-          <svg class="hydration-bottle-svg" viewBox="0 0 100 200">
+        <!-- Interactive 2L Bottle Graphic -->
+        <div class="hydration-bottle-card">
+          <svg class="hydration-bottle-svg" viewBox="0 0 100 220" preserveAspectRatio="xMidYMid meet">
             <defs>
-              <linearGradient id="water-fluid-gradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#38BDF8" />
-                <stop offset="50%" stop-color="#0284C7" />
-                <stop offset="100%" stop-color="#1D4ED8" />
+              <linearGradient id="water-fluid-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.95" />
+                <stop offset="100%" stop-color="#0284C7" stop-opacity="0.9" />
               </linearGradient>
 
-              <clipPath id="bottle-liquid-clip">
-                <rect x="19" y="35" width="62" height="150" rx="15" />
+              <clipPath id="bottle-inner-shape">
+                <rect x="19" y="37" width="62" height="150" rx="13" />
               </clipPath>
             </defs>
 
-            <!-- Tapa y Cuello -->
-            <rect x="36" y="10" width="28" height="14" rx="4" fill="#1E293B" stroke="#334155" stroke-width="2" />
-            <rect x="42" y="24" width="16" height="12" fill="#0F172A" stroke="#334155" stroke-width="1.5" />
+            <!-- Tapa de la botella -->
+            <rect x="42" y="14" width="16" height="5" rx="2" fill="#38BDF8" />
+            <rect x="38" y="19" width="24" height="12" rx="3" fill="#0EA5E9" />
 
-            <!-- Fondo interior oscuro del cristal -->
-            <rect x="18" y="34" width="64" height="152" rx="16" fill="rgba(15, 23, 42, 0.9)" />
+            <!-- Cuello -->
+            <path d="M42 31 L42 37 L58 37 L58 31 Z" fill="#0284C7" opacity="0.5" />
 
-            <!-- Líquido reactivo -->
-            <g clip-path="url(#bottle-liquid-clip)" id="bottle-water-group">
+            <!-- Fondo vacío del cristal -->
+            <rect x="19" y="37" width="62" height="150" rx="13" fill="rgba(56, 189, 248, 0.04)" />
+
+            <!-- Agua restante dinámica con clip-path -->
+            <g clip-path="url(#bottle-inner-shape)">
               <rect 
                 id="svg-water-rect"
-                x="15" 
+                x="10" 
                 y="${waterY}" 
-                width="70" 
-                height="${waterHeight + 8}" 
+                width="80" 
+                height="${waterHeight + 15}" 
                 fill="url(#water-fluid-gradient)" 
                 style="transition: y 0.5s cubic-bezier(0.4, 0, 0.2, 1), height 0.5s cubic-bezier(0.4, 0, 0.2, 1);"
               />
@@ -80,28 +89,28 @@ export class HydrationView extends BaseView {
                 cx="50" 
                 cy="${waterY}" 
                 rx="30" 
-                ry="4.5" 
+                ry="4" 
                 fill="#BAE6FD" 
                 opacity="${waterHeight > 3 && remainingPercent < 98 ? '0.9' : '0'}"
                 style="transition: cy 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;"
               />
             </g>
 
-            <!-- Contorno exterior de cristal y marcas -->
-            <rect x="18" y="34" width="64" height="152" rx="16" fill="none" stroke="#38BDF8" stroke-width="2.5" stroke-opacity="0.4" />
+            <!-- Contorno exterior de cristal y marcas simétricas -->
+            <rect x="18" y="36" width="64" height="152" rx="14" fill="none" stroke="#38BDF8" stroke-width="2.5" stroke-opacity="0.45" />
             
-            <line x1="68" y1="65" x2="76" y2="65" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" />
-            <line x1="68" y1="105" x2="76" y2="105" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" />
-            <line x1="68" y1="145" x2="76" y2="145" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" />
+            <line x1="68" y1="75" x2="77" y2="75" stroke="rgba(255,255,255,0.35)" stroke-width="1.5" />
+            <line x1="68" y1="112" x2="77" y2="112" stroke="rgba(255,255,255,0.35)" stroke-width="1.5" />
+            <line x1="68" y1="149" x2="77" y2="149" stroke="rgba(255,255,255,0.35)" stroke-width="1.5" />
 
-            <line x1="24" y1="45" x2="24" y2="175" stroke="rgba(255,255,255,0.15)" stroke-width="2" stroke-linecap="round" />
+            <line x1="25" y1="46" x2="25" y2="176" stroke="rgba(255,255,255,0.18)" stroke-width="2" stroke-linecap="round" />
           </svg>
 
           <div style="margin-top: var(--space-4); text-align: center;">
             <div class="hydration-progress-text" id="hydration-progress-text">${consumed} / ${goal} ml</div>
             <div class="hydration-goal-label" id="hydration-goal-label">
               ${consumed >= goal 
-                ? '¡Meta diaria completada! Botella vacía.' 
+                ? 'Meta diaria completada. Botella vacía.' 
                 : `Restante por beber: ${remainingMl} ml (${remainingPercent}%)`}
             </div>
           </div>
@@ -143,7 +152,7 @@ export class HydrationView extends BaseView {
             </div>
             
             <p style="color: var(--text-secondary); font-size: var(--text-xs); margin-bottom: var(--space-3);">
-              Recibe avisos periódicos en tu computadora para mantener tu nivel de concentración.
+              Recibe avisos periódicos en tu computadora y correo electrónico para mantener tu nivel de concentración.
             </p>
 
             <div style="display: flex; gap: var(--space-3); align-items: center; margin-bottom: var(--space-3);">
@@ -157,21 +166,45 @@ export class HydrationView extends BaseView {
               </select>
             </div>
 
-            <!-- Email Notification Toggle -->
+            <!-- Email Notification Section -->
             <div style="background-color: var(--bg-input); padding: var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                 <span style="font-size: var(--text-xs); font-weight: var(--fw-semibold); color: var(--text-primary);">
                   Notificar a mi correo electrónico
                 </span>
-                <input type="checkbox" id="toggle-water-email" ${reminder.emailNotification ? 'checked' : ''} style="cursor: pointer;" />
+                <input type="checkbox" id="toggle-water-email" ${reminder.emailNotification !== false ? 'checked' : ''} style="cursor: pointer;" />
               </div>
+
+              <!-- Selector de Opciones: Correo de Cuenta vs Personalizado -->
+              <div class="email-choice-group" style="margin-bottom: 8px;">
+                <div class="email-choice-card ${!isCustomEmail ? 'active' : ''}" id="water-choice-account" style="padding: 8px 10px;">
+                  <div class="email-choice-radio" style="width: 14px; height: 14px;">
+                    <div class="email-choice-radio-inner" style="width: 5px; height: 5px;"></div>
+                  </div>
+                  <div>
+                    <span class="email-choice-title" style="font-size: 11.5px;">Correo de mi cuenta</span>
+                    <span class="email-choice-desc" style="font-size: 10px;">${escapeHTML(accountEmail)}</span>
+                  </div>
+                </div>
+
+                <div class="email-choice-card ${isCustomEmail ? 'active' : ''}" id="water-choice-custom" style="padding: 8px 10px;">
+                  <div class="email-choice-radio" style="width: 14px; height: 14px;">
+                    <div class="email-choice-radio-inner" style="width: 5px; height: 5px;"></div>
+                  </div>
+                  <div>
+                    <span class="email-choice-title" style="font-size: 11.5px;">Otro correo</span>
+                    <span class="email-choice-desc" style="font-size: 10px;">Personalizado</span>
+                  </div>
+                </div>
+              </div>
+
               <input 
                 type="email" 
                 id="water-reminder-email" 
                 class="form-control" 
-                placeholder="tu-correo@ejemplo.com" 
-                value="${escapeHTML(reminder.email || 'demo@focusflow.app')}"
-                style="padding: 6px 10px; font-size: var(--text-xs);"
+                placeholder="ejemplo@correo.com" 
+                value="${escapeHTML(activeEmail)}"
+                ${!isCustomEmail ? 'readonly style="opacity: 0.85; cursor: default; padding: 6px 10px; font-size: var(--text-xs);"' : 'style="padding: 6px 10px; font-size: var(--text-xs);"'}
               />
             </div>
 
@@ -189,7 +222,43 @@ export class HydrationView extends BaseView {
   bindEvents() {
     if (!this.container) return;
 
-    // 1. Botón de Tomar Agua (+250 ml)
+    const currentUser = store.getUser();
+    const accountEmail = (currentUser && currentUser.email) ? currentUser.email : 'dannyeduardoanasi@gmail.com';
+
+    const choiceAccount = $('#water-choice-account', this.container);
+    const choiceCustom = $('#water-choice-custom', this.container);
+    const emailInput = $('#water-reminder-email', this.container);
+
+    let isCustomSelected = choiceCustom ? choiceCustom.classList.contains('active') : false;
+
+    // 1. Alternador de modo de correo en Hidratación
+    if (choiceAccount && choiceCustom && emailInput) {
+      choiceAccount.onclick = () => {
+        soundService.playClick();
+        choiceAccount.classList.add('active');
+        choiceCustom.classList.remove('active');
+        isCustomSelected = false;
+
+        emailInput.value = accountEmail;
+        emailInput.readOnly = true;
+        emailInput.style.opacity = '0.85';
+        emailInput.style.cursor = 'default';
+      };
+
+      choiceCustom.onclick = () => {
+        soundService.playClick();
+        choiceCustom.classList.add('active');
+        choiceAccount.classList.remove('active');
+        isCustomSelected = true;
+
+        emailInput.readOnly = false;
+        emailInput.style.opacity = '1';
+        emailInput.style.cursor = 'text';
+        emailInput.focus();
+      };
+    }
+
+    // 2. Botón de Tomar Agua (+250 ml)
     const drinkBtn = $('#btn-drink-water-single', this.container);
     if (drinkBtn) {
       drinkBtn.onclick = () => {
@@ -203,7 +272,7 @@ export class HydrationView extends BaseView {
       };
     }
 
-    // 2. Botón de Reiniciar Botella
+    // 3. Botón de Reiniciar Botella
     const resetBtn = $('#btn-reset-water', this.container);
     if (resetBtn) {
       resetBtn.onclick = () => {
@@ -217,13 +286,12 @@ export class HydrationView extends BaseView {
       };
     }
 
-    // 3. Guardar Recordatorio (No bloqueante, sin recargar todo el DOM)
+    // 4. Guardar Recordatorio
     const saveReminderBtn = $('#btn-save-reminder', this.container);
     if (saveReminderBtn) {
       saveReminderBtn.onclick = () => {
         soundService.playClick();
         
-        // Solicitar permisos de escritorio sin bloquear el hilo principal
         if ('Notification' in window && Notification.permission === 'default') {
           Notification.requestPermission().catch(() => {});
         }
@@ -231,27 +299,42 @@ export class HydrationView extends BaseView {
         const enabled = $('#toggle-water-reminder', this.container)?.checked || false;
         const interval = parseFloat($('#reminder-interval-select', this.container)?.value || '1');
         const emailNotification = $('#toggle-water-email', this.container)?.checked || false;
-        const email = $('#water-reminder-email', this.container)?.value.trim() || 'demo@focusflow.app';
+        const inputEmail = emailInput ? emailInput.value.trim() : accountEmail;
+        const targetEmail = isCustomSelected ? inputEmail : accountEmail;
+
+        if (emailNotification && isCustomSelected && (!targetEmail || !targetEmail.includes('@'))) {
+          toast.warning('Por favor ingresa un correo electrónico válido');
+          emailInput?.focus();
+          return;
+        }
 
         const data = store.getState().hydration;
         data.reminder = {
           enabled,
           intervalHours: interval,
           emailNotification,
-          email
+          useCustomEmail: isCustomSelected,
+          email: targetEmail
         };
 
         store._persistAndNotify('hydration', data, 'hydration:updated');
         
+        // Sincronizar con las preferencias globales de correo
+        store.setEmailPreferences({
+          emailWaterAlerts: emailNotification,
+          notificationEmail: targetEmail,
+          useCustomEmail: isCustomSelected
+        });
+
         if (enabled) {
           notificationScheduler.addNotification({
             id: 'notif-water-reminder',
             title: 'Recordatorio de Hidratación Activado',
-            description: `Avisos programados cada ${interval} horas en tu computadora${emailNotification ? ` y a ${email}` : ''}.`,
+            description: `Avisos programados cada ${interval} horas en tu computadora${emailNotification ? ` y a ${targetEmail}` : ''}.`,
             priority: 'medium',
             type: 'hydration'
           });
-          toast.success(`Recordatorio activo cada ${interval}h`);
+          toast.success(`Recordatorio de hidratación guardado para ${targetEmail}`);
         } else {
           notificationScheduler.removeNotification('notif-water-reminder');
           toast.info('Recordatorio de hidratación desactivado');
@@ -259,16 +342,13 @@ export class HydrationView extends BaseView {
       };
     }
 
-    // 4. Suscripción a eventos externos (ej. registrar desde la campana)
+    // 5. Suscripción a eventos externos
     if (this.unsubscribeHydration) this.unsubscribeHydration();
     this.unsubscribeHydration = eventBus.on('hydration:updated', () => {
       this._updateBottleUI();
     });
   }
 
-  /**
-   * Actualiza fluidamente solo el SVG y los textos sin destruir el DOM ni los botones
-   */
   _updateBottleUI() {
     if (!this.container) return;
 
@@ -279,46 +359,33 @@ export class HydrationView extends BaseView {
     const remainingMl = Math.max(0, goal - consumed);
     const remainingPercent = Math.min(100, Math.max(0, Math.round((remainingMl / goal) * 100)));
 
-    const totalCavityHeight = 152;
-    const waterHeight = (totalCavityHeight * remainingPercent) / 100;
-    const waterY = 186 - waterHeight;
+    const waterHeight = (remainingPercent / 100) * 148;
+    const waterY = 38 + (148 - waterHeight);
 
-    const waterRect = $('#svg-water-rect', this.container);
-    const waterSurface = $('#svg-water-surface', this.container);
+    const rect = $('#svg-water-rect', this.container);
+    const surface = $('#svg-water-surface', this.container);
     const progressText = $('#hydration-progress-text', this.container);
     const goalLabel = $('#hydration-goal-label', this.container);
     const logsText = $('#hydration-logs-text', this.container);
 
-    if (waterRect) {
-      waterRect.setAttribute('y', waterY);
-      waterRect.setAttribute('height', waterHeight + 8);
+    if (rect) {
+      rect.setAttribute('y', waterY);
+      rect.setAttribute('height', waterHeight + 15);
     }
-
-    if (waterSurface) {
-      waterSurface.setAttribute('cy', waterY);
-      waterSurface.style.opacity = (waterHeight > 3 && remainingPercent < 98) ? '0.9' : '0';
+    if (surface) {
+      surface.setAttribute('cy', waterY);
+      surface.style.opacity = (waterHeight > 3 && remainingPercent < 98) ? '0.9' : '0';
     }
-
     if (progressText) {
       progressText.textContent = `${consumed} / ${goal} ml`;
     }
-
     if (goalLabel) {
-      goalLabel.textContent = consumed >= goal
-        ? '¡Meta diaria completada! Botella vacía.'
+      goalLabel.textContent = consumed >= goal 
+        ? 'Meta diaria completada. Botella vacía.' 
         : `Restante por beber: ${remainingMl} ml (${remainingPercent}%)`;
     }
-
     if (logsText) {
       logsText.textContent = `${data.logsToday || 0} tomas registradas hoy`;
     }
-  }
-
-  unmount() {
-    if (this.unsubscribeHydration) {
-      this.unsubscribeHydration();
-      this.unsubscribeHydration = null;
-    }
-    super.unmount();
   }
 }

@@ -1,6 +1,7 @@
 /**
  * FocusFlow Web - Main Application Bootstrap
- * Incluye gestión de Pomodoro en segundo plano, notificaciones dinámicas reales (Web + Desktop) y creación rápida.
+ * Incluye gestión de Pomodoro en segundo plano, notificaciones dinámicas reales (Web + Desktop),
+ * personalización de fotos de perfil de usuario (Google / Archivos Locales / Presets) y búsqueda global.
  */
 
 import { store } from './core/store.js';
@@ -17,6 +18,7 @@ import { HydrationView } from './views/hydration.view.js';
 import { AssistantView } from './views/assistant.view.js';
 import { AnalyticsView } from './views/analytics.view.js';
 import { SettingsView } from './views/settings.view.js';
+import { AuthModal } from './components/auth.modal.js';
 import { $, $$, escapeHTML } from './utils/dom.utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -24,7 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const currentAccent = store.getState().accent || 'cobalt';
   document.documentElement.setAttribute('data-accent', currentAccent);
 
-  // 2. Registrar Rutas de la SPA
+  // 2. Inicializar Pantalla / Modal de Autenticación
+  const authModal = new AuthModal();
+
+  // 3. Registrar Rutas de la SPA
   const routes = {
     'dashboard': DashboardView,
     'tasks': TasksView,
@@ -35,19 +40,23 @@ document.addEventListener('DOMContentLoaded', () => {
     'settings': SettingsView
   };
 
-  // 3. Iniciar Router con Dashboard por defecto
+  // 4. Iniciar Router con Dashboard por defecto
   const router = new Router(routes, 'dashboard');
 
-  // 4. Inicializar Herramientas de la Barra Superior
+  // 5. Inicializar Herramientas de la Barra Superior y Perfil
   initTopBarTools(router);
 
-  // 5. Inicializar Programador de Notificaciones Dinámicas
+  // 6. Inicializar Sistema de Personalización de Fotos de Perfil y Edición de Datos
+  initAvatarCustomization();
+  initEditProfileModal();
+
+  // 7. Inicializar Programador de Notificaciones Dinámicas
   notificationScheduler.init();
 
-  // 6. Inicializar selector de prioridades visuales en modal
+  // 8. Inicializar selector de prioridades visuales en modal
   initModalPrioritySelector();
 
-  console.log('FocusFlow Web inicializado correctamente con Notificaciones Duales (Web + Desktop OS).');
+  console.log('FocusFlow Web inicializado correctamente.');
 });
 
 /**
@@ -194,10 +203,11 @@ function initTopBarTools(router) {
     if (matchingTasks.length > 0) {
       html += `<div style="padding: 8px 8px 4px 8px; font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">Tareas</div>`;
       matchingTasks.slice(0, 5).forEach(t => {
+        const priority = (t.priorities && t.priorities[0]) || 'medium';
         html += `
           <div class="palette-result-item" data-task-focus="${t.id}">
             <span>${escapeHTML(t.title)}</span>
-            <span class="badge badge-priority-${t.priorities[0] || 'medium'}">${t.priorities[0] || 'medium'}</span>
+            <span class="badge badge-priority-${priority}">${priority}</span>
           </div>
         `;
       });
@@ -312,18 +322,33 @@ function initTopBarTools(router) {
     });
   }
 
+  // Carga y sincronización del estado de presencia persistente
+  const savedPresence = StorageService.get('presence_status', 'available');
+  if (headerPresenceDot) {
+    headerPresenceDot.className = `presence-dot ${savedPresence}`;
+  }
+
   const presenceButtons = $$('.presence-option-btn', profilePopover);
   presenceButtons.forEach(btn => {
+    const status = btn.getAttribute('data-status');
+    if (status === savedPresence) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+
     btn.addEventListener('click', () => {
       soundService.playClick();
-      const status = btn.getAttribute('data-status');
+      const newStatus = btn.getAttribute('data-status');
       
       presenceButtons.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
 
       if (headerPresenceDot) {
-        headerPresenceDot.className = `presence-dot ${status}`;
+        headerPresenceDot.className = `presence-dot ${newStatus}`;
       }
+
+      StorageService.set('presence_status', newStatus);
 
       const statusLabels = {
         available: 'Disponible',
@@ -331,15 +356,26 @@ function initTopBarTools(router) {
         break: 'En Pausa / Descanso'
       };
 
-      toast.info(`Estado actualizado: ${statusLabels[status] || status}`);
+      toast.info(`Estado: ${statusLabels[newStatus] || newStatus}`);
     });
   });
 
+  const authSwitchBtn = $('#btn-profile-auth-switch');
+  if (authSwitchBtn) {
+    authSwitchBtn.addEventListener('click', () => {
+      soundService.playClick();
+      if (profilePopover) profilePopover.classList.remove('open');
+      eventBus.emit('auth:open');
+    });
+  }
+
   if (profileLogoutBtn) {
     profileLogoutBtn.addEventListener('click', () => {
-      if (confirm('¿Deseas cerrar sesión y reiniciar los datos de prueba a su estado original?')) {
-        StorageService.clearAll();
-        window.location.reload();
+      if (confirm('¿Deseas cerrar tu sesión actual?')) {
+        soundService.playClick();
+        if (profilePopover) profilePopover.classList.remove('open');
+        store.logout();
+        toast.info('Has cerrado sesión correctamente.');
       }
     });
   }
@@ -352,6 +388,199 @@ function initTopBarTools(router) {
       profilePopover.classList.remove('open');
     }
   });
+}
+
+/**
+ * Inicializa la personalización y carga de fotos de perfil (Google, Subida de Archivos y Presets)
+ */
+function initAvatarCustomization() {
+  const avatarModal = $('#avatar-picker-modal');
+  const closeAvatarBtn = $('#btn-close-avatar-modal');
+  const openAvatarPickerBtn = $('#btn-open-avatar-picker');
+  const editProfilePhotoBtn = $('#btn-edit-profile-photo');
+  const uploadFileInput = $('#input-avatar-upload');
+  const triggerUploadBtn = $('#btn-trigger-upload-file');
+  const previewImg = $('#avatar-modal-preview-img');
+  const userLabel = $('#avatar-modal-user-label');
+  const presetsContainer = $('#avatar-presets-container');
+  const googleAvatarBtn = $('#btn-use-google-avatar-style');
+  const resetAvatarBtn = $('#btn-reset-avatar-default');
+
+  const headerAvatarImg = $('#header-avatar-img');
+  const popoverAvatarImg = $('#popover-avatar-img');
+  const popoverUserName = $('#popover-user-name');
+  const popoverUserEmail = $('#popover-user-email');
+
+  // Presets vectoriales elegantes
+  const PRESET_AVATARS = [
+    {
+      id: 'avatar-blue',
+      name: 'Cobalto Focus',
+      svg: `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g1' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%233B82F6'/><stop offset='100%' stop-color='%231D4ED8'/></linearGradient></defs><circle cx='50' cy='50' r='50' fill='url(%23g1)'/><circle cx='50' cy='38' r='18' fill='%23FFFFFF' opacity='0.9'/><path d='M22 84c0-15 13-26 28-26s28 11 28 26' fill='%23FFFFFF' opacity='0.9'/></svg>`
+    },
+    {
+      id: 'avatar-emerald',
+      name: 'Esmeralda Zen',
+      svg: `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g2' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%2310B981'/><stop offset='100%' stop-color='%23047857'/></linearGradient></defs><circle cx='50' cy='50' r='50' fill='url(%23g2)'/><circle cx='50' cy='38' r='18' fill='%23FFFFFF' opacity='0.9'/><path d='M22 84c0-15 13-26 28-26s28 11 28 26' fill='%23FFFFFF' opacity='0.9'/></svg>`
+    },
+    {
+      id: 'avatar-purple',
+      name: 'Violeta Pro',
+      svg: `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g3' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%238B5CF6'/><stop offset='100%' stop-color='%236D28D9'/></linearGradient></defs><circle cx='50' cy='50' r='50' fill='url(%23g3)'/><circle cx='50' cy='38' r='18' fill='%23FFFFFF' opacity='0.9'/><path d='M22 84c0-15 13-26 28-26s28 11 28 26' fill='%23FFFFFF' opacity='0.9'/></svg>`
+    },
+    {
+      id: 'avatar-amber',
+      name: 'Ámbar Energía',
+      svg: `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g4' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%23F59E0B'/><stop offset='100%' stop-color='%23B45309'/></linearGradient></defs><circle cx='50' cy='50' r='50' fill='url(%23g4)'/><circle cx='50' cy='38' r='18' fill='%23FFFFFF' opacity='0.9'/><path d='M22 84c0-15 13-26 28-26s28 11 28 26' fill='%23FFFFFF' opacity='0.9'/></svg>`
+    },
+    {
+      id: 'avatar-cyan',
+      name: 'Cian Océano',
+      svg: `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g5' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%2306B6D4'/><stop offset='100%' stop-color='%230E7490'/></linearGradient></defs><circle cx='50' cy='50' r='50' fill='url(%23g5)'/><circle cx='50' cy='38' r='18' fill='%23FFFFFF' opacity='0.9'/><path d='M22 84c0-15 13-26 28-26s28 11 28 26' fill='%23FFFFFF' opacity='0.9'/></svg>`
+    },
+    {
+      id: 'avatar-rose',
+      name: 'Rosa Neón',
+      svg: `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g6' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%23EC4899'/><stop offset='100%' stop-color='%23BE185D'/></linearGradient></defs><circle cx='50' cy='50' r='50' fill='url(%23g6)'/><circle cx='50' cy='38' r='18' fill='%23FFFFFF' opacity='0.9'/><path d='M22 84c0-15 13-26 28-26s28 11 28 26' fill='%23FFFFFF' opacity='0.9'/></svg>`
+    }
+  ];
+
+  const defaultAvatar = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231e293b'/><circle cx='50' cy='38' r='20' fill='%2394a3b8'/><path d='M20 90c0-18 14-30 30-30s30 12 30 30' fill='%2394a3b8'/></svg>`;
+
+  const getGoogleLetterAvatar = (name = 'Danny', email = 'danny@gmail.com') => {
+    const initial = (name.trim()[0] || email.trim()[0] || 'U').toUpperCase();
+    const colors = ['%231A73E8', '%23188038', '%23D93025', '%23F29900', '%239334E6', '%2312B5CB'];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i);
+    const color = colors[Math.abs(hash) % colors.length];
+
+    return `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='${color}'/><text x='50' y='65' font-family='sans-serif' font-size='44' font-weight='bold' fill='%23FFFFFF' text-anchor='middle'>${initial}</text></svg>`;
+  };
+
+  const renderAvatars = () => {
+    const user = store.getUser();
+    const currentAvatar = store.getUserAvatar() || (user ? getGoogleLetterAvatar(user.name, user.email) : defaultAvatar);
+
+    if (headerAvatarImg) headerAvatarImg.src = currentAvatar;
+    if (popoverAvatarImg) popoverAvatarImg.src = currentAvatar;
+    if (previewImg) previewImg.src = currentAvatar;
+
+    if (user) {
+      if (popoverUserName) popoverUserName.textContent = user.name;
+      if (popoverUserEmail) popoverUserEmail.textContent = user.email;
+      if (userLabel) userLabel.textContent = user.name;
+    }
+  };
+
+  // Render inicial
+  renderAvatars();
+
+  // Renderizar Presets en el modal
+  if (presetsContainer) {
+    presetsContainer.innerHTML = PRESET_AVATARS.map(p => `
+      <div class="avatar-preset-item" data-preset-svg="${encodeURIComponent(p.svg)}" title="${p.name}">
+        <img src="${p.svg}" alt="${p.name}" />
+      </div>
+    `).join('');
+
+    presetsContainer.onclick = (e) => {
+      const item = e.target.closest('.avatar-preset-item');
+      if (!item) return;
+      soundService.playClick();
+      const svg = decodeURIComponent(item.getAttribute('data-preset-svg'));
+      store.setUserAvatar(svg);
+      toast.success('Foto de perfil actualizada');
+      closeModal();
+    };
+  }
+
+  // Abrir modal
+  const openModal = () => {
+    soundService.playClick();
+    const profilePopover = $('#profile-popover');
+    if (profilePopover) profilePopover.classList.remove('open');
+    renderAvatars();
+    if (avatarModal) {
+      avatarModal.classList.add('open');
+      avatarModal.setAttribute('aria-hidden', 'false');
+    }
+  };
+
+  const closeModal = () => {
+    if (avatarModal) {
+      avatarModal.classList.remove('open');
+      avatarModal.setAttribute('aria-hidden', 'true');
+    }
+  };
+
+  if (openAvatarPickerBtn) openAvatarPickerBtn.addEventListener('click', openModal);
+  if (editProfilePhotoBtn) editProfilePhotoBtn.addEventListener('click', openModal);
+  if (closeAvatarBtn) closeAvatarBtn.addEventListener('click', closeModal);
+
+  // Cerrar al hacer clic en el backdrop
+  if (avatarModal) {
+    avatarModal.addEventListener('click', (e) => {
+      if (e.target === avatarModal) closeModal();
+    });
+  }
+
+  // Subir archivo local desde el equipo
+  if (triggerUploadBtn && uploadFileInput) {
+    triggerUploadBtn.addEventListener('click', () => {
+      soundService.playClick();
+      uploadFileInput.click();
+    });
+
+    uploadFileInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        toast.warning('Por favor selecciona un archivo de imagen válido');
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        toast.warning('La imagen no debe superar los 5MB');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target.result;
+        store.setUserAvatar(dataUrl);
+        toast.success('¡Foto de perfil actualizada correctamente!');
+        closeModal();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Usar inicial de Google
+  if (googleAvatarBtn) {
+    googleAvatarBtn.addEventListener('click', () => {
+      soundService.playClick();
+      const user = store.getUser();
+      const googleSvg = getGoogleLetterAvatar(user ? user.name : 'Danny', user ? user.email : 'danny@gmail.com');
+      store.setUserAvatar(googleSvg);
+      toast.success('Avatar con inicial de Google aplicado');
+      closeModal();
+    });
+  }
+
+  // Restablecer
+  if (resetAvatarBtn) {
+    resetAvatarBtn.addEventListener('click', () => {
+      soundService.playClick();
+      store.setUserAvatar(defaultAvatar);
+      toast.info('Foto de perfil restablecida');
+      closeModal();
+    });
+  }
+
+  // Suscribirse a cambios en tiempo real
+  eventBus.on('user:avatarChanged', () => renderAvatars());
+  eventBus.on('user:changed', () => renderAvatars());
 }
 
 /**
@@ -372,4 +601,268 @@ function initModalPrioritySelector() {
       hiddenInput.value = val;
     });
   });
+}
+
+/**
+ * Inicializa el modal de edición de perfil (Nombre y Apellido por separado, Actualización de Correo y Control Estricto de Errores)
+ */
+function initEditProfileModal() {
+  const modal = $('#edit-profile-modal');
+  const openBtn = $('#btn-open-edit-profile');
+  const closeBtn = $('#btn-close-edit-profile-modal');
+  const cancelBtn = $('#btn-cancel-edit-profile');
+  const form = $('#form-edit-profile');
+  const firstNameInput = $('#input-profile-firstname');
+  const lastNameInput = $('#input-profile-lastname');
+  const currentEmailInput = $('#input-profile-current-email');
+  const newEmailInput = $('#input-profile-new-email');
+  const updateEmailBtn = $('#btn-action-update-email');
+  const avatarPreview = $('#edit-profile-avatar-preview');
+  const switchToAvatarBtn = $('#btn-switch-to-avatar-modal');
+
+  const errorFirstName = $('#error-profile-firstname');
+  const errorLastName = $('#error-profile-lastname');
+  const errorNewEmail = $('#error-profile-new-email');
+
+  // Reglas de validación estrictas (solo letras, tildes, espacios y guiones)
+  const NAME_REGEX = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]+$/;
+  const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+  const clearErrors = () => {
+    [errorFirstName, errorLastName, errorNewEmail].forEach(el => {
+      if (el) {
+        el.textContent = '';
+        el.style.display = 'none';
+      }
+    });
+    [firstNameInput, lastNameInput, newEmailInput].forEach(inp => {
+      if (inp) inp.style.borderColor = '';
+    });
+  };
+
+  const showFieldError = (inputEl, errorEl, message) => {
+    if (inputEl) {
+      inputEl.style.borderColor = 'var(--color-danger)';
+      inputEl.focus();
+    }
+    if (errorEl) {
+      errorEl.textContent = message;
+      errorEl.style.display = 'block';
+    }
+  };
+
+  const openModal = () => {
+    soundService.playClick();
+    const profilePopover = $('#profile-popover');
+    if (profilePopover) profilePopover.classList.remove('open');
+    clearErrors();
+
+    const user = store.getUser() || {};
+    const avatar = store.getUserAvatar();
+
+    // Separar nombres y apellidos inteligentemente si vienen juntos
+    let fName = user.firstName || '';
+    let lName = user.lastName || '';
+
+    if (!fName && user.name) {
+      const parts = user.name.trim().split(' ');
+      fName = parts[0] || '';
+      lName = parts.slice(1).join(' ') || '';
+    }
+
+    if (firstNameInput) firstNameInput.value = fName;
+    if (lastNameInput) lastNameInput.value = lName;
+    if (currentEmailInput) currentEmailInput.value = user.email || 'dannyeduardoanasi@gmail.com';
+    if (newEmailInput) newEmailInput.value = '';
+    if (avatarPreview && avatar) avatarPreview.src = avatar;
+
+    if (modal) {
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      if (firstNameInput) setTimeout(() => firstNameInput.focus(), 60);
+    }
+  };
+
+  const closeModal = () => {
+    if (modal) {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      clearErrors();
+    }
+  };
+
+  if (openBtn) openBtn.addEventListener('click', openModal);
+  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+  if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+  }
+
+  // Limpiar errores en tiempo real mientras el usuario escribe
+  if (firstNameInput) {
+    firstNameInput.addEventListener('input', () => {
+      firstNameInput.style.borderColor = '';
+      if (errorFirstName) errorFirstName.style.display = 'none';
+    });
+  }
+  if (lastNameInput) {
+    lastNameInput.addEventListener('input', () => {
+      lastNameInput.style.borderColor = '';
+      if (errorLastName) errorLastName.style.display = 'none';
+    });
+  }
+  if (newEmailInput) {
+    newEmailInput.addEventListener('input', () => {
+      newEmailInput.style.borderColor = '';
+      if (errorNewEmail) errorNewEmail.style.display = 'none';
+    });
+  }
+
+  // Cambiar foto desde el modal de edición de perfil
+  if (switchToAvatarBtn) {
+    switchToAvatarBtn.addEventListener('click', () => {
+      closeModal();
+      const avatarModal = $('#avatar-picker-modal');
+      if (avatarModal) {
+        avatarModal.classList.add('open');
+        avatarModal.setAttribute('aria-hidden', 'false');
+      }
+    });
+  }
+
+  // Botón Dedicado: "Actualizar Correo"
+  if (updateEmailBtn && newEmailInput) {
+    updateEmailBtn.addEventListener('click', () => {
+      if (errorNewEmail) errorNewEmail.style.display = 'none';
+      const cleanNewEmail = newEmailInput.value.trim().toLowerCase();
+      const user = store.getUser() || {};
+      const currentEmail = (user.email || '').toLowerCase();
+
+      if (!cleanNewEmail) {
+        showFieldError(newEmailInput, errorNewEmail, 'Por favor escribe el nuevo correo que deseas usar');
+        return;
+      }
+
+      if (!EMAIL_REGEX.test(cleanNewEmail)) {
+        showFieldError(newEmailInput, errorNewEmail, 'Ingresa un correo electrónico válido (ej: usuario@gmail.com)');
+        return;
+      }
+
+      if (cleanNewEmail === currentEmail) {
+        showFieldError(newEmailInput, errorNewEmail, 'El nuevo correo debe ser diferente al actual');
+        return;
+      }
+
+      soundService.playTaskComplete();
+
+      // Actualizar usuario en Store
+      const updatedUser = {
+        ...user,
+        email: cleanNewEmail
+      };
+      store.setUser(updatedUser);
+
+      // Sincronizar en preferencias de notificaciones
+      store.setEmailPreferences({ notificationEmail: cleanNewEmail });
+
+      // Actualizar campos en el modal
+      if (currentEmailInput) currentEmailInput.value = cleanNewEmail;
+      newEmailInput.value = '';
+
+      // Actualizar popover
+      const popoverUserEmail = $('#popover-user-email');
+      if (popoverUserEmail) popoverUserEmail.textContent = cleanNewEmail;
+
+      toast.success(`¡Correo de cuenta actualizado a ${cleanNewEmail}!`);
+    });
+  }
+
+  // Guardar cambios generales de perfil (Nombre y Apellido)
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      clearErrors();
+
+      const fName = firstNameInput ? firstNameInput.value.trim() : '';
+      const lName = lastNameInput ? lastNameInput.value.trim() : '';
+      const optionalNewEmail = newEmailInput ? newEmailInput.value.trim().toLowerCase() : '';
+
+      let hasError = false;
+
+      // 1. Control de errores para Nombre
+      if (!fName) {
+        showFieldError(firstNameInput, errorFirstName, 'Por favor escribe tu nombre');
+        hasError = true;
+      } else if (fName.length < 2) {
+        showFieldError(firstNameInput, errorFirstName, 'El nombre debe tener al menos 2 caracteres');
+        hasError = true;
+      } else if (!NAME_REGEX.test(fName)) {
+        showFieldError(firstNameInput, errorFirstName, 'El nombre solo puede contener letras (sin números ni símbolos)');
+        hasError = true;
+      }
+
+      // 2. Control de errores para Apellido
+      if (!hasError) {
+        if (!lName) {
+          showFieldError(lastNameInput, errorLastName, 'Por favor escribe tu apellido');
+          hasError = true;
+        } else if (lName.length < 2) {
+          showFieldError(lastNameInput, errorLastName, 'El apellido debe tener al menos 2 caracteres');
+          hasError = true;
+        } else if (!NAME_REGEX.test(lName)) {
+          showFieldError(lastNameInput, errorLastName, 'El apellido solo puede contener letras (sin números ni símbolos)');
+          hasError = true;
+        }
+      }
+
+      // 3. Si además escribió un nuevo correo, validarlo
+      let targetEmail = currentEmailInput ? currentEmailInput.value.trim().toLowerCase() : '';
+      if (!hasError && optionalNewEmail) {
+        if (!EMAIL_REGEX.test(optionalNewEmail)) {
+          showFieldError(newEmailInput, errorNewEmail, 'Ingresa un correo electrónico válido');
+          hasError = true;
+        } else {
+          targetEmail = optionalNewEmail;
+        }
+      }
+
+      if (hasError) return;
+
+      soundService.playTaskComplete();
+
+      const fullName = `${fName} ${lName}`.trim();
+      const currentUser = store.getUser() || {};
+      const updatedUser = {
+        ...currentUser,
+        name: fullName,
+        firstName: fName,
+        lastName: lName,
+        email: targetEmail || currentUser.email
+      };
+
+      // Guardar en Store y LocalStorage
+      store.setUser(updatedUser);
+
+      // Sincronizar correo principal con las preferencias de notificaciones
+      store.setEmailPreferences({ notificationEmail: targetEmail || currentUser.email });
+
+      // Actualizar saludo del topbar y dashboard
+      const greetingNameEl = document.querySelector('.welcome-name, .dashboard-greeting strong');
+      if (greetingNameEl) {
+        greetingNameEl.textContent = fName;
+      }
+
+      // Actualizar popover
+      const popoverUserName = $('#popover-user-name');
+      const popoverUserEmail = $('#popover-user-email');
+      if (popoverUserName) popoverUserName.textContent = fullName;
+      if (popoverUserEmail) popoverUserEmail.textContent = targetEmail || currentUser.email;
+
+      toast.success('¡Perfil actualizado con éxito!');
+      closeModal();
+    });
+  }
 }
