@@ -1,0 +1,72 @@
+/**
+ * FocusFlow Web - Base: SPA Layout Structure
+ */
+
+.app-root {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--bg-app);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Main Container Area */
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-width: 0;
+  overflow: hidden;
+  background-color: var(--bg-app);
+  position: relative;
+}
+
+/* Scrollable Viewport for Views */
+.app-viewport {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--space-4) var(--space-8) var(--space-8) var(--space-8);
+  position: relative;
+}
+
+/* SPA Single-Module View Transition Container */
+.spa-view {
+  display: none;
+  width: 100%;
+  animation: fadeInView var(--transition-normal) ease forwards;
+}
+
+.spa-view.active {
+  display: block;
+}
+
+@keyframes fadeInView {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .app-viewport {
+    padding: var(--space-4) var(--space-5) var(--space-6) var(--space-5);
+  }
+}
+
+@media (max-width: 768px) {
+  .app-root {
+    flex-direction: column-reverse;
+  }
+
+  .app-viewport {
+    padding: var(--space-3) var(--space-4) calc(var(--space-8) + 60px) var(--space-4);
+  }
+}

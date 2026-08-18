@@ -1,0 +1,94 @@
+/**
+ * FocusFlow Web - Design Tokens: Colors
+ * Soporte para modo oscuro por defecto y temas de acento dinámicos.
+ */
+
+:root {
+  /* Slate Dark Base Palette */
+  --bg-app: #0B0F19;
+  --bg-sidebar: #0D1322;
+  --bg-topbar: rgba(11, 15, 25, 0.85);
+  --bg-card: #121929;
+  --bg-card-hover: #172136;
+  --bg-card-active: #1D2A44;
+  --bg-card-glass: rgba(18, 25, 41, 0.75);
+  --bg-input: #151D30;
+  --bg-input-focus: #19243B;
+  
+  /* Borders & Dividers */
+  --border-subtle: #1C2638;
+  --border-medium: #26334D;
+  --border-highlight: #334466;
+  --border-card: #1E293B;
+
+  /* Typography Colors (WCAG AAA High Contrast) */
+  --text-primary: #F9FAFB;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --text-disabled: #475569;
+  --text-inverse: #0B0F19;
+
+  /* Default Dynamic Accent: Cobalt Blue */
+  --accent-primary: #3B82F6;
+  --accent-primary-hover: #2563EB;
+  --accent-primary-rgb: 59, 130, 246;
+  --accent-glow: rgba(59, 130, 246, 0.25);
+  --accent-subtle: rgba(59, 130, 246, 0.15);
+  --accent-text: #FFFFFF;
+
+  /* Priority Badges Colors */
+  --priority-high-bg: rgba(239, 68, 68, 0.16);
+  --priority-high-border: rgba(239, 68, 68, 0.35);
+  --priority-high-text: #FCA5A5;
+
+  --priority-medium-bg: rgba(245, 158, 11, 0.16);
+  --priority-medium-border: rgba(245, 158, 11, 0.35);
+  --priority-medium-text: #FDE047;
+
+  --priority-low-bg: rgba(56, 189, 248, 0.16);
+  --priority-low-border: rgba(56, 189, 248, 0.35);
+  --priority-low-text: #93C5FD;
+
+  /* Status Colors */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #06B6D4;
+
+  /* Elevation Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --shadow-accent: 0 0 20px rgba(var(--accent-primary-rgb), 0.35);
+}
+
+/* Preset de Acentos Dinámicos */
+[data-accent="cobalt"] {
+  --accent-primary: #3B82F6;
+  --accent-primary-hover: #2563EB;
+  --accent-primary-rgb: 59, 130, 246;
+}
+
+[data-accent="emerald"] {
+  --accent-primary: #10B981;
+  --accent-primary-hover: #059669;
+  --accent-primary-rgb: 16, 185, 129;
+}
+
+[data-accent="amber"] {
+  --accent-primary: #F59E0B;
+  --accent-primary-hover: #D97706;
+  --accent-primary-rgb: 245, 158, 11;
+}
+
+[data-accent="pink"] {
+  --accent-primary: #EC4899;
+  --accent-primary-hover: #DB2777;
+  --accent-primary-rgb: 236, 72, 153;
+}
+
+[data-accent="ocean"] {
+  --accent-primary: #06B6D4;
+  --accent-primary-hover: #0891B2;
+  --accent-primary-rgb: 6, 182, 212;
+}

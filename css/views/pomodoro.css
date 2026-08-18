@@ -1,0 +1,145 @@
+/**
+ * FocusFlow Web - View: Pomodoro Timer with Task Synergy (#pomodoro-view)
+ */
+
+.pomodoro-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 620px;
+  margin: var(--space-2) auto;
+  gap: var(--space-6);
+  text-align: center;
+}
+
+/* Active Focus Task Banner */
+.active-focus-task-banner {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  padding: 0.875rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: var(--space-3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  animation: fadeInView var(--transition-normal) ease;
+}
+
+.banner-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: left;
+}
+
+.active-task-title {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+}
+
+/* Mode Switcher Chips */
+.pomodoro-modes {
+  display: flex;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-pill);
+  padding: 4px;
+  gap: 4px;
+}
+
+.pomodoro-mode-btn {
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.pomodoro-mode-btn:hover {
+  color: var(--text-primary);
+}
+
+.pomodoro-mode-btn.active {
+  background-color: var(--accent-primary);
+  color: #FFFFFF;
+}
+
+/* Clock Display Card */
+.pomodoro-clock-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
+  width: 100%;
+  box-shadow: var(--shadow-md);
+}
+
+.clock-svg-wrapper {
+  position: relative;
+  width: 270px;
+  height: 270px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pomodoro-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.clock-content {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.clock-time {
+  font-family: var(--font-heading);
+  font-size: 3.5rem;
+  font-weight: var(--fw-extrabold);
+  color: var(--text-primary);
+  letter-spacing: var(--ls-tight);
+}
+
+.clock-state-label {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-wider);
+}
+
+/* Timer Controls */
+.pomodoro-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+}
+
+.btn-play-pause {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.75rem 1.75rem;
+  font-size: var(--text-base);
+  font-weight: var(--fw-bold);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 4px 18px rgba(var(--accent-primary-rgb), 0.4);
+}

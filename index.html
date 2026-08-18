@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="es" data-accent="cobalt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="FocusFlow Web - Suite de Productividad Personal y Hábitos (SPA)" />
+  <title>FocusFlow Web - Suite de Productividad</title>
+
+  <!-- Google Fonts Preconnect & Stylesheets -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Master Modular Stylesheet -->
+  <link rel="stylesheet" href="./css/main.css" />
+</head>
+<body>
+  <div class="app-root">
+    
+    <!-- 1. Fixed Left Sidebar -->
+    <aside class="app-sidebar" aria-label="Navegación Principal">
+      <a href="#/dashboard" class="sidebar-brand">
+        <div class="brand-icon"></div>
+        <span class="brand-title">FocusFlow Web</span>
+      </a>
+
+      <nav class="sidebar-nav">
+        <a href="#/dashboard" class="nav-item active" data-route="dashboard">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+          </span>
+          <span>Dashboard</span>
+        </a>
+
+        <a href="#/tasks" class="nav-item" data-route="tasks">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 11 12 14 22 4"></polyline>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+            </svg>
+          </span>
+          <span>Tareas</span>
+        </a>
+
+        <a href="#/pomodoro" class="nav-item" data-route="pomodoro">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </span>
+          <span>Pomodoro</span>
+        </a>
+
+        <a href="#/hydration" class="nav-item" data-route="hydration">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+            </svg>
+          </span>
+          <span>Hidratación</span>
+        </a>
+
+        <a href="#/assistant" class="nav-item" data-route="assistant">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10a10 10 0 0 1-10-10c0-5.523 4.477-10 10-10z"></path>
+              <path d="M12 8v8"></path>
+              <path d="M8 12h8"></path>
+            </svg>
+          </span>
+          <span>Asistente IA</span>
+        </a>
+
+        <a href="#/analytics" class="nav-item" data-route="analytics">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+          </span>
+          <span>Analítica</span>
+        </a>
+
+        <a href="#/settings" class="nav-item" data-route="settings">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </span>
+          <span>Ajustes</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- 2. Main Viewport & Top Bar -->
+    <main class="app-main">
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <div class="topbar-title-row">
+            <span class="topbar-greeting">Visión General:</span>
+            <h1 class="topbar-title">Dashboard</h1>
+          </div>
+          
+          <div class="topbar-progress-container" title="Progreso de tareas del día">
+            <div class="topbar-progress-bar">
+              <div class="topbar-progress-fill" style="width: 40%;"></div>
+            </div>
+            <span class="topbar-progress-text">2/5 completadas (40%)</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div id="dnd-status-pill" class="dnd-indicator-pill" style="display: none;" title="Modo No Molestar Activo">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+            <span>Silencio</span>
+          </div>
+
+          <!-- Search button -->
+          <button class="topbar-btn" id="btn-topbar-search" title="Buscar / Comandos (Cmd+K)" aria-label="Search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </button>
+
+          <!-- Notification Bell -->
+          <button class="topbar-btn" id="btn-notifications" title="Centro de Notificaciones" aria-label="Notifications">
+            <span class="notification-dot hidden" id="notification-badge-dot"></span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+          </button>
+
+          <!-- Notifications Floating Popover -->
+          <div class="topbar-popover" id="notifications-popover" style="width: 350px;">
+            <div class="popover-header">
+              <span class="popover-title">Notificaciones & Alertas</span>
+              <button class="btn btn-ghost" id="btn-clear-notifications" style="font-size: 11px; padding: 2px 6px;">
+                Limpiar todo
+              </button>
+            </div>
+
+            <div class="popover-dnd-row">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+                <span style="font-size: var(--text-xs); font-weight: var(--fw-semibold); color: var(--text-primary);">
+                  Modo No Molestar
+                </span>
+              </div>
+              <label class="custom-toggle" style="transform: scale(0.85);" title="Silenciar sonidos y alertas">
+                <input type="checkbox" id="toggle-dnd-mode" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="popover-body" id="notifications-list">
+              <div style="padding: var(--space-6) var(--space-4); text-align: center; color: var(--text-muted); font-size: 11.5px;">
+                No tienes notificaciones pendientes
+              </div>
+            </div>
+          </div>
+
+          <!-- Profile Avatar -->
+          <div class="topbar-avatar-wrapper" id="btn-profile-avatar" title="Estado de Cuenta y Presencia">
+            <div class="topbar-avatar">
+              <img 
+                src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%236366f1'><rect width='100' height='100' fill='%231e293b'/><circle cx='50' cy='38' r='20' fill='%2394a3b8'/><path d='M20 90c0-18 14-30 30-30s30 12 30 30' fill='%2394a3b8'/></svg>" 
+                alt="Profile" 
+              />
+            </div>
+            <span class="presence-dot available" id="header-presence-dot" title="Disponible"></span>
+          </div>
+
+          <!-- Profile Floating Popover -->
+          <div class="topbar-popover" id="profile-popover" style="width: 290px;">
+            <div class="popover-header" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+              <strong style="color: var(--text-primary); font-size: var(--text-sm);">Francisco</strong>
+              <span style="font-size: 11px; color: var(--text-muted);">demo@focusflow.app</span>
+              <div style="margin-top: 4px; display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; background: rgba(16, 185, 129, 0.15); color: var(--color-success); font-size: 10.5px; font-weight: 600;">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--color-success);"></span>
+                Almacenamiento Local Activo
+              </div>
+            </div>
+
+            <div style="padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle);">
+              <span style="display: block; font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">
+                Estado de Enfoque
+              </span>
+              <div class="presence-options-grid">
+                <button class="presence-option-btn active" data-status="available">
+                  <span class="presence-dot-mini available"></span>
+                  <span>Disponible</span>
+                </button>
+                <button class="presence-option-btn" data-status="focus">
+                  <span class="presence-dot-mini focus"></span>
+                  <span>Enfoque</span>
+                </button>
+                <button class="presence-option-btn" data-status="break">
+                  <span class="presence-dot-mini break"></span>
+                  <span>Pausa</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="popover-footer" style="justify-content: center;">
+              <button class="btn btn-ghost" id="btn-profile-logout" style="color: var(--color-danger); font-size: 11.5px; width: 100%;">
+                Cerrar Sesión / Reiniciar Demo
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </header>
+
+      <!-- Scrollable Main Viewport -->
+      <section class="app-viewport" id="main-viewport">
+        <div id="dashboard-view" class="spa-view active"></div>
+        <div id="tasks-view" class="spa-view"></div>
+        <div id="pomodoro-view" class="spa-view"></div>
+        <div id="hydration-view" class="spa-view"></div>
+        <div id="assistant-view" class="spa-view"></div>
+        <div id="analytics-view" class="spa-view"></div>
+        <div id="settings-view" class="spa-view"></div>
+      </section>
+    </main>
+
+  </div>
+
+  <!-- Command Palette Modal -->
+  <div id="command-palette-modal" class="command-palette-backdrop" aria-hidden="true" role="dialog">
+    <div class="command-palette-container">
+      <div class="palette-input-row">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-muted);">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input 
+          type="text" 
+          id="command-palette-input" 
+          class="palette-input" 
+          placeholder="Escribe para buscar tareas o saltar a una vista..." 
+          autocomplete="off" 
+        />
+        <button class="modal-close-btn" data-close-palette aria-label="Cerrar buscador">✕</button>
+      </div>
+
+      <div class="palette-results" id="palette-results-list"></div>
+
+      <div class="palette-footer">
+        <span>Presiona <strong>ESC</strong> para cerrar</span>
+        <span>Atajo: <strong>Cmd + K</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       4. Smartphone-Style Modals (iOS/Android Alarm Clock - 60 Minutos Completos)
+       ==================================================================== -->
+  
+  <!-- Modal: Create Task -->
+  <div id="create-task-modal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="create-task-title">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="create-task-title">Nueva Tarea</h3>
+        <button class="modal-close-btn" data-close-modal aria-label="Cerrar modal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <form id="create-task-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="task-title-input">Título de la Tarea</label>
+            <input type="text" id="task-title-input" class="form-control" placeholder="Ej. Finalizar Propuesta de Proyecto" required />
+          </div>
+
+          <!-- Visual Priority Selector -->
+          <div class="form-group">
+            <label class="form-label">Nivel de Prioridad & Alarma</label>
+            <input type="hidden" id="task-priority-select" value="medium" />
+            <div class="priority-cards-grid" id="create-priority-selector">
+              <button type="button" class="priority-card-btn" data-val="high">
+                <span class="priority-dot-indicator red"></span>
+                <strong>Alta</strong>
+              </button>
+              <button type="button" class="priority-card-btn selected" data-val="medium">
+                <span class="priority-dot-indicator yellow"></span>
+                <strong>Media</strong>
+              </button>
+              <button type="button" class="priority-card-btn" data-val="low">
+                <span class="priority-dot-indicator green"></span>
+                <strong>Baja</strong>
+              </button>
+            </div>
+          </div>
+
+          <!-- Interactive Visual Calendar Widget -->
+          <div class="form-group">
+            <label class="form-label">Fecha Programada</label>
+            <div class="modal-calendar-widget" id="create-calendar-widget">
+              <div class="calendar-widget-header">
+                <button type="button" class="btn-cal-nav cal-prev-btn" title="Mes Anterior" aria-label="Mes Anterior">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                  </svg>
+                </button>
+                <span class="cal-month-title">Agosto 2026</span>
+                <button type="button" class="btn-cal-nav cal-next-btn" title="Mes Siguiente" aria-label="Mes Siguiente">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </button>
+              </div>
+              <div class="calendar-weekdays-row">
+                <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span>
+              </div>
+              <div class="calendar-days-grid"></div>
+              <input type="hidden" class="calendar-selected-input" id="create-task-date-val" />
+              <div class="calendar-selected-label">Fecha seleccionada</div>
+            </div>
+          </div>
+
+          <!-- Smartphone Style Alarm Clock Picker (00 a 59 Minutos) -->
+          <div class="form-group">
+            <label class="form-label">Hora Programada (Alarma)</label>
+            <div class="mobile-clock-container" id="create-mobile-clock">
+              <div class="mobile-clock-picker">
+                <!-- Hora -->
+                <div class="clock-wheel-col">
+                  <span class="clock-col-label">Hora</span>
+                  <select class="mobile-clock-select clock-hour-select" id="create-clock-hour" title="Hora">
+                    <option value="1">01</option>
+                    <option value="2">02</option>
+                    <option value="3">03</option>
+                    <option value="4">04</option>
+                    <option value="5">05</option>
+                    <option value="6">06</option>
+                    <option value="7">07</option>
+                    <option value="8">08</option>
+                    <option value="9">09</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12" selected>12</option>
+                  </select>
+                </div>
+
+                <span class="clock-colon">:</span>
+
+                <!-- Minutos (00 a 59) -->
+                <div class="clock-wheel-col">
+                  <span class="clock-col-label">Min</span>
+                  <select class="mobile-clock-select clock-min-select" id="create-clock-min" title="Minutos">
+                    <option value="00" selected>00</option>
+                    <option value="01">01</option>
+                    <option value="02">02</option>
+                    <option value="03">03</option>
+                    <option value="04">04</option>
+                    <option value="05">05</option>
+                    <option value="06">06</option>
+                    <option value="07">07</option>
+                    <option value="08">08</option>
+                    <option value="09">09</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                    <option value="13">13</option>
+                    <option value="14">14</option>
+                    <option value="15">15</option>
+                    <option value="16">16</option>
+                    <option value="17">17</option>
+                    <option value="18">18</option>
+                    <option value="19">19</option>
+                    <option value="20">20</option>
+                    <option value="21">21</option>
+                    <option value="22">22</option>
+                    <option value="23">23</option>
+                    <option value="24">24</option>
+                    <option value="25">25</option>
+                    <option value="26">26</option>
+                    <option value="27">27</option>
+                    <option value="28">28</option>
+                    <option value="29">29</option>
+                    <option value="30">30</option>
+                    <option value="31">31</option>
+                    <option value="32">32</option>
+                    <option value="33">33</option>
+                    <option value="34">34</option>
+                    <option value="35">35</option>
+                    <option value="36">36</option>
+                    <option value="37">37</option>
+                    <option value="38">38</option>
+                    <option value="39">39</option>
+                    <option value="40">40</option>
+                    <option value="41">41</option>
+                    <option value="42">42</option>
+                    <option value="43">43</option>
+                    <option value="44">44</option>
+                    <option value="45">45</option>
+                    <option value="46">46</option>
+                    <option value="47">47</option>
+                    <option value="48">48</option>
+                    <option value="49">49</option>
+                    <option value="50">50</option>
+                    <option value="51">51</option>
+                    <option value="52">52</option>
+                    <option value="53">53</option>
+                    <option value="54">54</option>
+                    <option value="55">55</option>
+                    <option value="56">56</option>
+                    <option value="57">57</option>
+                    <option value="58">58</option>
+                    <option value="59">59</option>
+                  </select>
+                </div>
+
+                <!-- AM / PM Segmented Toggle -->
+                <div class="clock-wheel-col">
+                  <span class="clock-col-label">Periodo</span>
+                  <div class="ampm-segmented-control clock-ampm-control">
+                    <button type="button" class="ampm-btn" data-ampm="AM">AM</button>
+                    <button type="button" class="ampm-btn active" data-ampm="PM">PM</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick Time Chips -->
+              <div class="clock-quick-chips">
+                <button type="button" class="clock-quick-chip" data-quick-time="now">Ahora</button>
+                <button type="button" class="clock-quick-chip" data-quick-time="+30">+30 min</button>
+                <button type="button" class="clock-quick-chip" data-quick-time="+60">+1 hora</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="task-category-select">Categoría</label>
+            <select id="task-category-select" class="form-control" style="cursor: pointer;">
+              <option value="General" selected>General</option>
+              <option value="Trabajo">Trabajo</option>
+              <option value="Estudio">Estudio</option>
+              <option value="Exámenes">Exámenes</option>
+            </select>
+          </div>
+
+          <!-- Email Reminder Option -->
+          <div style="background-color: var(--bg-input); padding: var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: var(--text-xs); color: var(--text-primary); cursor: pointer;">
+              <input type="checkbox" id="task-email-reminder-toggle" />
+              <span>Enviar recordatorio a mi correo electrónico</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Crear Tarea</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Task -->
+  <div id="edit-task-modal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="edit-task-title">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="edit-task-title">Editar Tarea</h3>
+        <button class="modal-close-btn" data-close-modal aria-label="Cerrar modal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <form id="edit-task-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="edit-task-title-input">Título de la Tarea</label>
+            <input type="text" id="edit-task-title-input" class="form-control" required />
+          </div>
+
+          <!-- Visual Priority Selector (Unificado) -->
+          <div class="form-group">
+            <label class="form-label">Nivel de Prioridad & Alarma</label>
+            <input type="hidden" id="edit-task-priority-select" value="medium" />
+            <div class="priority-cards-grid" id="edit-priority-selector">
+              <button type="button" class="priority-card-btn" data-val="high">
+                <span class="priority-dot-indicator red"></span>
+                <strong>Alta</strong>
+              </button>
+              <button type="button" class="priority-card-btn selected" data-val="medium">
+                <span class="priority-dot-indicator yellow"></span>
+                <strong>Media</strong>
+              </button>
+              <button type="button" class="priority-card-btn" data-val="low">
+                <span class="priority-dot-indicator green"></span>
+                <strong>Baja</strong>
+              </button>
+            </div>
+          </div>
+
+          <!-- Interactive Visual Calendar Widget for Edit -->
+          <div class="form-group">
+            <label class="form-label">Fecha Programada</label>
+            <div class="modal-calendar-widget" id="edit-calendar-widget">
+              <div class="calendar-widget-header">
+                <button type="button" class="btn-cal-nav cal-prev-btn" title="Mes Anterior" aria-label="Mes Anterior">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                  </svg>
+                </button>
+                <span class="cal-month-title">Agosto 2026</span>
+                <button type="button" class="btn-cal-nav cal-next-btn" title="Mes Siguiente" aria-label="Mes Siguiente">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </button>
+              </div>
+              <div class="calendar-weekdays-row">
+                <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span>
+              </div>
+              <div class="calendar-days-grid"></div>
+              <input type="hidden" class="calendar-selected-input" id="edit-task-date-val" />
+              <div class="calendar-selected-label">Fecha seleccionada</div>
+            </div>
+          </div>
+
+          <!-- Smartphone Style Alarm Clock Picker for Edit (00 a 59) -->
+          <div class="form-group">
+            <label class="form-label">Hora Programada (Alarma)</label>
+            <div class="mobile-clock-container" id="edit-mobile-clock">
+              <div class="mobile-clock-picker">
+                <!-- Hora -->
+                <div class="clock-wheel-col">
+                  <span class="clock-col-label">Hora</span>
+                  <select class="mobile-clock-select clock-hour-select" id="edit-clock-hour" title="Hora">
+                    <option value="1">01</option>
+                    <option value="2">02</option>
+                    <option value="3">03</option>
+                    <option value="4">04</option>
+                    <option value="5">05</option>
+                    <option value="6">06</option>
+                    <option value="7">07</option>
+                    <option value="8">08</option>
+                    <option value="9">09</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12" selected>12</option>
+                  </select>
+                </div>
+
+                <span class="clock-colon">:</span>
+
+                <!-- Minutos (00 a 59) -->
+                <div class="clock-wheel-col">
+                  <span class="clock-col-label">Min</span>
+                  <select class="mobile-clock-select clock-min-select" id="edit-clock-min" title="Minutos">
+                    <option value="00" selected>00</option>
+                    <option value="01">01</option>
+                    <option value="02">02</option>
+                    <option value="03">03</option>
+                    <option value="04">04</option>
+                    <option value="05">05</option>
+                    <option value="06">06</option>
+                    <option value="07">07</option>
+                    <option value="08">08</option>
+                    <option value="09">09</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                    <option value="13">13</option>
+                    <option value="14">14</option>
+                    <option value="15">15</option>
+                    <option value="16">16</option>
+                    <option value="17">17</option>
+                    <option value="18">18</option>
+                    <option value="19">19</option>
+                    <option value="20">20</option>
+                    <option value="21">21</option>
+                    <option value="22">22</option>
+                    <option value="23">23</option>
+                    <option value="24">24</option>
+                    <option value="25">25</option>
+                    <option value="26">26</option>
+                    <option value="27">27</option>
+                    <option value="28">28</option>
+                    <option value="29">29</option>
+                    <option value="30">30</option>
+                    <option value="31">31</option>
+                    <option value="32">32</option>
+                    <option value="33">33</option>
+                    <option value="34">34</option>
+                    <option value="35">35</option>
+                    <option value="36">36</option>
+                    <option value="37">37</option>
+                    <option value="38">38</option>
+                    <option value="39">39</option>
+                    <option value="40">40</option>
+                    <option value="41">41</option>
+                    <option value="42">42</option>
+                    <option value="43">43</option>
+                    <option value="44">44</option>
+                    <option value="45">45</option>
+                    <option value="46">46</option>
+                    <option value="47">47</option>
+                    <option value="48">48</option>
+                    <option value="49">49</option>
+                    <option value="50">50</option>
+                    <option value="51">51</option>
+                    <option value="52">52</option>
+                    <option value="53">53</option>
+                    <option value="54">54</option>
+                    <option value="55">55</option>
+                    <option value="56">56</option>
+                    <option value="57">57</option>
+                    <option value="58">58</option>
+                    <option value="59">59</option>
+                  </select>
+                </div>
+
+                <!-- AM / PM Segmented Toggle -->
+                <div class="clock-wheel-col">
+                  <span class="clock-col-label">Periodo</span>
+                  <div class="ampm-segmented-control clock-ampm-control">
+                    <button type="button" class="ampm-btn" data-ampm="AM">AM</button>
+                    <button type="button" class="ampm-btn active" data-ampm="PM">PM</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick Time Chips -->
+              <div class="clock-quick-chips">
+                <button type="button" class="clock-quick-chip" data-quick-time="now">Ahora</button>
+                <button type="button" class="clock-quick-chip" data-quick-time="+30">+30 min</button>
+                <button type="button" class="clock-quick-chip" data-quick-time="+60">+1 hora</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="edit-task-category-select">Categoría</label>
+            <select id="edit-task-category-select" class="form-control" style="cursor: pointer;">
+              <option value="General">General</option>
+              <option value="Trabajo">Trabajo</option>
+              <option value="Estudio">Estudio</option>
+              <option value="Exámenes">Exámenes</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Active Alarm Notification Popup -->
+  <div id="active-alarm-modal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-container alarm-modal-container">
+      <div class="modal-header alarm-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="alarm-pulse-dot"></span>
+          <h3 class="modal-title" id="alarm-modal-header-title">Alarma Programada</h3>
+        </div>
+        <button class="modal-close-btn" id="btn-close-alarm-modal" aria-label="Cerrar alarma">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body" style="text-align: center; padding: 1.25rem 1.25rem 1rem 1.25rem;">
+        <div class="alarm-time-display" id="alarm-display-time">12:00 PM</div>
+        <h2 class="alarm-task-title" id="alarm-display-title">Título de la Tarea</h2>
+        <div class="alarm-task-meta" id="alarm-display-meta">Categoría: Trabajo • Prioridad: Alta</div>
+      </div>
+
+      <div class="modal-footer" style="justify-content: space-between;">
+        <button type="button" class="btn btn-secondary" id="btn-alarm-snooze">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          Posponer 5 min
+        </button>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn btn-ghost" id="btn-alarm-dismiss">Descartar</button>
+          <button type="button" class="btn btn-primary" id="btn-alarm-complete" style="background: var(--color-success); border-color: var(--color-success);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 4px;">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Marcar Hecha
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" aria-live="polite"></div>
+
+  <!-- App Bootstrap JS -->
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>

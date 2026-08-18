@@ -1,0 +1,32 @@
+/**
+ * FocusFlow Web - Master Stylesheet
+ * Importación modular organizada por capas (Tokens -> Base -> Componentes -> Vistas)
+ */
+
+/* 1. Design Tokens */
+@import './tokens/colors.css';
+@import './tokens/typography.css';
+@import './tokens/spacing.css';
+
+/* 2. Base & Layout */
+@import './base/reset.css';
+@import './base/layout.css';
+
+/* 3. Reusable UI Components */
+@import './components/sidebar.css';
+@import './components/topbar.css';
+@import './components/buttons.css';
+@import './components/badges.css';
+@import './components/inputs.css';
+@import './components/cards.css';
+@import './components/modal.css';
+@import './components/toast.css';
+
+/* 4. Modular Views */
+@import './views/dashboard.css';
+@import './views/tasks.css';
+@import './views/pomodoro.css';
+@import './views/hydration.css';
+@import './views/assistant.css';
+@import './views/analytics.css';
+@import './views/settings.css';

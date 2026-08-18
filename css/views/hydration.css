@@ -1,0 +1,138 @@
+/**
+ * FocusFlow Web - View: Hydration (#hydration-view)
+ */
+
+.hydration-container {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: var(--space-8);
+  max-width: 960px;
+  margin: var(--space-4) auto;
+  align-items: start;
+}
+
+.bottle-visual-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 420px;
+}
+
+.hydration-bottle-svg {
+  width: 150px;
+  height: 290px;
+  filter: drop-shadow(0 8px 24px rgba(56, 189, 248, 0.25));
+}
+
+.hydration-info-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.hydration-action-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+}
+
+.hydration-section-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-md);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.hydration-progress-text {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  font-weight: var(--fw-extrabold);
+  color: var(--text-primary);
+}
+
+.hydration-goal-label {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* Single Large Drink Button */
+.btn-drink-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: 1.1rem var(--space-6);
+  font-size: var(--text-md);
+  font-weight: var(--fw-bold);
+  width: 100%;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 18px rgba(var(--accent-primary-rgb), 0.4);
+  transition: all var(--transition-spring);
+}
+
+.btn-drink-main:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(var(--accent-primary-rgb), 0.55);
+}
+
+.btn-drink-main:active {
+  transform: translateY(0);
+}
+
+/* Custom Switch Toggle */
+.custom-toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.custom-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background-color: var(--border-medium);
+  border-radius: var(--radius-pill);
+  transition: all var(--transition-fast);
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #FFFFFF;
+  border-radius: var(--radius-circle);
+  transition: all var(--transition-fast);
+}
+
+.custom-toggle input:checked + .toggle-slider {
+  background-color: var(--accent-primary);
+}
+
+.custom-toggle input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+}
+
+@media (max-width: 768px) {
+  .hydration-container {
+    grid-template-columns: 1fr;
+  }
+}

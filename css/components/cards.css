@@ -1,0 +1,225 @@
+/**
+ * FocusFlow Web - Components: Task & Content Cards with Quick Actions
+ */
+
+.card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.card:hover {
+  background-color: var(--bg-card-hover);
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Task Card Specification */
+.task-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 118px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.4rem;
+  transition: all var(--transition-normal);
+  position: relative;
+}
+
+.task-card:hover {
+  border-color: var(--border-highlight);
+  background-color: var(--bg-card-hover);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+.task-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  position: relative;
+}
+
+.task-card-title {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  line-height: var(--lh-tight);
+  flex: 1;
+  word-break: break-word;
+  transition: color var(--transition-fast), text-decoration var(--transition-fast);
+}
+
+/* Quick Actions Toolbar (Revealed on Hover) */
+.task-quick-actions {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 2px 4px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-md);
+  z-index: 10;
+}
+
+.task-card:hover .task-quick-actions {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.quick-action-btn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.quick-action-btn:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.quick-action-btn.btn-focus:hover {
+  background-color: var(--accent-primary);
+  color: #FFFFFF;
+}
+
+.quick-action-btn.btn-delete:hover {
+  background-color: var(--color-danger);
+  color: #FFFFFF;
+}
+
+.quick-action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Completed Task State */
+.task-card.completed {
+  opacity: 0.65;
+  background-color: rgba(18, 25, 41, 0.4);
+}
+
+.task-card.completed .task-card-title {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+/* Task Card Footer with Badges and Time */
+.task-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: auto;
+}
+
+.task-card-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.task-card-time {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* "+ New Task" Action Card Slot */
+.new-task-slot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 118px;
+  background-color: rgba(18, 25, 41, 0.4);
+  border: 1px dashed var(--border-medium);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.4rem;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  color: var(--text-secondary);
+}
+
+.new-task-slot:hover {
+  background-color: var(--bg-card-hover);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.new-task-slot-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.new-task-slot-checkbox-placeholder {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1.5px dashed var(--border-medium);
+}
+
+.new-task-slot-label {
+  font-size: var(--text-base);
+  font-weight: var(--fw-medium);
+}
+
+/* List View Variant */
+.tasks-grid.list-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.tasks-grid.list-view .task-card {
+  min-height: auto;
+  flex-direction: row;
+  align-items: center;
+  padding: 0.875rem 1.25rem;
+}
+
+.tasks-grid.list-view .task-card-header {
+  flex: 1;
+  align-items: center;
+}
+
+.tasks-grid.list-view .task-card-footer {
+  margin-top: 0;
+  gap: var(--space-4);
+}
+
+.tasks-grid.list-view .new-task-slot {
+  min-height: auto;
+  padding: 0.875rem 1.25rem;
+}
