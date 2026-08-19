@@ -321,7 +321,7 @@ function initTopBarTools(router) {
 
   const updateDesktopNotifUI = () => {
     const permStatus = notificationService.getPermissionStatus();
-    const isExplicitlyEnabled = StorageService.get('edhuflow_desktop_notifs_enabled', true);
+    const isExplicitlyEnabled = StorageService.get('edhuflow_desktop_notifs_enabled', false);
 
     if (permStatus === 'granted') {
       if (isExplicitlyEnabled) {

@@ -14,7 +14,7 @@ class NotificationService {
   }
 
   isDesktopEnabled() {
-    return this.hasPermission && StorageService.get('edhuflow_desktop_notifs_enabled', true) !== false;
+    return this.hasPermission && StorageService.get('edhuflow_desktop_notifs_enabled', false) === true;
   }
 
   getPermissionStatus() {
@@ -35,7 +35,7 @@ class NotificationService {
   }
 
   send(title, options = {}) {
-    if (StorageService.get('edhuflow_desktop_notifs_enabled', true) === false) {
+    if (StorageService.get('edhuflow_desktop_notifs_enabled', false) !== true) {
       return null;
     }
 
