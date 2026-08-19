@@ -314,44 +314,96 @@ function initTopBarTools(router) {
     });
   }
 
-  // Activar y probar notificaciones de escritorio (PC / Mac OS)
-  const enableDesktopBtn = $('#btn-enable-desktop-notifs');
+  // Control de Notificaciones de Escritorio (Prendidas / Apagadas con Switch)
+  const desktopToggle = $('#toggle-desktop-notifs');
+  const desktopBadge = $('#desktop-notif-status-badge');
+  const desktopSubtext = $('#desktop-notif-subtext');
   const testDesktopBtn = $('#btn-test-desktop-notifs');
-  const desktopStatusLabel = $('#desktop-notif-status-label');
 
   const updateDesktopNotifUI = () => {
-    const status = notificationService.getPermissionStatus();
-    if (desktopStatusLabel) {
-      if (status === 'granted') {
-        desktopStatusLabel.innerHTML = `<span style="color: var(--color-success, #10B981); font-weight: bold;">● PC Activo</span>`;
-        if (enableDesktopBtn) enableDesktopBtn.style.display = 'none';
-      } else if (status === 'denied') {
-        desktopStatusLabel.innerHTML = `<span style="color: var(--color-danger, #EF4444);">✕ PC Bloqueado</span>`;
-        if (enableDesktopBtn) enableDesktopBtn.style.display = 'inline-block';
+    const permStatus = notificationService.getPermissionStatus();
+    const isExplicitlyEnabled = StorageService.get('edhuflow_desktop_notifs_enabled', true);
+
+    if (permStatus === 'granted') {
+      if (isExplicitlyEnabled) {
+        if (desktopToggle) desktopToggle.checked = true;
+        if (desktopBadge) {
+          desktopBadge.textContent = 'PRENDIDAS';
+          desktopBadge.style.background = 'rgba(16, 185, 129, 0.18)';
+          desktopBadge.style.color = '#10B981';
+        }
+        if (desktopSubtext) {
+          desktopSubtext.textContent = 'Las alertas y alarmas se mostrarán en la pantalla de tu computadora.';
+        }
       } else {
-        desktopStatusLabel.innerHTML = `<span>Alertas de PC:</span>`;
-        if (enableDesktopBtn) enableDesktopBtn.style.display = 'inline-block';
+        if (desktopToggle) desktopToggle.checked = false;
+        if (desktopBadge) {
+          desktopBadge.textContent = 'APAGADAS';
+          desktopBadge.style.background = 'rgba(255, 255, 255, 0.08)';
+          desktopBadge.style.color = 'var(--text-muted)';
+        }
+        if (desktopSubtext) {
+          desktopSubtext.textContent = 'Alertas en pantalla desactivadas. Enciende el interruptor para activarlas.';
+        }
+      }
+    } else if (permStatus === 'denied') {
+      if (desktopToggle) desktopToggle.checked = false;
+      if (desktopBadge) {
+        desktopBadge.textContent = 'BLOQUEADAS';
+        desktopBadge.style.background = 'rgba(239, 68, 68, 0.18)';
+        desktopBadge.style.color = '#EF4444';
+      }
+      if (desktopSubtext) {
+        desktopSubtext.textContent = 'Permiso denegado en el navegador. Haz clic en el icono del candado arriba para permitir.';
+      }
+    } else {
+      // 'default'
+      if (desktopToggle) desktopToggle.checked = false;
+      if (desktopBadge) {
+        desktopBadge.textContent = 'APAGADAS';
+        desktopBadge.style.background = 'rgba(255, 255, 255, 0.08)';
+        desktopBadge.style.color = 'var(--text-muted)';
+      }
+      if (desktopSubtext) {
+        desktopSubtext.textContent = 'Haz clic en el interruptor para solicitar permiso y prender las alertas de tu computadora.';
       }
     }
   };
 
   updateDesktopNotifUI();
 
-  if (enableDesktopBtn) {
-    enableDesktopBtn.addEventListener('click', async () => {
-      soundService.playClick();
-      const granted = await notificationService.requestPermission();
-      updateDesktopNotifUI();
-      if (granted) {
-        toast.success('Notificaciones de escritorio activadas para tu computadora.');
+  if (desktopToggle) {
+    desktopToggle.addEventListener('change', async () => {
+      if (desktopToggle.checked) {
+        soundService.playClick();
+        const granted = await notificationService.requestPermission();
+        if (granted) {
+          StorageService.set('edhuflow_desktop_notifs_enabled', true);
+          updateDesktopNotifUI();
+          soundService.playSoftChime();
+          toast.success('Notificaciones en tu computadora PRENDIDAS.');
+          notificationService.send('EdhuFlow — Alertas Prendidas', {
+            body: 'Las notificaciones en tu computadora están prendidas y activas.',
+            tag: 'edhuflow-enabled-alert'
+          });
+        } else {
+          StorageService.set('edhuflow_desktop_notifs_enabled', false);
+          desktopToggle.checked = false;
+          updateDesktopNotifUI();
+          toast.warning('Permiso requerido. Habilita las notificaciones en tu navegador.');
+        }
       } else {
-        toast.warning('Permisos requeridos. Habilita las notificaciones en tu navegador.');
+        soundService.playClick();
+        StorageService.set('edhuflow_desktop_notifs_enabled', false);
+        updateDesktopNotifUI();
+        toast.info('Notificaciones en tu computadora APAGADAS.');
       }
     });
   }
 
   if (testDesktopBtn) {
-    testDesktopBtn.addEventListener('click', async () => {
+    testDesktopBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
       soundService.playSoftChime();
       const res = await notificationService.sendTestDesktopNotification();
       
@@ -368,7 +420,7 @@ function initTopBarTools(router) {
       if (res.success) {
         toast.success('Notificación de prueba enviada a tu pantalla y correo.');
       } else {
-        toast.info('Permiso requerido. Haz clic en "Activar en PC" para ver alertas en tu pantalla.');
+        toast.info('Permiso requerido. Activa el interruptor para prender las alertas en tu pantalla.');
       }
       updateDesktopNotifUI();
     });

@@ -1,6 +1,4 @@
-/**
- * EdhuFlow - Services: Web & Desktop OS Notifications Service
- */
+import { StorageService } from './storage.service.js';
 
 class NotificationService {
   constructor() {
@@ -13,6 +11,10 @@ class NotificationService {
       this.hasPermission = Notification.permission === 'granted';
     }
     return this.hasPermission;
+  }
+
+  isDesktopEnabled() {
+    return this.hasPermission && StorageService.get('edhuflow_desktop_notifs_enabled', true) !== false;
   }
 
   getPermissionStatus() {
@@ -33,6 +35,10 @@ class NotificationService {
   }
 
   send(title, options = {}) {
+    if (StorageService.get('edhuflow_desktop_notifs_enabled', true) === false) {
+      return null;
+    }
+
     this.checkPermission();
     if (this.hasPermission && 'Notification' in window) {
       try {
