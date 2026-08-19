@@ -369,14 +369,47 @@ function initTopBarTools(router) {
     });
   }
 
+  // Modal de confirmación elegante para cerrar sesión
+  const logoutModal = $('#logout-confirm-modal');
+  const cancelLogoutBtn = $('#btn-cancel-logout');
+  const confirmLogoutBtn = $('#btn-confirm-logout');
+
+  const openLogoutModal = () => {
+    soundService.playClick();
+    if (profilePopover) profilePopover.classList.remove('open');
+    if (logoutModal) {
+      logoutModal.classList.add('open');
+      logoutModal.setAttribute('aria-hidden', 'false');
+    }
+  };
+
+  const closeLogoutModal = () => {
+    if (logoutModal) {
+      logoutModal.classList.remove('open');
+      logoutModal.setAttribute('aria-hidden', 'true');
+    }
+  };
+
   if (profileLogoutBtn) {
-    profileLogoutBtn.addEventListener('click', () => {
-      if (confirm('¿Deseas cerrar tu sesión actual?')) {
-        soundService.playClick();
-        if (profilePopover) profilePopover.classList.remove('open');
-        store.logout();
-        toast.info('Has cerrado sesión correctamente.');
-      }
+    profileLogoutBtn.addEventListener('click', openLogoutModal);
+  }
+
+  if (cancelLogoutBtn) {
+    cancelLogoutBtn.addEventListener('click', closeLogoutModal);
+  }
+
+  if (logoutModal) {
+    logoutModal.addEventListener('click', (e) => {
+      if (e.target === logoutModal) closeLogoutModal();
+    });
+  }
+
+  if (confirmLogoutBtn) {
+    confirmLogoutBtn.addEventListener('click', () => {
+      soundService.playClick();
+      closeLogoutModal();
+      store.logout();
+      toast.info('Has cerrado sesión correctamente.');
     });
   }
 
