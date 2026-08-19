@@ -193,10 +193,14 @@ class ApiService {
         method: 'POST',
         body: JSON.stringify({ message: prompt, history }),
       });
-      return res ? res.data : null;
+      return res;
     } catch {
       return null;
     }
+  }
+
+  async sendChatMessage(prompt, history = []) {
+    return this.askGemini(prompt, history);
   }
 
   /* --- Recordatorios por Correo --- */

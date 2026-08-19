@@ -180,44 +180,161 @@ export class AssistantView extends BaseView {
       this.isThinking = false;
       soundService.playSoftChime();
 
-      if (response && response.data) {
+      if (response && response.data && response.data.message) {
         const detected = response.data.detected_tasks || [];
         this.messages.push({
           sender: 'assistant',
-          text: response.data.message || 'He procesado tu solicitud:',
+          text: response.data.message,
           detectedTasks: detected
         });
       } else {
-        // Fallback dinámico inteligente local
-        const todayISO = getTodayISO();
-        const isStudy = /estudiar|calculo|examen|lectura|estudio/i.test(userText);
-        const isWork = /reunion|cliente|proyecto|trabajo|informe/i.test(userText);
-        const isUrgent = /urgente|importante|alarma|alta/i.test(userText);
-
+        // Motor conversacional y de extracción inteligente local
+        const localReply = this._processLocalAssistant(userText);
         this.messages.push({
           sender: 'assistant',
-          text: `He preparado la tarea a partir de tu indicación. Pulsa en el botón para integrarla a tu agenda:`,
-          detectedTasks: [
-            {
-              title: userText.charAt(0).toUpperCase() + userText.slice(1),
-              category: isStudy ? 'Estudio' : (isWork ? 'Trabajo' : 'General'),
-              priority: isUrgent ? 'Alta' : 'Media',
-              time: '04:00 PM',
-              date: todayISO
-            }
-          ]
+          text: localReply.text,
+          detectedTasks: localReply.detectedTasks || []
         });
       }
     } catch (e) {
       this.isThinking = false;
+      const localReply = this._processLocalAssistant(userText);
       this.messages.push({
         sender: 'assistant',
-        text: 'He registrado tu consulta. ¿Deseas que prepare una tarea o configuremos un bloque de enfoque?'
+        text: localReply.text,
+        detectedTasks: localReply.detectedTasks || []
       });
     }
 
     this.render();
     this.bindEvents();
+  }
+
+  _processLocalAssistant(userText) {
+    const raw = userText.trim();
+    const lower = raw.toLowerCase();
+    const todayISO = getTodayISO();
+
+    // 1. Saludos
+    if (/^(hola|buenas|buenos d[ií]as|buenas tardes|buenas noches|hey|saludos|que tal|qué tal)\b/i.test(lower) && lower.length < 25) {
+      return {
+        text: '¡Hola! ¿En qué te puedo colaborar hoy? Puedes pedirme crear una tarea (ej: "Estudiar física mañana a las 4pm"), programar un recordatorio o solicitar recomendaciones de productividad.',
+        detectedTasks: []
+      };
+    }
+
+    // 2. Afirmaciones y confirmaciones cortas
+    if (/^(si|sí|claro|dale|por favor|porfa|ok|vale|yes)\b/i.test(lower) && lower.length < 15) {
+      return {
+        text: '¡Excelente! Cuéntame qué tarea o recordatorio deseas agendar (por ejemplo: "Reunión con el equipo el viernes a las 10am" o "Comprar café hoy a las 6pm").',
+        detectedTasks: []
+      };
+    }
+
+    // 3. Petición general de recordatorio
+    if (/^(quiero un recordatorio|necesito un recordatorio|hazme un recordatorio|ponme un recordatorio|recordatorio)\b/i.test(lower) && lower.length < 35) {
+      return {
+        text: '¡Perfecto! Dime qué quieres recordar y a qué hora (por ejemplo: "Recordar tomar agua a las 3:00 PM" o "Revisar tareas mañana a las 9:00 AM") y lo programaré de inmediato.',
+        detectedTasks: []
+      };
+    }
+
+    // 4. Preguntas de productividad / consejos
+    if (/consejo|técnica|tecnica|pomodoro|eisenhower|distracc|procrastin|concentra|organizar|h[aá]bito/i.test(lower)) {
+      return {
+        text: 'Te recomiendo la técnica de Bloques de Tiempo (*Time Blocking*): dedica 45 minutos de trabajo sin interrupciones seguidos de 10 minutos de pausa activa para estirar y tomar agua. También puedes iniciar una sesión en nuestro **Temporizador** para mantener tu ritmo.',
+        detectedTasks: []
+      };
+    }
+
+    // 5. Extracción inteligente de Tareas / Recordatorios
+    let dateVal = todayISO;
+    if (/mañana|manana/i.test(lower)) {
+      const d = new Date();
+      d.setDate(d.getDate() + 1);
+      dateVal = d.toISOString().split('T')[0];
+    } else if (/pasado mañana|pasado manana/i.test(lower)) {
+      const d = new Date();
+      d.setDate(d.getDate() + 2);
+      dateVal = d.toISOString().split('T')[0];
+    } else if (/lunes/i.test(lower)) {
+      dateVal = this._getNextDayOfWeek(1);
+    } else if (/martes/i.test(lower)) {
+      dateVal = this._getNextDayOfWeek(2);
+    } else if (/mi[eé]rcoles|miercoles/i.test(lower)) {
+      dateVal = this._getNextDayOfWeek(3);
+    } else if (/jueves/i.test(lower)) {
+      dateVal = this._getNextDayOfWeek(4);
+    } else if (/viernes/i.test(lower)) {
+      dateVal = this._getNextDayOfWeek(5);
+    } else if (/s[aá]bado|sabado/i.test(lower)) {
+      dateVal = this._getNextDayOfWeek(6);
+    } else if (/domingo/i.test(lower)) {
+      dateVal = this._getNextDayOfWeek(0);
+    }
+
+    // Extracción de hora
+    let timeVal = '12:00 PM';
+    const timeMatch = lower.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)/i) ||
+                      lower.match(/a las\s*(\d{1,2})(?::(\d{2}))?/i);
+    if (timeMatch) {
+      let hours = parseInt(timeMatch[1], 10);
+      let mins = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
+      let ampm = timeMatch[3] ? timeMatch[3].toUpperCase().replace(/\./g, '') : (hours >= 12 ? 'PM' : 'AM');
+      if (hours > 12) {
+        hours -= 12;
+        ampm = 'PM';
+      }
+      timeVal = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')} ${ampm}`;
+    }
+
+    // Prioridad
+    const isUrgent = /urgente|importante|alarma|alta|prioridad alta|critico/i.test(lower);
+    const isLow = /baja|opcional|despues|prioridad baja/i.test(lower);
+    const priorityVal = isUrgent ? 'Alta' : (isLow ? 'Baja' : 'Media');
+
+    // Categoría
+    const isStudy = /estudiar|calculo|examen|lectura|estudio|tarea|universidad|colegio/i.test(lower);
+    const isWork = /reunion|cliente|proyecto|trabajo|informe|reporte|correo|email|jefe/i.test(lower);
+    const isHealth = /agua|ejercicio|gimnasio|correr|meditar|caminar|medicina|doctor/i.test(lower);
+    const categoryVal = isStudy ? 'Estudio' : (isWork ? 'Trabajo' : (isHealth ? 'Salud' : 'General'));
+
+    // Limpiar título de tarea
+    let cleanTitle = raw
+      .replace(/^(crear tarea( para)?|recordatorio( para)?|quiero un recordatorio( para)?|acordarme de|agendar( una)?|recordar|programar)\s*/i, '')
+      .replace(/\b(mañana|hoy|el (lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo))\b/gi, '')
+      .replace(/\ba las \d{1,2}(:\d{2})?\s*(am|pm|a\.m\.|p\.m\.)?\b/gi, '')
+      .replace(/\bcon prioridad (alta|media|baja)\b/gi, '')
+      .replace(/\ben categor[ií]a \w+\b/gi, '')
+      .trim();
+
+    if (!cleanTitle || cleanTitle.length < 2) {
+      cleanTitle = raw.charAt(0).toUpperCase() + raw.slice(1);
+    } else {
+      cleanTitle = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
+    }
+
+    return {
+      text: `He preparado la tarea a partir de tu indicación. Pulsa en **Agregar a mis Tareas** para agendarla con su recordatorio:`,
+      detectedTasks: [
+        {
+          title: cleanTitle,
+          category: categoryVal,
+          priority: priorityVal,
+          time: timeVal,
+          date: dateVal
+        }
+      ]
+    };
+  }
+
+  _getNextDayOfWeek(targetDayIndex) {
+    const d = new Date();
+    const currentDay = d.getDay();
+    let diff = targetDayIndex - currentDay;
+    if (diff <= 0) diff += 7;
+    d.setDate(d.getDate() + diff);
+    return d.toISOString().split('T')[0];
   }
 
   _toggleSpeechRecognition() {
