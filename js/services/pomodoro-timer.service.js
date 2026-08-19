@@ -1,7 +1,7 @@
 /**
  * FocusFlow Web - Services: Global Background Pomodoro Timer Service
- * Mantiene el tiempo y ciclo de concentración activo en segundo plano sin reiniciarse al cambiar de pestaña.
- * Con soporte fluido y atómico para alternar entre Enfoque (25m), Descanso Corto (5m) y Descanso Largo (15m).
+ * Mantiene el tiempo y ciclo de concentración activo en segundo plano sin reiniciarse al cambiar de pestaña ni recargar la página.
+ * Persistencia en tiempo real en LocalStorage para garantizar continuidad absoluta.
  */
 
 import { eventBus } from '../core/event-bus.js';
@@ -23,12 +23,68 @@ class PomodoroTimerService {
     this.isRunning = false;
     this.endTime = null;
     this.timerInterval = null;
+
+    this._loadSession();
+  }
+
+  _loadSession() {
+    try {
+      const raw = localStorage.getItem('focusflow_pomodoro_session');
+      if (raw) {
+        const saved = JSON.parse(raw);
+        this.currentMode = saved.currentMode || 'focus';
+        this.totalDurationSeconds = saved.totalDurationSeconds || this.durations[this.currentMode] || (25 * 60);
+
+        if (saved.isRunning && saved.endTime) {
+          const now = Date.now();
+          const diffMs = saved.endTime - now;
+          if (diffMs > 0) {
+            this.remainingSeconds = Math.ceil(diffMs / 1000);
+            this.endTime = saved.endTime;
+            this.start();
+          } else {
+            this.remainingSeconds = this.durations[this.currentMode];
+            this.isRunning = false;
+            this.endTime = null;
+            this._persistSession();
+          }
+        } else {
+          this.remainingSeconds = typeof saved.remainingSeconds === 'number' 
+            ? saved.remainingSeconds 
+            : this.durations[this.currentMode];
+          this.isRunning = false;
+          this.endTime = null;
+        }
+      }
+    } catch (e) {
+      console.warn('[PomodoroTimer] Error cargando sesión persistente:', e);
+    }
+  }
+
+  _persistSession() {
+    try {
+      localStorage.setItem('focusflow_pomodoro_session', JSON.stringify({
+        currentMode: this.currentMode,
+        remainingSeconds: this.remainingSeconds,
+        totalDurationSeconds: this.totalDurationSeconds,
+        isRunning: this.isRunning,
+        endTime: this.endTime
+      }));
+    } catch (e) {}
   }
 
   getState() {
+    let seconds = this.remainingSeconds;
+    if (this.isRunning && this.endTime) {
+      const now = Date.now();
+      const diffMs = this.endTime - now;
+      seconds = Math.max(0, Math.ceil(diffMs / 1000));
+      this.remainingSeconds = seconds;
+    }
+
     return {
       currentMode: this.currentMode,
-      remainingSeconds: this.remainingSeconds,
+      remainingSeconds: seconds,
       totalDurationSeconds: this.totalDurationSeconds,
       isRunning: this.isRunning,
       activeTask: store.getActiveFocusTask()
@@ -36,10 +92,14 @@ class PomodoroTimerService {
   }
 
   start() {
-    if (this.isRunning) return;
+    if (this.isRunning && this.timerInterval) return;
 
     this.isRunning = true;
-    this.endTime = Date.now() + (this.remainingSeconds * 1000);
+    if (!this.endTime) {
+      this.endTime = Date.now() + (this.remainingSeconds * 1000);
+    }
+
+    this._persistSession();
 
     if (this.timerInterval) clearInterval(this.timerInterval);
 
@@ -51,6 +111,7 @@ class PomodoroTimerService {
       const secondsLeft = Math.max(0, Math.ceil(diffMs / 1000));
 
       this.remainingSeconds = secondsLeft;
+      this._persistSession();
       eventBus.emit('pomodoro:tick', this.getState());
 
       if (secondsLeft <= 0) {
@@ -76,6 +137,7 @@ class PomodoroTimerService {
       this.endTime = null;
     }
 
+    this._persistSession();
     eventBus.emit('pomodoro:paused', this.getState());
   }
 
@@ -83,6 +145,8 @@ class PomodoroTimerService {
     this.pause();
     this.remainingSeconds = this.durations[this.currentMode] || (25 * 60);
     this.totalDurationSeconds = this.durations[this.currentMode] || (25 * 60);
+    this.endTime = null;
+    this._persistSession();
     eventBus.emit('pomodoro:reset', this.getState());
   }
 
@@ -96,7 +160,9 @@ class PomodoroTimerService {
     this.currentMode = mode;
     this.totalDurationSeconds = this.durations[mode];
     this.remainingSeconds = this.durations[mode];
+    this.endTime = null;
 
+    this._persistSession();
     eventBus.emit('pomodoro:modeChanged', this.getState());
   }
 
@@ -137,6 +203,8 @@ class PomodoroTimerService {
       this.remainingSeconds = this.durations.focus;
     }
 
+    this.endTime = null;
+    this._persistSession();
     eventBus.emit('pomodoro:completed', this.getState());
     eventBus.emit('pomodoro:modeChanged', this.getState());
   }
