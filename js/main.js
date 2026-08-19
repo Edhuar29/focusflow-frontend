@@ -318,7 +318,6 @@ function initTopBarTools(router) {
   const desktopToggle = $('#toggle-desktop-notifs');
   const desktopBadge = $('#desktop-notif-status-badge');
   const desktopSubtext = $('#desktop-notif-subtext');
-  const testDesktopBtn = $('#btn-test-desktop-notifs');
 
   const updateDesktopNotifUI = () => {
     const permStatus = notificationService.getPermissionStatus();
@@ -398,31 +397,6 @@ function initTopBarTools(router) {
         updateDesktopNotifUI();
         toast.info('Notificaciones en tu computadora APAGADAS.');
       }
-    });
-  }
-
-  if (testDesktopBtn) {
-    testDesktopBtn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      soundService.playSoftChime();
-      const res = await notificationService.sendTestDesktopNotification();
-      
-      const emailPrefs = store.getEmailPreferences();
-      const currentUser = store.getUser();
-      const targetEmail = emailPrefs.notificationEmail || (currentUser ? currentUser.email : '');
-      
-      if (targetEmail) {
-        apiService.sendTestEmail(targetEmail)
-          .then(() => console.log('[TestNotification] Correo de prueba despachado'))
-          .catch(err => console.warn('[TestNotification] Error correo prueba:', err));
-      }
-
-      if (res.success) {
-        toast.success('Notificación de prueba enviada a tu pantalla y correo.');
-      } else {
-        toast.info('Permiso requerido. Activa el interruptor para prender las alertas en tu pantalla.');
-      }
-      updateDesktopNotifUI();
     });
   }
 
