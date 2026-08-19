@@ -1,12 +1,12 @@
 /**
  * FocusFlow Web - Services: Global Background Pomodoro Timer Service
  * Mantiene el tiempo y ciclo de concentración activo en segundo plano sin reiniciarse al cambiar de pestaña.
+ * Con soporte fluido y atómico para alternar entre Enfoque (25m), Descanso Corto (5m) y Descanso Largo (15m).
  */
 
 import { eventBus } from '../core/event-bus.js';
 import { store } from '../core/store.js';
 import { soundService } from './sound.service.js';
-import { toast } from '../components/toast.component.js';
 import { notificationScheduler } from './notification-scheduler.service.js';
 
 class PomodoroTimerService {
@@ -41,7 +41,6 @@ class PomodoroTimerService {
     this.isRunning = true;
     this.endTime = Date.now() + (this.remainingSeconds * 1000);
 
-    // Iniciar intervalo persistente en segundo plano
     if (this.timerInterval) clearInterval(this.timerInterval);
 
     this.timerInterval = setInterval(() => {
@@ -63,7 +62,7 @@ class PomodoroTimerService {
   }
 
   pause() {
-    if (!this.isRunning) return;
+    if (!this.isRunning && !this.timerInterval) return;
 
     this.isRunning = false;
     if (this.timerInterval) {
@@ -82,21 +81,22 @@ class PomodoroTimerService {
 
   reset() {
     this.pause();
-    this.remainingSeconds = this.durations[this.currentMode];
-    this.totalDurationSeconds = this.durations[this.currentMode];
+    this.remainingSeconds = this.durations[this.currentMode] || (25 * 60);
+    this.totalDurationSeconds = this.durations[this.currentMode] || (25 * 60);
     eventBus.emit('pomodoro:reset', this.getState());
   }
 
   /**
-   * Cambia de modo solo si el usuario lo solicita explícitamente
+   * Cambia de modo limpiamente (Enfoque, Descanso Corto, Descanso Largo)
    */
   setMode(mode) {
-    if (this.currentMode === mode) return;
+    if (!this.durations[mode]) mode = 'focus';
 
     this.pause();
     this.currentMode = mode;
-    this.totalDurationSeconds = this.durations[mode] || (25 * 60);
-    this.remainingSeconds = this.totalDurationSeconds;
+    this.totalDurationSeconds = this.durations[mode];
+    this.remainingSeconds = this.durations[mode];
+
     eventBus.emit('pomodoro:modeChanged', this.getState());
   }
 
@@ -116,7 +116,7 @@ class PomodoroTimerService {
 
       notificationScheduler.addNotification({
         title: '¡Sesión de Enfoque Completada!',
-        description: 'Has completado 25 minutos de concentración. Tómate un descanso corto.',
+        description: 'Has completado 25 minutos de concentración. Tómate un descanso corto de 5 minutos.',
         priority: 'high',
         type: 'pomodoro'
       });
@@ -138,6 +138,7 @@ class PomodoroTimerService {
     }
 
     eventBus.emit('pomodoro:completed', this.getState());
+    eventBus.emit('pomodoro:modeChanged', this.getState());
   }
 }
 
