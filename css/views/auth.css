@@ -268,12 +268,27 @@
 }
 
 .google-account-badge {
-  font-size: 10px;
-  font-weight: 500;
-  color: #38BDF8;
-  background: rgba(56, 189, 248, 0.12);
-  padding: 2px 7px;
-  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #FFFFFF;
+  background: #2563EB;
+  border: 1px solid #3B82F6;
+  padding: 6px 14px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.2px;
+  flex-shrink: 0;
+}
+
+.google-account-item:hover .google-account-badge {
+  background: #1D4ED8;
+  border-color: #60A5FA;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.55);
+  transform: scale(1.04);
 }
 
 .google-add-account-btn {
