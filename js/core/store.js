@@ -378,10 +378,13 @@ class Store {
     this.state.hydration = { currentMl: 0, goalMl: 2000, logsToday: 0 };
     StorageService.remove('user');
     localStorage.removeItem('focusflow_auth_token');
+    document.documentElement.classList.remove('authenticated-boot');
+    document.documentElement.classList.add('unauthenticated-boot');
     eventBus.emit('user:loggedOut');
     eventBus.emit('tasks:updated', this.state.tasks);
     eventBus.emit('hydration:updated', this.state.hydration);
     eventBus.emit('pomodoro:updated', this.state.pomodoro);
+    eventBus.emit('auth:open');
   }
 
   isAuthenticated() {

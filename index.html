@@ -13,6 +13,35 @@
 
   <!-- Master Modular Stylesheet -->
   <link rel="stylesheet" href="./css/main.css" />
+
+  <!-- Auth Guard Instantáneo: Previene el parpadeo de contenido desautenticado (Zero FOUC) -->
+  <script>
+    (function() {
+      try {
+        var user = localStorage.getItem('focusflow_user');
+        var token = localStorage.getItem('focusflow_auth_token');
+        if (!user || !token) {
+          document.documentElement.classList.add('unauthenticated-boot');
+        } else {
+          document.documentElement.classList.add('authenticated-boot');
+        }
+      } catch (e) {
+        document.documentElement.classList.add('unauthenticated-boot');
+      }
+    })();
+  </script>
+  <style>
+    /* Prevenir parpadeo de contenido desautenticado (Zero FOUC) */
+    html.unauthenticated-boot .app-root {
+      display: none !important;
+    }
+    html.unauthenticated-boot #auth-screen-overlay {
+      display: flex !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: all !important;
+    }
+  </style>
 </head>
 <body>
   <div class="app-root">

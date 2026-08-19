@@ -188,12 +188,16 @@ export class AuthModal {
   }
 
   show() {
+    document.documentElement.classList.remove('authenticated-boot');
+    document.documentElement.classList.add('unauthenticated-boot');
     if (this.overlay) {
       this.overlay.classList.remove('hidden');
     }
   }
 
   hide() {
+    document.documentElement.classList.remove('unauthenticated-boot');
+    document.documentElement.classList.add('authenticated-boot');
     if (this.overlay) {
       this.overlay.classList.add('hidden');
     }
