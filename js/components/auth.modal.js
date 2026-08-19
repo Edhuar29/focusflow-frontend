@@ -312,13 +312,12 @@ export class AuthModal {
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
               </button>
-              <button type="button" class="btn-remove-google-account" data-action="remove" data-email="${escapeHTML(acc.email)}" title="Eliminar cuenta de este dispositivo" aria-label="Eliminar cuenta">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <button type="button" class="btn-remove-google-account" data-action="remove" data-email="${escapeHTML(acc.email)}" title="Eliminar cuenta de este dispositivo">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M3 6h18"></path>
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                  <line x1="10" y1="11" x2="10" y2="17"></line>
-                  <line x1="14" y1="11" x2="14" y2="17"></line>
                 </svg>
+                <span>Quitar</span>
               </button>
             </div>
           </div>
