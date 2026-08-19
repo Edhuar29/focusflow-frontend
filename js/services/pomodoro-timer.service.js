@@ -192,14 +192,16 @@ class PomodoroTimerService {
   }
 
   /**
-   * Cambia de modo guardando el progreso previo del modo anterior
+   * Cambia de modo guardando el progreso previo y manteniendo la ejecución si estaba corriendo
    */
   setMode(mode) {
     if (!this.modes[mode]) return;
     if (this.currentMode === mode) return;
 
-    // Pausar el modo anterior preservando sus segundos restantes
+    // Verificar si el modo anterior estaba activo y corriendo
     const prev = this.modes[this.currentMode];
+    const wasRunning = prev && prev.isRunning;
+
     if (prev && prev.isRunning) {
       if (prev.endTime) {
         prev.remainingSeconds = Math.max(0, Math.ceil((prev.endTime - Date.now()) / 1000));
@@ -213,10 +215,19 @@ class PomodoroTimerService {
       this.timerInterval = null;
     }
 
-    // Cambiar al nuevo modo (mantiene sus propios segundos restantes)
+    // Cambiar al nuevo modo (preserva sus segundos restantes)
     this.currentMode = mode;
-    this._persistSession();
-    eventBus.emit('pomodoro:modeChanged', this.getState());
+    const next = this.modes[mode];
+
+    // Si estaba corriendo, continuar corriendo automáticamente en el nuevo modo sin pausarse
+    if (wasRunning && next) {
+      next.isRunning = true;
+      next.endTime = Date.now() + (next.remainingSeconds * 1000);
+      this.start();
+    } else {
+      this._persistSession();
+      eventBus.emit('pomodoro:modeChanged', this.getState());
+    }
   }
 
   skip() {
