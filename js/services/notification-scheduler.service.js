@@ -279,9 +279,9 @@ class NotificationSchedulerService {
       notificationService.send(`EdhuFlow [URGENTE]: ${notif.title}`, {
         body: notif.description,
         tag: uniqueTag,
-        requireInteraction: true,
-        silent: isMuted
+        requireInteraction: false
       });
+      toast.warning(`[Alarma Urgente] ${notif.title}: ${notif.description}`);
     }
 
     // 2. PRIORIDAD MEDIA / ESTÁNDAR
@@ -290,9 +290,9 @@ class NotificationSchedulerService {
       notificationService.send(`EdhuFlow: ${notif.title}`, {
         body: notif.description,
         tag: uniqueTag,
-        requireInteraction: true,
-        silent: isMuted
+        requireInteraction: false
       });
+      toast.info(`[Recordatorio] ${notif.title}: ${notif.description}`);
     }
 
     // 3. PRIORIDAD BAJA (Aviso Silencioso)
@@ -300,8 +300,7 @@ class NotificationSchedulerService {
       notificationService.send(`EdhuFlow: ${notif.title}`, {
         body: notif.description,
         tag: uniqueTag,
-        requireInteraction: false,
-        silent: true
+        requireInteraction: false
       });
     }
   }
