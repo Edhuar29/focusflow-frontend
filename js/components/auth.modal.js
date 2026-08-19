@@ -231,17 +231,18 @@ export class AuthModal {
   /* --- Cuentas de Google Guardadas y Selector --- */
   getSavedGoogleAccounts() {
     const raw = localStorage.getItem('focusflow_saved_google_accounts');
-    if (raw) {
+    if (raw !== null) {
       try {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       } catch {}
     }
 
-    // Cuentas iniciales detectadas por defecto
-    const defaultAccounts = [
-      { name: 'Danny Eduardo', email: 'dannyeduardoanasi@gmail.com', isCurrent: true },
-    ];
+    const currentUser = store.getUser();
+    const defaultAccounts = currentUser ? [
+      { name: currentUser.name || 'Danny Eduardo', email: currentUser.email || 'dannyeduardoanasi@gmail.com', isCurrent: true }
+    ] : [];
+
     localStorage.setItem('focusflow_saved_google_accounts', JSON.stringify(defaultAccounts));
     return defaultAccounts;
   }
@@ -263,10 +264,32 @@ export class AuthModal {
     return accounts;
   }
 
+  removeGoogleAccount(email) {
+    let accounts = this.getSavedGoogleAccounts();
+    accounts = accounts.filter(a => a.email.toLowerCase() !== email.toLowerCase());
+    localStorage.setItem('focusflow_saved_google_accounts', JSON.stringify(accounts));
+    toast.info(`Cuenta ${email} eliminada de este equipo.`);
+    this.renderGoogleAccountsList();
+
+    if (accounts.length === 0 && this.googleCustomSection) {
+      this.googleCustomSection.style.display = 'block';
+    }
+  }
+
   renderGoogleAccountsList() {
     if (!this.googleAccountsList) return;
 
     const accounts = this.getSavedGoogleAccounts();
+
+    if (accounts.length === 0) {
+      this.googleAccountsList.innerHTML = `
+        <div style="text-align: center; padding: 16px 12px; background: rgba(255, 255, 255, 0.02); border: 1px dashed var(--border-subtle); border-radius: 12px; margin-bottom: 12px;">
+          <p style="font-size: 12.5px; color: var(--text-secondary); margin: 0 0 6px 0;">No hay cuentas guardadas en este dispositivo.</p>
+          <span style="font-size: 11px; color: var(--text-muted);">Usa el botón de abajo para ingresar con una cuenta de Google.</span>
+        </div>
+      `;
+      return;
+    }
 
     this.googleAccountsList.innerHTML = accounts.map((acc, index) => {
       const color = AVATAR_COLORS[index % AVATAR_COLORS.length];
@@ -274,7 +297,7 @@ export class AuthModal {
 
       return `
         <div class="google-account-item" data-google-email="${escapeHTML(acc.email)}" data-google-name="${escapeHTML(acc.name)}">
-          <div style="display: flex; align-items: center; width: 100%;">
+          <div style="display: flex; align-items: center; width: 100%; gap: 10px;">
             <div class="google-account-avatar" style="background-color: ${color};">
               ${escapeHTML(initial)}
             </div>
@@ -282,21 +305,41 @@ export class AuthModal {
               <div class="google-account-name">${escapeHTML(acc.name)}</div>
               <div class="google-account-email">${escapeHTML(acc.email)}</div>
             </div>
-            <span class="google-account-badge">
-              <span>Conectar</span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
-            </span>
+            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+              <button type="button" class="google-account-badge" data-action="connect" title="Iniciar sesión con esta cuenta">
+                <span>Conectar</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+              <button type="button" class="btn-remove-google-account" data-action="remove" data-email="${escapeHTML(acc.email)}" title="Eliminar cuenta de este dispositivo" aria-label="Eliminar cuenta">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18"></path>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       `;
     }).join('');
 
-    // Conectar eventos de clic en cada cuenta de Google
+    // Manejar eventos de clic (Conectar o Eliminar)
     const items = this.googleAccountsList.querySelectorAll('.google-account-item');
     items.forEach(item => {
-      item.onclick = async () => {
+      item.onclick = async (e) => {
+        const removeBtn = e.target.closest('.btn-remove-google-account, [data-action="remove"]');
+        if (removeBtn) {
+          e.stopPropagation();
+          const targetEmail = removeBtn.getAttribute('data-email');
+          if (targetEmail) {
+            this.removeGoogleAccount(targetEmail);
+          }
+          return;
+        }
+
         const email = item.getAttribute('data-google-email');
         const name = item.getAttribute('data-google-name');
         if (email) {

@@ -282,13 +282,37 @@
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   letter-spacing: 0.2px;
   flex-shrink: 0;
+  cursor: pointer;
 }
 
-.google-account-item:hover .google-account-badge {
+.google-account-badge:hover {
   background: #1D4ED8;
   border-color: #60A5FA;
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.55);
   transform: scale(1.04);
+}
+
+.btn-remove-google-account {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  color: #F87171;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-remove-google-account:hover {
+  background: #DC2626;
+  border-color: #DC2626;
+  color: #FFFFFF;
+  transform: scale(1.08);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.45);
 }
 
 .google-add-account-btn {
