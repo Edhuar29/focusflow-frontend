@@ -248,7 +248,8 @@ export class AssistantView extends BaseView {
               time: taskData.time || '12:00 PM',
               date: taskData.date || getTodayISO(),
               category: taskData.category || 'General',
-              alarm: priorityVal === 'high'
+              alarm: true,
+              emailAlert: true
             });
 
             soundService.playTaskComplete();

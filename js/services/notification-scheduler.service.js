@@ -128,13 +128,16 @@ class NotificationSchedulerService {
           this._showActiveAlarmModal(task, priority);
 
           // Despacho de Correo Electrónico para Tareas
-          const emailPrefs = store.getEmailPreferences();
-          const currentUser = store.getUser();
-          const targetEmail = emailPrefs.notificationEmail || (currentUser ? currentUser.email : '');
+          const emailPrefs = store.getEmailPreferences() || {};
+          const currentUser = store.getUser() || {};
+          const targetEmail = emailPrefs.notificationEmail || currentUser.email || 'dannyeduardoanasi@gmail.com';
 
-          if (targetEmail && (task.emailAlert || emailPrefs.emailTaskAlerts !== false)) {
+          if (targetEmail) {
             apiService.sendTaskEmailReminder(targetEmail, task.title, task.time, task.category || 'General')
-              .then(() => console.log(`[NotificationScheduler] Correo de tarea enviado a ${targetEmail}`))
+              .then(() => {
+                console.log(`[NotificationScheduler] Correo de tarea enviado exitosamente a ${targetEmail}`);
+                toast.info(`Alarma: Correo enviado a ${targetEmail}`);
+              })
               .catch(err => console.warn('[NotificationScheduler] Fallo de correo de tarea:', err));
           }
         }
@@ -268,34 +271,35 @@ class NotificationSchedulerService {
   _dispatchAlert(notif) {
     const isMuted = soundService.isMuted();
     const priority = notif.priority || 'medium';
+    const uniqueTag = `edhuflow-${Date.now()}`;
 
     // 1. PRIORIDAD ALTA (Modo Alarma Crítica)
     if (priority === 'high') {
       soundService.playUrgentAlarm();
       notificationService.send(`EdhuFlow [URGENTE]: ${notif.title}`, {
         body: notif.description,
-        tag: notif.id || 'edhuflow-urgent',
+        tag: uniqueTag,
         requireInteraction: true,
         silent: isMuted
       });
     }
 
-    // 2. PRIORIDAD MEDIA (Alerta Estándar)
+    // 2. PRIORIDAD MEDIA / ESTÁNDAR
     else if (priority === 'medium') {
       soundService.playSoftChime();
       notificationService.send(`EdhuFlow: ${notif.title}`, {
         body: notif.description,
-        tag: notif.id || 'edhuflow-medium',
-        requireInteraction: false,
+        tag: uniqueTag,
+        requireInteraction: true,
         silent: isMuted
       });
     }
 
     // 3. PRIORIDAD BAJA (Aviso Silencioso)
-    else if (priority === 'low') {
+    else {
       notificationService.send(`EdhuFlow: ${notif.title}`, {
         body: notif.description,
-        tag: notif.id || 'edhuflow-low',
+        tag: uniqueTag,
         requireInteraction: false,
         silent: true
       });
