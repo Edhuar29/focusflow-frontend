@@ -361,6 +361,21 @@ function initTopBarTools(router) {
   });
 
   const authSwitchBtn = $('#btn-profile-auth-switch');
+  
+  const updateProfilePopoverAuthButtons = () => {
+    const isAuth = store.isAuthenticated();
+    if (authSwitchBtn) {
+      authSwitchBtn.style.display = isAuth ? 'none' : 'block';
+    }
+    if (profileLogoutBtn) {
+      profileLogoutBtn.style.display = isAuth ? 'block' : 'none';
+    }
+  };
+
+  updateProfilePopoverAuthButtons();
+  eventBus.on('auth:changed', updateProfilePopoverAuthButtons);
+  eventBus.on('store:userUpdated', updateProfilePopoverAuthButtons);
+
   if (authSwitchBtn) {
     authSwitchBtn.addEventListener('click', () => {
       soundService.playClick();
