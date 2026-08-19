@@ -45,9 +45,17 @@ export class AssistantView extends BaseView {
                         <div style="font-weight: var(--fw-bold); font-size: var(--text-sm); color: var(--text-primary); margin-bottom: 2px;">
                           ${escapeHTML(t.title)}
                         </div>
-                        <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">
-                          <span>⏰ ${escapeHTML(t.time || '12:00 PM')}</span> • 
-                          <span>📅 ${escapeHTML(t.date || getTodayISO())}</span> • 
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                          <span style="display: inline-flex; align-items: center; gap: 3px;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            ${escapeHTML(t.time || '12:00 PM')}
+                          </span>
+                          <span>•</span>
+                          <span style="display: inline-flex; align-items: center; gap: 3px;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            ${escapeHTML(t.date || getTodayISO())}
+                          </span>
+                          <span>•</span>
                           <span class="badge badge-priority-${(t.priority || 'medium').toLowerCase()}">${t.priority || 'Medio'}</span>
                         </div>
                         <button class="btn btn-primary btn-approve-task" data-msg-idx="${idx}" data-task-idx="${tIdx}" style="font-size: 11px; padding: 4px 10px; width: 100%;">
