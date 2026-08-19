@@ -1,5 +1,6 @@
 /**
- * FocusFlow Web - View: Pomodoro Timer with Task Synergy (#pomodoro-view)
+ * FocusFlow Web - View: Customizable Focus Timer (#pomodoro-view)
+ * Temporizador personalizable y adaptable al tiempo elegido por el usuario.
  */
 
 .pomodoro-container {
@@ -9,7 +10,7 @@
   justify-content: center;
   max-width: 620px;
   margin: var(--space-2) auto;
-  gap: var(--space-6);
+  gap: var(--space-5);
   text-align: center;
 }
 
@@ -41,9 +42,11 @@
   color: var(--text-primary);
 }
 
-/* Mode Switcher Chips */
-.pomodoro-modes {
+/* Quick Time Preset Chips */
+.timer-preset-chips {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   background-color: var(--bg-card);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-pill);
@@ -51,25 +54,27 @@
   gap: 4px;
 }
 
-.pomodoro-mode-btn {
-  padding: 0.5rem 1.25rem;
+.timer-preset-btn {
+  padding: 0.45rem 1rem;
   border-radius: var(--radius-pill);
-  font-size: var(--text-sm);
+  font-size: 12.5px;
   font-weight: var(--fw-semibold);
   color: var(--text-secondary);
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.pomodoro-mode-btn:hover {
+.timer-preset-btn:hover {
   color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.pomodoro-mode-btn.active {
+.timer-preset-btn.active {
   background-color: var(--accent-primary);
   color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
 }
 
 /* Clock Display Card */
@@ -77,12 +82,12 @@
   background-color: var(--bg-card);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-xl);
-  padding: var(--space-8) var(--space-6);
+  padding: var(--space-7) var(--space-6);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-6);
+  gap: var(--space-5);
   width: 100%;
   box-shadow: var(--shadow-md);
 }
@@ -118,11 +123,84 @@
 }
 
 .clock-state-label {
-  font-size: var(--text-xs);
+  font-size: 11px;
   color: var(--text-secondary);
   font-weight: var(--fw-medium);
   text-transform: uppercase;
-  letter-spacing: var(--ls-wider);
+  letter-spacing: 1px;
+}
+
+/* Custom Time Quick Adjuster */
+.custom-timer-adjuster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 6px 12px;
+}
+
+.btn-time-adjust {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-time-adjust:hover:not(:disabled) {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.btn-time-adjust:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.custom-time-inputs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 4px;
+}
+
+.custom-time-input {
+  width: 48px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: #FFFFFF;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  padding: 4px 2px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.custom-time-input:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+}
+
+.custom-time-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.custom-time-sep {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-muted);
 }
 
 /* Timer Controls */
@@ -141,5 +219,5 @@
   font-size: var(--text-base);
   font-weight: var(--fw-bold);
   border-radius: var(--radius-pill);
-  box-shadow: 0 4px 18px rgba(var(--accent-primary-rgb), 0.4);
+  box-shadow: 0 4px 18px rgba(37, 99, 235, 0.4);
 }

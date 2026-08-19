@@ -1,10 +1,7 @@
 /**
- * FocusFlow Web - Services: Global Background Pomodoro Timer Service
- * Sistema de temporizador determinista, robusto y limpio.
- * - Modo por defecto: Enfoque (25:00) en pausa (standby).
- * - NUNCA inicia solo: solo corre cuando el usuario presiona "Iniciar".
- * - Cambiar de modo (Enfoque, Descanso Corto, Descanso Largo) calibra el reloj y espera al usuario.
- * - Persistencia limpia en segundo plano mientras corre sin descalibraciones.
+ * FocusFlow Web - Services: Customizable Focus Timer Service
+ * Temporizador totalmente personalizable por el usuario (en minutos y segundos).
+ * Soporta ejecución en segundo plano, persistencia limpia, sonidos y notificaciones.
  */
 
 import { eventBus } from '../core/event-bus.js';
@@ -14,24 +11,16 @@ import { notificationScheduler } from './notification-scheduler.service.js';
 
 class PomodoroTimerService {
   constructor() {
-    this.durations = {
-      focus: 25 * 60,
-      shortBreak: 5 * 60,
-      longBreak: 15 * 60
-    };
-
-    this.currentMode = 'focus';
-    this.remainingSeconds = this.durations.focus;
-    this.totalDurationSeconds = this.durations.focus;
+    this.totalDurationSeconds = 25 * 60;
+    this.remainingSeconds = 25 * 60;
     this.isRunning = false;
     this.endTime = null;
     this.timerInterval = null;
 
-    this._initSession();
+    this._init();
   }
 
-  _initSession() {
-    // Al abrir la app, siempre inicia en standby limpio y seguro
+  _init() {
     this.isRunning = false;
     this.endTime = null;
     if (this.timerInterval) {
@@ -51,7 +40,6 @@ class PomodoroTimerService {
     }
 
     return {
-      currentMode: this.currentMode,
       remainingSeconds: seconds,
       totalDurationSeconds: this.totalDurationSeconds,
       isRunning: this.isRunning,
@@ -59,8 +47,39 @@ class PomodoroTimerService {
     };
   }
 
+  /**
+   * Configura la duración personalizada del temporizador (en segundos)
+   * @param {number} totalSeconds 
+   */
+  setDuration(totalSeconds) {
+    if (typeof totalSeconds !== 'number' || isNaN(totalSeconds)) return;
+    
+    // Rango seguro: mínimo 10 segundos, máximo 4 horas (14400s)
+    const clamped = Math.max(10, Math.min(14400, totalSeconds));
+    
+    this.pause();
+    this.totalDurationSeconds = clamped;
+    this.remainingSeconds = clamped;
+    this.endTime = null;
+
+    eventBus.emit('pomodoro:durationChanged', this.getState());
+  }
+
+  /**
+   * Ajusta el tiempo sumando o restando segundos (ej: +60s, -300s)
+   */
+  adjustTime(deltaSeconds) {
+    if (this.isRunning) return;
+
+    const newDuration = Math.max(60, this.totalDurationSeconds + deltaSeconds);
+    this.setDuration(newDuration);
+  }
+
   start() {
     if (this.isRunning) return;
+    if (this.remainingSeconds <= 0) {
+      this.remainingSeconds = this.totalDurationSeconds;
+    }
 
     this.isRunning = true;
     this.endTime = Date.now() + (this.remainingSeconds * 1000);
@@ -103,33 +122,11 @@ class PomodoroTimerService {
     eventBus.emit('pomodoro:paused', this.getState());
   }
 
-  /**
-   * Reinicia el modo actual a su duración inicial en estado de pausa (standby)
-   */
   reset() {
     this.pause();
-    this.remainingSeconds = this.durations[this.currentMode] || (25 * 60);
-    this.totalDurationSeconds = this.durations[this.currentMode] || (25 * 60);
+    this.remainingSeconds = this.totalDurationSeconds;
     this.endTime = null;
     eventBus.emit('pomodoro:reset', this.getState());
-  }
-
-  /**
-   * Cambia de modo (Enfoque 25m, Descanso Corto 5m, Descanso Largo 15m)
-   * Siempre queda en standby pausado esperando a que el usuario presione "Iniciar".
-   */
-  setMode(mode) {
-    if (!this.durations[mode]) mode = 'focus';
-
-    // Detener cualquier temporizador activo previo
-    this.pause();
-
-    this.currentMode = mode;
-    this.totalDurationSeconds = this.durations[mode];
-    this.remainingSeconds = this.durations[mode];
-    this.endTime = null;
-
-    eventBus.emit('pomodoro:modeChanged', this.getState());
   }
 
   skip() {
@@ -140,40 +137,23 @@ class PomodoroTimerService {
     this.pause();
     soundService.playCelebration();
 
-    if (this.currentMode === 'focus') {
-      const pomodoroState = store.getState().pomodoro;
-      pomodoroState.cyclesCompletedToday = (pomodoroState.cyclesCompletedToday || 0) + 1;
-      pomodoroState.totalFocusMinutes = (pomodoroState.totalFocusMinutes || 0) + Math.round(this.totalDurationSeconds / 60);
-      store._persistAndNotify('pomodoro', pomodoroState, 'pomodoro:updated');
+    const focusMinutes = Math.round(this.totalDurationSeconds / 60);
+    const pomodoroState = store.getState().pomodoro || {};
+    pomodoroState.cyclesCompletedToday = (pomodoroState.cyclesCompletedToday || 0) + 1;
+    pomodoroState.totalFocusMinutes = (pomodoroState.totalFocusMinutes || 0) + focusMinutes;
+    store._persistAndNotify('pomodoro', pomodoroState, 'pomodoro:updated');
 
-      notificationScheduler.addNotification({
-        title: '¡Sesión de Enfoque Completada!',
-        description: 'Has completado 25 minutos de concentración. Tómate un descanso corto de 5 minutos.',
-        priority: 'high',
-        type: 'pomodoro'
-      });
+    notificationScheduler.addNotification({
+      title: '¡Tiempo Completado!',
+      description: `Has finalizado tu sesión de enfoque de ${focusMinutes} minutos. ¡Gran trabajo!`,
+      priority: 'high',
+      type: 'pomodoro'
+    });
 
-      // Pasar al modo descanso corto en standby
-      this.currentMode = 'shortBreak';
-      this.totalDurationSeconds = this.durations.shortBreak;
-      this.remainingSeconds = this.durations.shortBreak;
-    } else {
-      notificationScheduler.addNotification({
-        title: 'Descanso Finalizado',
-        description: 'Tu tiempo de descanso terminó. ¿Listo para una nueva sesión de enfoque?',
-        priority: 'medium',
-        type: 'pomodoro'
-      });
-
-      // Volver a modo enfoque en standby
-      this.currentMode = 'focus';
-      this.totalDurationSeconds = this.durations.focus;
-      this.remainingSeconds = this.durations.focus;
-    }
-
+    this.remainingSeconds = this.totalDurationSeconds;
     this.endTime = null;
+
     eventBus.emit('pomodoro:completed', this.getState());
-    eventBus.emit('pomodoro:modeChanged', this.getState());
   }
 }
 
