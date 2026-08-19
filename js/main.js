@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 8. Inicializar selector de prioridades visuales en modal
   initModalPrioritySelector();
 
-  console.log('FocusFlow Web inicializado correctamente.');
+  console.log('EdhuFlow inicializado correctamente.');
 });
 
 /**

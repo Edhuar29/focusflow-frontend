@@ -17,7 +17,7 @@ export class AssistantView extends BaseView {
     this.messages = [
       {
         sender: 'assistant',
-        text: '¡Hola, Francisco! Soy tu Asistente FocusFlow impulsado por IA. Puedes dictarme o escribirme tareas en lenguaje natural (ej: "Estudiar física mañana a las 4pm con prioridad alta") o pedirme recomendaciones para organizar tu jornada.'
+        text: '¡Hola, Francisco! Soy tu Asistente EdhuFlow impulsado por IA. Puedes dictarme o escribirme tareas en lenguaje natural (ej: "Estudiar física mañana a las 4pm con prioridad alta") o pedirme recomendaciones para organizar tu jornada.'
       }
     ];
     this.isListening = false;
