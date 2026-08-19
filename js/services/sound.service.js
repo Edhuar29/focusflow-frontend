@@ -106,62 +106,77 @@ class SoundService {
   }
 
   /**
-   * 🔴 PRIORIDAD ALTA: Alarma Urgente y Enérgica (Doble ráfaga sonora)
+   * 🔴 PRIORIDAD ALTA: Alarma Urgente y Enérgica (Cuádruple ráfaga sonora)
    */
-  playUrgentAlarm() {
+  async playUrgentAlarm() {
     if (this.muted) return;
     this.init();
+    if (this.ctx && this.ctx.state === 'suspended') {
+      try {
+        await this.ctx.resume();
+      } catch (e) {}
+    }
     if (!this.ctx) return;
 
     try {
-      const bursts = [0, 0.16, 0.32];
+      const startTime = this.ctx.currentTime + 0.02;
+      const bursts = [0, 0.18, 0.36, 0.54];
       bursts.forEach(delay => {
-        const now = this.ctx.currentTime + delay;
+        const now = startTime + delay;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
 
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(880, now);
-        osc.frequency.setValueAtTime(1174.66, now + 0.06);
+        osc.frequency.setValueAtTime(1318.51, now + 0.08);
 
-        gain.gain.setValueAtTime(0.25, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
 
         osc.connect(gain);
         gain.connect(this.ctx.destination);
 
         osc.start(now);
-        osc.stop(now + 0.14);
+        osc.stop(now + 0.16);
       });
-    } catch (e) {}
+    } catch (e) {
+      console.warn('[SoundService] Error al reproducir playUrgentAlarm:', e);
+    }
   }
 
   /**
-   * 🟡 PRIORIDAD MEDIA: Chime Suave y Armónico (1 solo toque)
+   * 🟡 PRIORIDAD MEDIA: Chime Suave y Armónico (Doble tono campana)
    */
-  playSoftChime() {
+  async playSoftChime() {
     if (this.muted) return;
     this.init();
+    if (this.ctx && this.ctx.state === 'suspended') {
+      try {
+        await this.ctx.resume();
+      } catch (e) {}
+    }
     if (!this.ctx) return;
 
     try {
-      const now = this.ctx.currentTime;
+      const startTime = this.ctx.currentTime + 0.02;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
 
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(659.25, now);
-      osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+      osc.frequency.setValueAtTime(659.25, startTime);
+      osc.frequency.exponentialRampToValueAtTime(987.77, startTime + 0.18);
 
-      gain.gain.setValueAtTime(0.12, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      gain.gain.setValueAtTime(0.3, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.55);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
 
-      osc.start(now);
-      osc.stop(now + 0.4);
-    } catch (e) {}
+      osc.start(startTime);
+      osc.stop(startTime + 0.55);
+    } catch (e) {
+      console.warn('[SoundService] Error al reproducir playSoftChime:', e);
+    }
   }
 
   /**

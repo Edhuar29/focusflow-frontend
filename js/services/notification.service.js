@@ -36,11 +36,19 @@ class NotificationService {
     this.checkPermission();
     if (this.hasPermission && 'Notification' in window) {
       try {
+        const iconUrl = new URL('./assets/images/logo.png', window.location.href).href;
+        const badgeUrl = new URL('./assets/images/favicon.png', window.location.href).href;
         const notif = new Notification(title, {
-          icon: './assets/images/logo.png',
-          badge: './assets/images/favicon.png',
+          icon: iconUrl,
+          badge: badgeUrl,
           ...options
         });
+
+        notif.onclick = () => {
+          window.focus();
+          notif.close();
+        };
+
         return notif;
       } catch (e) {
         console.warn('[NotificationService] Error al disparar notificación de escritorio:', e);
