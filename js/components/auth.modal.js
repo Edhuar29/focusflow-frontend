@@ -297,7 +297,7 @@ export class AuthModal {
 
       return `
         <div class="google-account-item" data-google-email="${escapeHTML(acc.email)}" data-google-name="${escapeHTML(acc.name)}">
-          <div style="display: flex; align-items: center; width: 100%; gap: 10px;">
+          <div class="google-account-main-click" title="Entrar como ${escapeHTML(acc.name || acc.email)}">
             <div class="google-account-avatar" style="background-color: ${color};">
               ${escapeHTML(initial)}
             </div>
@@ -305,46 +305,49 @@ export class AuthModal {
               <div class="google-account-name">${escapeHTML(acc.name)}</div>
               <div class="google-account-email">${escapeHTML(acc.email)}</div>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-              <button type="button" class="google-account-badge" data-action="connect" title="Iniciar sesión con esta cuenta">
-                <span>Conectar</span>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </button>
-              <button type="button" class="btn-remove-google-account" data-action="remove" data-email="${escapeHTML(acc.email)}" title="Eliminar cuenta de este dispositivo">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 6h18"></path>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                </svg>
-                <span>Quitar</span>
-              </button>
+            <div class="google-account-arrow" title="Iniciar sesión">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
             </div>
           </div>
+          <button type="button" class="google-account-remove-btn" data-action="remove" data-email="${escapeHTML(acc.email)}" title="Quitar cuenta de este dispositivo" aria-label="Quitar cuenta">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+          </button>
         </div>
       `;
     }).join('');
 
-    // Manejar eventos de clic (Conectar o Eliminar)
+    // Manejar eventos de clic (Entrar o Quitar)
     const items = this.googleAccountsList.querySelectorAll('.google-account-item');
     items.forEach(item => {
-      item.onclick = async (e) => {
-        const removeBtn = e.target.closest('.btn-remove-google-account, [data-action="remove"]');
-        if (removeBtn) {
+      const mainClick = item.querySelector('.google-account-main-click');
+      const removeBtn = item.querySelector('.google-account-remove-btn');
+
+      if (mainClick) {
+        mainClick.onclick = async () => {
+          const email = item.getAttribute('data-google-email');
+          const name = item.getAttribute('data-google-name');
+          if (email) {
+            await this.loginWithGoogleAccount(email, name || email.split('@')[0]);
+          }
+        };
+      }
+
+      if (removeBtn) {
+        removeBtn.onclick = (e) => {
           e.stopPropagation();
           const targetEmail = removeBtn.getAttribute('data-email');
           if (targetEmail) {
             this.removeGoogleAccount(targetEmail);
           }
-          return;
-        }
-
-        const email = item.getAttribute('data-google-email');
-        const name = item.getAttribute('data-google-name');
-        if (email) {
-          await this.loginWithGoogleAccount(email, name || email.split('@')[0]);
-        }
-      };
+        };
+      }
     });
   }
 
