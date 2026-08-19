@@ -948,8 +948,16 @@
               <form id="form-auth-google" class="auth-form">
                 <div class="auth-input-group">
                   <div class="auth-input-wrapper">
-                    <input type="email" id="google-email-input" class="auth-input-control" placeholder="tu_otra_cuenta@gmail.com" autocomplete="email" />
+                    <input type="email" id="google-email-input" class="auth-input-control" placeholder="tu_cuenta@gmail.com" autocomplete="username email" name="email" />
                   </div>
+                </div>
+
+                <!-- Caja de sugerencias de autocompletado rápido -->
+                <div class="auth-autofill-box" id="google-autofill-suggestion-box" style="display: none;">
+                  <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 5px;">
+                    ¿Deseas autocompletar con una cuenta detectada?
+                  </div>
+                  <div id="google-autofill-chips-container" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
                 </div>
 
                 <div style="display: flex; gap: 8px; margin-top: 10px;">

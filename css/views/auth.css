@@ -352,6 +352,33 @@
   color: #F8FAFC;
 }
 
+.auth-autofill-box {
+  margin-top: 8px;
+  text-align: left;
+}
+
+.auth-autofill-suggestion-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(37, 99, 235, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #60A5FA;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-autofill-suggestion-chip:hover {
+  background: rgba(37, 99, 235, 0.25);
+  border-color: #3B82F6;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
 /* Divisor elegante "o con tu correo" */
 .auth-divider {
   display: flex;

@@ -221,11 +221,58 @@ export class AuthModal {
     if (this.viewRegister) this.viewRegister.style.display = 'none';
     if (this.viewGoogle) this.viewGoogle.style.display = 'block';
 
+    const accounts = this.getSavedGoogleAccounts();
     if (this.googleCustomSection) {
-      this.googleCustomSection.style.display = 'none';
+      this.googleCustomSection.style.display = accounts.length === 0 ? 'block' : 'none';
     }
 
     this.renderGoogleAccountsList();
+    this.renderAutofillSuggestions();
+  }
+
+  renderAutofillSuggestions() {
+    const box = document.getElementById('google-autofill-suggestion-box');
+    const container = document.getElementById('google-autofill-chips-container');
+    const input = document.getElementById('google-email-input');
+    if (!box || !container || !input) return;
+
+    // Detectar cuentas conocidas o sugeridas en el dispositivo
+    const suggestions = new Set(['dannyeduardoanasi@gmail.com']);
+    const emailPrefs = store.getEmailPreferences();
+    if (emailPrefs && emailPrefs.notificationEmail && emailPrefs.notificationEmail.includes('@gmail')) {
+      suggestions.add(emailPrefs.notificationEmail.toLowerCase());
+    }
+    const currentUser = store.getUser();
+    if (currentUser && currentUser.email && currentUser.email.includes('@gmail')) {
+      suggestions.add(currentUser.email.toLowerCase());
+    }
+
+    const list = Array.from(suggestions);
+    if (list.length === 0) {
+      box.style.display = 'none';
+      return;
+    }
+
+    box.style.display = 'block';
+    container.innerHTML = list.map(email => `
+      <button type="button" class="auth-autofill-suggestion-chip" data-autofill-email="${escapeHTML(email)}" title="Autocompletar con este correo">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+        </svg>
+        <span>${escapeHTML(email)}</span>
+      </button>
+    `).join('');
+
+    container.querySelectorAll('.auth-autofill-suggestion-chip').forEach(btn => {
+      btn.onclick = () => {
+        const val = btn.getAttribute('data-autofill-email');
+        if (val) {
+          input.value = val;
+          this.clearFieldError(input);
+          input.focus();
+        }
+      };
+    });
   }
 
   /* --- Cuentas de Google Guardadas y Selector --- */
