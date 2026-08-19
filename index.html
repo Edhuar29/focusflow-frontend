@@ -196,6 +196,26 @@
               </label>
             </div>
 
+            <!-- Fila de Control y Pruebas de Notificaciones de Escritorio (PC/Mac) -->
+            <div id="desktop-notif-row" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border-subtle); gap: 6px;">
+              <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary);">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                  <line x1="8" y1="21" x2="16" y2="21"></line>
+                  <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+                <span id="desktop-notif-status-label">Alertas de PC:</span>
+              </div>
+              <div style="display: flex; gap: 4px;">
+                <button type="button" class="btn btn-primary" id="btn-enable-desktop-notifs" style="font-size: 10.5px; padding: 2px 7px;">
+                  Activar en PC
+                </button>
+                <button type="button" class="btn btn-secondary" id="btn-test-desktop-notifs" style="font-size: 10.5px; padding: 2px 7px;" title="Probar notificación en tu pantalla y correo">
+                  Probar
+                </button>
+              </div>
+            </div>
+
             <div class="popover-body" id="notifications-list">
               <div style="padding: var(--space-6) var(--space-4); text-align: center; color: var(--text-muted); font-size: 11.5px;">
                 No tienes notificaciones pendientes

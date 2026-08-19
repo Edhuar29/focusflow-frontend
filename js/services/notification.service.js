@@ -1,5 +1,5 @@
 /**
- * FocusFlow Web - Services: Web Notifications Service
+ * EdhuFlow - Services: Web & Desktop OS Notifications Service
  */
 
 class NotificationService {
@@ -12,6 +12,12 @@ class NotificationService {
     if ('Notification' in window) {
       this.hasPermission = Notification.permission === 'granted';
     }
+    return this.hasPermission;
+  }
+
+  getPermissionStatus() {
+    if (!('Notification' in window)) return 'unsupported';
+    return Notification.permission;
   }
 
   async requestPermission() {
@@ -21,20 +27,41 @@ class NotificationService {
       this.hasPermission = permission === 'granted';
       return this.hasPermission;
     } catch (e) {
-      console.warn('Error solicitando permisos de notificación:', e);
+      console.warn('[NotificationService] Error solicitando permisos de notificación:', e);
       return false;
     }
   }
 
   send(title, options = {}) {
+    this.checkPermission();
     if (this.hasPermission && 'Notification' in window) {
-      return new Notification(title, {
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
-        ...options
-      });
+      try {
+        const notif = new Notification(title, {
+          icon: './assets/images/logo.png',
+          badge: './assets/images/favicon.png',
+          ...options
+        });
+        return notif;
+      } catch (e) {
+        console.warn('[NotificationService] Error al disparar notificación de escritorio:', e);
+      }
     }
     return null;
+  }
+
+  async sendTestDesktopNotification() {
+    const granted = await this.requestPermission();
+    if (!granted) {
+      return { success: false, reason: 'permission_denied' };
+    }
+
+    const notif = this.send('EdhuFlow — Notificación de Escritorio', {
+      body: '¡Excelente! Las notificaciones en tu computadora están activas y funcionando correctamente.',
+      tag: 'edhuflow-test-alert',
+      requireInteraction: false
+    });
+
+    return { success: !!notif };
   }
 }
 

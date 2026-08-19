@@ -7,6 +7,7 @@
 
 import { store } from '../core/store.js';
 import { soundService } from './sound.service.js';
+import { notificationService } from './notification.service.js';
 import { apiService } from './api.service.js';
 import { StorageService } from './storage.service.js';
 import { toast } from '../components/toast.component.js';
@@ -271,50 +272,33 @@ class NotificationSchedulerService {
     // 1. PRIORIDAD ALTA (Modo Alarma Crítica)
     if (priority === 'high') {
       soundService.playUrgentAlarm();
-
-      if ('Notification' in window && Notification.permission === 'granted' && !isMuted) {
-        try {
-          new Notification(`FocusFlow [URGENTE]: ${notif.title}`, {
-            body: notif.description,
-            requireInteraction: true,
-            silent: false
-          });
-        } catch (e) {
-          console.warn('Desktop Notification warning:', e);
-        }
-      }
+      notificationService.send(`EdhuFlow [URGENTE]: ${notif.title}`, {
+        body: notif.description,
+        tag: notif.id || 'edhuflow-urgent',
+        requireInteraction: true,
+        silent: isMuted
+      });
     }
 
     // 2. PRIORIDAD MEDIA (Alerta Estándar)
     else if (priority === 'medium') {
       soundService.playSoftChime();
-
-      if ('Notification' in window && Notification.permission === 'granted' && !isMuted) {
-        try {
-          new Notification(`FocusFlow: ${notif.title}`, {
-            body: notif.description,
-            requireInteraction: false,
-            silent: isMuted
-          });
-        } catch (e) {
-          console.warn('Desktop Notification warning:', e);
-        }
-      }
+      notificationService.send(`EdhuFlow: ${notif.title}`, {
+        body: notif.description,
+        tag: notif.id || 'edhuflow-medium',
+        requireInteraction: false,
+        silent: isMuted
+      });
     }
 
     // 3. PRIORIDAD BAJA (Aviso Silencioso)
     else if (priority === 'low') {
-      if ('Notification' in window && Notification.permission === 'granted') {
-        try {
-          new Notification(`FocusFlow: ${notif.title}`, {
-            body: notif.description,
-            requireInteraction: false,
-            silent: true
-          });
-        } catch (e) {
-          console.warn('Desktop Notification warning:', e);
-        }
-      }
+      notificationService.send(`EdhuFlow: ${notif.title}`, {
+        body: notif.description,
+        tag: notif.id || 'edhuflow-low',
+        requireInteraction: false,
+        silent: true
+      });
     }
   }
 

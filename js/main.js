@@ -7,6 +7,8 @@
 import { store } from './core/store.js';
 import { Router } from './core/router.js';
 import { soundService } from './services/sound.service.js';
+import { notificationService } from './services/notification.service.js';
+import { apiService } from './services/api.service.js';
 import { toast } from './components/toast.component.js';
 import { StorageService } from './services/storage.service.js';
 import { notificationScheduler } from './services/notification-scheduler.service.js';
@@ -309,6 +311,66 @@ function initTopBarTools(router) {
       soundService.playClick();
       store.clearNotifications();
       toast.info('Notificaciones limpiadas');
+    });
+  }
+
+  // Activar y probar notificaciones de escritorio (PC / Mac OS)
+  const enableDesktopBtn = $('#btn-enable-desktop-notifs');
+  const testDesktopBtn = $('#btn-test-desktop-notifs');
+  const desktopStatusLabel = $('#desktop-notif-status-label');
+
+  const updateDesktopNotifUI = () => {
+    const status = notificationService.getPermissionStatus();
+    if (desktopStatusLabel) {
+      if (status === 'granted') {
+        desktopStatusLabel.innerHTML = `<span style="color: var(--color-success, #10B981); font-weight: bold;">● PC Activo</span>`;
+        if (enableDesktopBtn) enableDesktopBtn.style.display = 'none';
+      } else if (status === 'denied') {
+        desktopStatusLabel.innerHTML = `<span style="color: var(--color-danger, #EF4444);">✕ PC Bloqueado</span>`;
+        if (enableDesktopBtn) enableDesktopBtn.style.display = 'inline-block';
+      } else {
+        desktopStatusLabel.innerHTML = `<span>Alertas de PC:</span>`;
+        if (enableDesktopBtn) enableDesktopBtn.style.display = 'inline-block';
+      }
+    }
+  };
+
+  updateDesktopNotifUI();
+
+  if (enableDesktopBtn) {
+    enableDesktopBtn.addEventListener('click', async () => {
+      soundService.playClick();
+      const granted = await notificationService.requestPermission();
+      updateDesktopNotifUI();
+      if (granted) {
+        toast.success('Notificaciones de escritorio activadas para tu computadora.');
+      } else {
+        toast.warning('Permisos requeridos. Habilita las notificaciones en tu navegador.');
+      }
+    });
+  }
+
+  if (testDesktopBtn) {
+    testDesktopBtn.addEventListener('click', async () => {
+      soundService.playSoftChime();
+      const res = await notificationService.sendTestDesktopNotification();
+      
+      const emailPrefs = store.getEmailPreferences();
+      const currentUser = store.getUser();
+      const targetEmail = emailPrefs.notificationEmail || (currentUser ? currentUser.email : '');
+      
+      if (targetEmail) {
+        apiService.sendTestEmail(targetEmail)
+          .then(() => console.log('[TestNotification] Correo de prueba despachado'))
+          .catch(err => console.warn('[TestNotification] Error correo prueba:', err));
+      }
+
+      if (res.success) {
+        toast.success('Notificación de prueba enviada a tu pantalla y correo.');
+      } else {
+        toast.info('Permiso requerido. Haz clic en "Activar en PC" para ver alertas en tu pantalla.');
+      }
+      updateDesktopNotifUI();
     });
   }
 

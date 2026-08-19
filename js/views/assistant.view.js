@@ -14,18 +14,71 @@ import { $, escapeHTML } from '../utils/dom.utils.js';
 export class AssistantView extends BaseView {
   constructor() {
     super('assistant-view');
-    const user = store.getUser();
-    const userName = (user && user.name) ? user.name.split(' ')[0] : 'Usuario';
-
-    this.messages = [
-      {
-        sender: 'assistant',
-        text: `¡Hola, ${userName}! Soy tu Asistente EdhuFlow impulsado por IA. Puedes dictarme o escribirme tareas en lenguaje natural (ej: "Estudiar física mañana a las 4pm con prioridad alta" o "Recordatorio en 5 minutos para prueba 1") o pedirme recomendaciones para organizar tu jornada.`
-      }
-    ];
+    this.messages = this._loadHistory();
     this.isListening = false;
     this.isThinking = false;
     this.recognition = null;
+  }
+
+  _getStorageKey() {
+    const user = store.getUser();
+    return user && user.id ? `edhuflow_ai_chat_${user.id}` : 'edhuflow_ai_chat_guest';
+  }
+
+  _loadHistory() {
+    try {
+      const saved = localStorage.getItem(this._getStorageKey());
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('[AssistantView] Error loading chat history:', e);
+    }
+    const user = store.getUser();
+    const userName = (user && user.name) ? user.name.split(' ')[0] : 'Usuario';
+    return [
+      {
+        sender: 'assistant',
+        text: `¡Hola, ${userName}! Soy tu Asistente EdhuFlow impulsado por IA. Puedes dictarme o escribirme tareas en lenguaje natural (ej: "Estudiar física mañana a las 4pm con prioridad alta" o "Recordatorio en 5 minutos con el nombre de prueba 1") o pedirme recomendaciones para organizar tu jornada.`
+      }
+    ];
+  }
+
+  _saveHistory() {
+    try {
+      const toSave = this.messages.slice(-50);
+      localStorage.setItem(this._getStorageKey(), JSON.stringify(toSave));
+    } catch (e) {
+      console.warn('[AssistantView] Error saving chat history:', e);
+    }
+  }
+
+  _clearHistory() {
+    const user = store.getUser();
+    const userName = (user && user.name) ? user.name.split(' ')[0] : 'Usuario';
+    this.messages = [
+      {
+        sender: 'assistant',
+        text: `¡Hola, ${userName}! Conversación reiniciada. ¿En qué puedo ayudarte hoy?`
+      }
+    ];
+    this._saveHistory();
+    soundService.playClick();
+    toast.info('Conversación del asistente reiniciada.');
+    this.render();
+    this.bindEvents();
+  }
+
+  _sanitizeInput(raw) {
+    if (!raw || typeof raw !== 'string') return '';
+    let clean = raw.slice(0, 500);
+    clean = clean.replace(/<[^>]*>?/gm, '');
+    clean = clean.replace(/javascript:/gi, '');
+    clean = clean.replace(/on\w+=/gi, '');
+    return clean.trim();
   }
 
   render() {
@@ -34,12 +87,32 @@ export class AssistantView extends BaseView {
     const user = store.getUser();
     const userName = (user && user.name) ? user.name.split(' ')[0] : 'Usuario';
     if (this.messages.length > 0 && this.messages[0].sender === 'assistant' && this.messages[0].text.startsWith('¡Hola,')) {
-      this.messages[0].text = `¡Hola, ${userName}! Soy tu Asistente EdhuFlow impulsado por IA. Puedes dictarme o escribirme tareas en lenguaje natural (ej: "Estudiar física mañana a las 4pm con prioridad alta" o "Recordatorio en 5 minutos con el nombre de prueba 1") o pedirme recomendaciones para organizar tu jornada.`;
+      this.messages[0].text = `¡Hola, ${userName}! Soy tu Asistente EdhuFlow impulsado por IA. Puedes dictarme o escribirme tareas en lenguaje natural (ej: "Estudiar física mañana a las 4pm con prioridad alta" o "Recordatorio en 5 minutos con el nombre de prueba 1") o pedirme recomendaciones para organizar tu jornada.`
     }
 
     this.container.innerHTML = `
       <div class="assistant-container">
         
+        <!-- Header con Identidad EdhuFlow y Limpiar Chat -->
+        <div class="assistant-header-bar" style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--border-subtle);">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 28px; height: 28px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(124, 58, 237, 0.4);">
+              <img src="./assets/images/logo.png" alt="EdhuFlow" style="width: 100%; height: 100%; object-fit: cover;" />
+            </div>
+            <div>
+              <span style="font-weight: var(--fw-bold); font-size: var(--text-sm); color: var(--text-primary);">Asistente EdhuFlow</span>
+              <span style="display: block; font-size: 11px; color: var(--text-secondary);">Encuentra tu ritmo, domina tu enfoque</span>
+            </div>
+          </div>
+          <button type="button" class="btn btn-secondary" id="btn-clear-ai-chat" style="font-size: 11px; padding: 4px 10px; display: inline-flex; align-items: center; gap: 4px;" title="Limpiar conversación">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            <span>Limpiar Chat</span>
+          </button>
+        </div>
+
         <!-- Chat History -->
         <div class="chat-history" id="chat-history">
           ${this.messages.map((m, idx) => `
@@ -85,7 +158,7 @@ export class AssistantView extends BaseView {
             <div class="chat-message assistant">
               <div class="chat-bubble" style="display: flex; align-items: center; gap: 6px; padding: 10px 14px;">
                 <span class="alarm-pulse-dot" style="width: 8px; height: 8px; background: var(--accent-primary);"></span>
-                <span style="font-size: var(--text-xs); color: var(--text-secondary);">FocusFlow IA está analizando tu solicitud...</span>
+                <span style="font-size: var(--text-xs); color: var(--text-secondary);">EdhuFlow IA está procesando tu solicitud...</span>
               </div>
             </div>
           ` : ''}
@@ -108,6 +181,7 @@ export class AssistantView extends BaseView {
             id="chat-input" 
             placeholder="Escribe o dicta: 'Examen de cálculo el viernes a las 3pm'..." 
             autocomplete="off" 
+            maxlength="500"
           />
 
           <button class="btn btn-primary" id="btn-send-chat">
@@ -127,12 +201,17 @@ export class AssistantView extends BaseView {
     const input = $('#chat-input', this.container);
     const sendBtn = $('#btn-send-chat', this.container);
     const micBtn = $('#btn-mic', this.container);
+    const clearBtn = $('#btn-clear-ai-chat', this.container);
+
+    if (clearBtn) {
+      clearBtn.onclick = () => this._clearHistory();
+    }
 
     const handleSend = () => {
-      const text = input.value.trim();
-      if (!text || this.isThinking) return;
+      const sanitized = this._sanitizeInput(input.value);
+      if (!sanitized || this.isThinking) return;
       input.value = '';
-      this._sendMessage(text);
+      this._sendMessage(sanitized);
     };
 
     if (sendBtn) sendBtn.onclick = handleSend;
@@ -187,6 +266,7 @@ export class AssistantView extends BaseView {
   async _sendMessage(userText) {
     soundService.playClick();
     this.messages.push({ sender: 'user', text: userText });
+    this._saveHistory();
     this.isThinking = true;
     this.render();
     this.bindEvents();
@@ -223,6 +303,7 @@ export class AssistantView extends BaseView {
       });
     }
 
+    this._saveHistory();
     this.render();
     this.bindEvents();
   }
