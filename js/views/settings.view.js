@@ -120,30 +120,20 @@ export class SettingsView extends BaseView {
                   <span class="toggle-slider"></span>
                 </label>
               </div>
-            </div>
-
-            <!-- Botones de Acción -->
-            <div style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
-              <button class="btn btn-primary" id="btn-save-email-prefs">
+                    <!-- Botón de Acción Principal -->
+            <div>
+              <button class="btn btn-primary" id="btn-save-email-prefs" style="width: 100%; max-width: 320px; font-weight: 600;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;">
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
                 <span>Guardar Preferencias de Correo</span>
-              </button>
-
-              <button class="btn btn-secondary" id="btn-send-test-email">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
-                  <line x1="22" y1="2" x2="11" y2="13"></line>
-                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                </svg>
-                <span>Enviar Correo de Prueba a mi Gmail</span>
               </button>
             </div>
 
           </div>
         </div>
 
-        <!-- 2. Notificaciones en la Pantalla de tu Computadora (PC) -->
+        <!-- 2. Permisos de Notificaciones en Pantalla -->
         <div class="settings-section">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -151,26 +141,26 @@ export class SettingsView extends BaseView {
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
               </svg>
-              <h3 class="settings-section-title" style="margin: 0;">Notificaciones en la Pantalla de tu Computadora</h3>
+              <h3 class="settings-section-title" style="margin: 0;">Notificaciones en Pantalla</h3>
             </div>
             <span id="settings-desktop-status-badge" style="font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px;">
               Verificando...
             </span>
           </div>
-          <p style="color: var(--text-secondary); font-size: var(--text-sm); margin-bottom: var(--space-4);">
-            Muestra alertas visuales nativas del sistema operativo y timbres de sonido cuando se cumpla la hora de tareas e hidratación:
+          <p style="color: var(--text-secondary); font-size: var(--text-sm); margin-bottom: var(--space-3);">
+            Estado de las alertas visuales y timbres de sonido en este dispositivo para tareas e hidratación.
           </p>
-          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <div id="settings-request-permission-wrap" style="display: none;">
             <button class="btn btn-secondary" id="btn-settings-request-desktop" style="font-size: var(--text-xs); display: flex; align-items: center; gap: 6px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               </svg>
-              <span>Probar Alerta en Pantalla Ahora</span>
+              <span>Permitir Notificaciones en este Navegador</span>
             </button>
           </div>
         </div>
 
-        <!-- 2. Paleta de Acentos de Color -->
+        <!-- 3. Paleta de Acentos de Color -->
         <div class="settings-section">
           <h3 class="settings-section-title">Paleta de Color de Acento</h3>
           <p style="color: var(--text-secondary); font-size: var(--text-sm); margin-bottom: var(--space-3);">
@@ -182,40 +172,6 @@ export class SettingsView extends BaseView {
             <button class="color-swatch ${currentAccent === 'amber' ? 'active' : ''}" data-accent-choice="amber" title="Ámbar Dorado" aria-label="Ámbar Dorado"></button>
             <button class="color-swatch ${currentAccent === 'pink' ? 'active' : ''}" data-accent-choice="pink" title="Rosa Neón" aria-label="Rosa Neón"></button>
             <button class="color-swatch ${currentAccent === 'ocean' ? 'active' : ''}" data-accent-choice="ocean" title="Cian Océano" aria-label="Cian Océano"></button>
-          </div>
-        </div>
-
-        <!-- 3. Seguridad y Gestión de Datos (Offline-First) -->
-        <div class="settings-section">
-          <h3 class="settings-section-title">Seguridad y Respaldo de Datos</h3>
-          <p style="color: var(--text-secondary); font-size: var(--text-sm); margin-bottom: var(--space-3);">
-            Tus datos están protegidos en tu almacenamiento local y sincronizados con tu cuenta:
-          </p>
-          <div style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
-            <button class="btn btn-secondary" id="btn-export-json">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              <span>Exportar Respaldo JSON</span>
-            </button>
-
-            <button class="btn btn-secondary" id="btn-export-csv">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-              </svg>
-              <span>Exportar Tareas en CSV</span>
-            </button>
-
-            <button class="btn btn-secondary" id="btn-reset-data" style="color: var(--color-danger); border-color: rgba(239, 68, 68, 0.4);">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              </svg>
-              <span>Restablecer Estado Local</span>
-            </button>
           </div>
         </div>
 
@@ -238,18 +194,19 @@ export class SettingsView extends BaseView {
     let isCustomSelected = choiceCustom ? choiceCustom.classList.contains('active') : false;
 
     // 1. Selector de opción: Correo de cuenta
-    if (choiceAccount && choiceCustom && emailInput) {
+    if (choiceAccount) {
       choiceAccount.onclick = () => {
         soundService.playClick();
-        choiceAccount.classList.add('active');
-        choiceCustom.classList.remove('active');
         isCustomSelected = false;
+        choiceAccount.classList.add('active');
+        choiceCustom?.classList.remove('active');
 
-        emailInput.value = accountEmail;
-        emailInput.readOnly = true;
-        emailInput.style.opacity = '0.85';
-        emailInput.style.cursor = 'default';
-
+        if (emailInput) {
+          emailInput.value = accountEmail;
+          emailInput.readOnly = true;
+          emailInput.style.opacity = '0.85';
+          emailInput.style.cursor = 'default';
+        }
         if (modeBadge) {
           modeBadge.textContent = 'Sincronizado con tu cuenta';
           modeBadge.style.color = '#38BDF8';
@@ -258,22 +215,25 @@ export class SettingsView extends BaseView {
           modeHelp.textContent = 'Las notificaciones llegarán al correo con el que iniciaste sesión.';
         }
       };
+    }
 
-      // Selector de opción: Usar otro correo
+    // 2. Selector de opción: Correo personalizado
+    if (choiceCustom) {
       choiceCustom.onclick = () => {
         soundService.playClick();
-        choiceCustom.classList.add('active');
-        choiceAccount.classList.remove('active');
         isCustomSelected = true;
+        choiceCustom.classList.add('active');
+        choiceAccount?.classList.remove('active');
 
-        emailInput.readOnly = false;
-        emailInput.style.opacity = '1';
-        emailInput.style.cursor = 'text';
-        emailInput.focus();
-
+        if (emailInput) {
+          emailInput.readOnly = false;
+          emailInput.style.opacity = '1';
+          emailInput.style.cursor = 'text';
+          emailInput.focus();
+        }
         if (modeBadge) {
           modeBadge.textContent = 'Modo personalizado activo';
-          modeBadge.style.color = 'var(--accent-primary)';
+          modeBadge.style.color = 'var(--text-muted)';
         }
         if (modeHelp) {
           modeHelp.textContent = 'Escribe el correo alternativo donde deseas recibir los avisos.';
@@ -281,83 +241,66 @@ export class SettingsView extends BaseView {
       };
     }
 
-    // 2. Guardar Preferencias de Correo
+    // 3. Guardar preferencias de correo
     const saveEmailBtn = $('#btn-save-email-prefs', this.container);
     if (saveEmailBtn) {
       saveEmailBtn.onclick = () => {
-        const toggleTasks = $('#toggle-email-tasks', this.container);
-        const toggleWater = $('#toggle-email-water', this.container);
+        soundService.playClick();
+        const emailVal = emailInput ? emailInput.value.trim() : '';
 
-        if (!emailInput) return;
-        const email = emailInput.value.trim();
-
-        if (isCustomSelected && (!email || !email.includes('@') || !email.includes('.'))) {
+        if (isCustomSelected && (!emailVal || !emailVal.includes('@'))) {
           toast.warning('Por favor ingresa un correo electrónico válido');
-          emailInput.focus();
+          emailInput?.focus();
           return;
         }
 
-        soundService.playClick();
+        const emailTaskAlerts = $('#toggle-email-tasks', this.container)?.checked || false;
+        const emailWaterAlerts = $('#toggle-email-water', this.container)?.checked || false;
+
+        const targetEmail = isCustomSelected ? emailVal : accountEmail;
+
         store.setEmailPreferences({
-          useCustomEmail: isCustomSelected,
-          notificationEmail: isCustomSelected ? email : accountEmail,
-          emailTaskAlerts: toggleTasks ? toggleTasks.checked : true,
-          emailWaterAlerts: toggleWater ? toggleWater.checked : true,
+          emailTaskAlerts,
+          emailWaterAlerts,
+          notificationEmail: targetEmail,
+          useCustomEmail: isCustomSelected
         });
 
-        toast.success('Preferencias de correo guardadas correctamente');
+        // Sincronizar también con la configuración de hidratación
+        const hydration = store.getState().hydration;
+        if (hydration && hydration.reminder) {
+          hydration.reminder.email = targetEmail;
+          hydration.reminder.useCustomEmail = isCustomSelected;
+          hydration.reminder.emailNotification = emailWaterAlerts;
+          store._persistAndNotify('hydration', hydration, 'hydration:updated');
+        }
+
+        toast.success(`Preferencias guardadas. Correo de avisos: ${targetEmail}`);
       };
     }
 
-    // 3. Enviar Correo de Prueba a Gmail
-    const testEmailBtn = $('#btn-send-test-email', this.container);
-    if (testEmailBtn) {
-      testEmailBtn.onclick = async () => {
-        const targetEmail = emailInput ? emailInput.value.trim() : accountEmail;
-
-        if (!targetEmail || !targetEmail.includes('@')) {
-          toast.warning('Ingresa un correo válido antes de enviar la prueba');
-          return;
-        }
-
-        soundService.playSoftChime();
-        testEmailBtn.disabled = true;
-        const originalText = testEmailBtn.innerHTML;
-        testEmailBtn.innerHTML = `<span>Enviando correo a ${targetEmail}...</span>`;
-
-        try {
-          const res = await apiService.sendTestEmail(targetEmail);
-          if (res && res.success) {
-            toast.success(`¡Correo de prueba entregado exitosamente a ${targetEmail}!`);
-          } else {
-            toast.info(`Correo enviado a ${targetEmail}`);
-          }
-        } catch (err) {
-          toast.error(`Error enviando correo: ${err.message || 'Verifica la conexión'}`);
-        } finally {
-          testEmailBtn.disabled = false;
-          testEmailBtn.innerHTML = originalText;
-        }
-      };
-    }
-
-    // 3.1 Estado y prueba de Notificaciones de Escritorio en Pantalla
+    // 4. Estado de Notificaciones del Sistema
     const desktopStatusBadge = $('#settings-desktop-status-badge', this.container);
+    const requestWrap = $('#settings-request-permission-wrap', this.container);
+
     const updateDesktopStatusUI = () => {
       if (!desktopStatusBadge) return;
-      const perm = notificationService.getPermissionStatus();
+      const perm = ('Notification' in window) ? Notification.permission : 'denied';
       if (perm === 'granted') {
         desktopStatusBadge.textContent = 'PERMITIDAS (ACTIVAS)';
         desktopStatusBadge.style.background = 'rgba(16, 185, 129, 0.18)';
         desktopStatusBadge.style.color = '#10B981';
+        if (requestWrap) requestWrap.style.display = 'none';
       } else if (perm === 'denied') {
-        desktopStatusBadge.textContent = 'BLOQUEADAS EN NAVEGADOR';
+        desktopStatusBadge.textContent = 'BLOQUEADAS';
         desktopStatusBadge.style.background = 'rgba(239, 68, 68, 0.18)';
         desktopStatusBadge.style.color = '#EF4444';
+        if (requestWrap) requestWrap.style.display = 'none';
       } else {
-        desktopStatusBadge.textContent = 'PENDIENTE DE PERMISO';
+        desktopStatusBadge.textContent = 'PENDIENTE';
         desktopStatusBadge.style.background = 'rgba(245, 158, 11, 0.18)';
         desktopStatusBadge.style.color = '#F59E0B';
+        if (requestWrap) requestWrap.style.display = 'block';
       }
     };
     updateDesktopStatusUI();
@@ -366,21 +309,15 @@ export class SettingsView extends BaseView {
     if (requestDesktopBtn) {
       requestDesktopBtn.onclick = async () => {
         soundService.playSoftChime();
-        const granted = await notificationService.requestPermission();
-        updateDesktopStatusUI();
-        if (granted) {
-          notificationService.send('EdhuFlow — Alerta de Prueba', {
-            body: '¡Excelente! Las notificaciones en tu pantalla están activas y funcionando correctamente.',
-            tag: 'edhuflow-test-desktop'
-          });
-          toast.success('¡Alerta de prueba mostrada en tu pantalla!');
-        } else {
-          toast.warning('Permiso no otorgado en el navegador.');
+        if ('Notification' in window) {
+          await Notification.requestPermission();
+          updateDesktopStatusUI();
+          toast.info('Permiso de notificaciones actualizado.');
         }
       };
     }
 
-    // 4. Selector de paleta de colores
+    // 5. Selector de paleta de colores
     const swatches = this.container.querySelectorAll('[data-accent-choice]');
     swatches.forEach(swatch => {
       swatch.onclick = () => {
@@ -392,55 +329,5 @@ export class SettingsView extends BaseView {
         toast.info('Color de acento actualizado');
       };
     });
-
-    // 5. Exportar JSON
-    const exportJsonBtn = $('#btn-export-json', this.container);
-    if (exportJsonBtn) {
-      exportJsonBtn.onclick = () => {
-        soundService.playClick();
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(store.getState(), null, 2));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `focusflow-backup-${new Date().toISOString().split('T')[0]}.json`);
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-        toast.success('Respaldo JSON descargado');
-      };
-    }
-
-    // 6. Exportar CSV de tareas
-    const exportCsvBtn = $('#btn-export-csv', this.container);
-    if (exportCsvBtn) {
-      exportCsvBtn.onclick = () => {
-        soundService.playClick();
-        const tasks = store.getTasks();
-        const headers = 'ID,Titulo,Prioridad,Fecha,Hora,Categoria,Completada\n';
-        const rows = tasks.map(t => 
-          `"${t.id}","${t.title.replace(/"/g, '""')}","${t.priorities ? (t.priorities[0] || 'medium') : 'medium'}","${t.date}","${t.time}","${t.category || 'General'}","${t.completed ? 'Si' : 'No'}"`
-        ).join('\n');
-
-        const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(headers + rows);
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", csvContent);
-        downloadAnchor.setAttribute("download", `focusflow-tareas-${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-        toast.success('Archivo CSV de tareas descargado');
-      };
-    }
-
-    // 7. Resetear a estado local
-    const resetBtn = $('#btn-reset-data', this.container);
-    if (resetBtn) {
-      resetBtn.onclick = () => {
-        if (confirm('¿Deseas reiniciar las tareas y métricas de este usuario a su estado inicial?')) {
-          soundService.playClick();
-          store.logout();
-          window.location.reload();
-        }
-      };
-    }
   }
 }
