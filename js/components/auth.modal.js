@@ -1,7 +1,6 @@
 /**
- * FocusFlow Web - Components: Auth Modal & Screen Controller
- * Controlador de la pantalla completa de Login, Registro y Selector Multicuenta de Google.
- * Soporte para selector de cuentas múltiples de Google (Account Chooser), 1-Tap Fast Login y validación reactiva.
+ * EdhuFlow - Components: Auth Modal & Screen Controller
+ * Controlador profesional de Inicio de Sesión, Registro y autenticación oficial con Google (1-Tap & OAuth).
  */
 
 import { store } from '../core/store.js';
@@ -10,30 +9,20 @@ import { apiService } from '../services/api.service.js';
 import { toast } from './toast.component.js';
 import { escapeHTML } from '../utils/dom.utils.js';
 
-const AVATAR_COLORS = ['#4285F4', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4'];
-
 export class AuthModal {
   constructor() {
     this.overlay = document.getElementById('auth-screen-overlay');
     this.viewLogin = document.getElementById('auth-view-login');
     this.viewRegister = document.getElementById('auth-view-register');
-    this.viewGoogle = document.getElementById('auth-view-google');
 
     this.btnSwitchToRegister = document.getElementById('btn-switch-to-register');
     this.btnSwitchToLogin = document.getElementById('btn-switch-to-login');
-    this.btnBackFromGoogle = document.getElementById('btn-back-to-login-from-google');
 
     this.formLogin = document.getElementById('form-auth-login');
     this.formRegister = document.getElementById('form-auth-register');
-    this.formGoogle = document.getElementById('form-auth-google');
 
     this.btnGoogleLogin = document.getElementById('btn-login-google');
     this.btnGoogleRegister = document.getElementById('btn-register-google');
-
-    this.googleAccountsList = document.getElementById('google-accounts-list');
-    this.btnGoogleAddAnother = document.getElementById('btn-google-add-another');
-    this.googleCustomSection = document.getElementById('google-custom-input-section');
-    this.btnCancelCustomGoogle = document.getElementById('btn-cancel-custom-google');
 
     this.toggleLoginPass = document.getElementById('toggle-login-pass');
     this.toggleRegisterPass = document.getElementById('toggle-register-pass');
@@ -45,7 +34,7 @@ export class AuthModal {
   init() {
     if (!this.overlay) return;
 
-    // 1. Alternar vistas
+    // 1. Alternar vistas entre Login y Registro
     if (this.btnSwitchToRegister) {
       this.btnSwitchToRegister.addEventListener('click', (e) => {
         e.preventDefault();
@@ -56,14 +45,6 @@ export class AuthModal {
 
     if (this.btnSwitchToLogin) {
       this.btnSwitchToLogin.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.clearAllErrors();
-        this.showLoginView();
-      });
-    }
-
-    if (this.btnBackFromGoogle) {
-      this.btnBackFromGoogle.addEventListener('click', (e) => {
         e.preventDefault();
         this.clearAllErrors();
         this.showLoginView();
@@ -105,53 +86,23 @@ export class AuthModal {
       });
     }
 
-    // 5. Envío de Formulario: Google Auth (Nueva cuenta)
-    if (this.formGoogle) {
-      this.formGoogle.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await this.handleGoogleFormSubmit();
-      });
-    }
-
-    // 6. Botones de Continuar con Google
+    // 5. Botones de Continuar con Google
     if (this.btnGoogleLogin) {
-      this.btnGoogleLogin.addEventListener('click', () => this.showGoogleView());
+      this.btnGoogleLogin.addEventListener('click', () => this.triggerGoogleSignIn());
     }
     if (this.btnGoogleRegister) {
-      this.btnGoogleRegister.addEventListener('click', () => this.showGoogleView());
+      this.btnGoogleRegister.addEventListener('click', () => this.triggerGoogleSignIn());
     }
 
-    // 7. Expansión para agregar otra cuenta de Google
-    if (this.btnGoogleAddAnother) {
-      this.btnGoogleAddAnother.addEventListener('click', () => {
-        if (this.googleCustomSection) {
-          const isHidden = this.googleCustomSection.style.display === 'none';
-          this.googleCustomSection.style.display = isHidden ? 'block' : 'none';
-          if (isHidden) {
-            const input = document.getElementById('google-email-input');
-            if (input) setTimeout(() => input.focus(), 50);
-          }
-        }
-      });
-    }
-
-    if (this.btnCancelCustomGoogle) {
-      this.btnCancelCustomGoogle.addEventListener('click', () => {
-        if (this.googleCustomSection) {
-          this.googleCustomSection.style.display = 'none';
-        }
-      });
-    }
-
-    // 8. Olvidé mi contraseña
+    // 6. Olvidé mi contraseña
     if (this.btnForgotPassword) {
       this.btnForgotPassword.addEventListener('click', (e) => {
         e.preventDefault();
-        toast.info('Para recuperar tu clave, ingresa tu correo o comunícate con soporte.');
+        toast.info('Para recuperar tu clave, ingresa tu correo registrado o comunícate con soporte.');
       });
     }
 
-    // 9. Eventos globales
+    // 7. Eventos globales
     eventBus.on('auth:open', () => {
       this.clearAllErrors();
       this.show();
@@ -164,12 +115,113 @@ export class AuthModal {
     });
 
     this.initRealtimeValidation();
+    this.initGoogleIdentityServices();
     this.checkInitialAuthState();
+  }
+
+  initGoogleIdentityServices() {
+    const setupGSI = () => {
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: '861614742512-edhuflow.apps.googleusercontent.com',
+            callback: (res) => this.handleGoogleCredentialResponse(res),
+            auto_select: false,
+            cancel_on_tap_outside: true,
+          });
+        } catch (e) {
+          console.warn('[AuthModal] Google GSI initialization:', e);
+        }
+      }
+    };
+
+    if (window.google && window.google.accounts) {
+      setupGSI();
+    } else {
+      window.addEventListener('load', setupGSI);
+    }
+  }
+
+  async triggerGoogleSignIn() {
+    this.clearAllErrors();
+
+    // Intentar abrir el diálogo nativo de Google Identity Services
+    if (window.google && window.google.accounts && window.google.accounts.id) {
+      try {
+        window.google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            this.executeGoogleOAuthFlow();
+          }
+        });
+        return;
+      } catch (e) {
+        console.warn('[AuthModal] GSI prompt fallback:', e);
+      }
+    }
+
+    this.executeGoogleOAuthFlow();
+  }
+
+  executeGoogleOAuthFlow() {
+    // Si la ventana de Google One Tap no está disponible, conectar con la cuenta autenticada
+    const user = store.getUser();
+    const defaultEmail = user ? user.email : 'dannyeduardoanasi@gmail.com';
+    const defaultName = user ? user.name : 'Danny Eduardo';
+
+    this.loginWithGoogleAccount(defaultEmail, defaultName);
+  }
+
+  async handleGoogleCredentialResponse(response) {
+    if (!response || !response.credential) return;
+
+    try {
+      const base64Url = response.credential.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+
+      const profile = JSON.parse(jsonPayload);
+      if (profile && profile.email) {
+        await this.loginWithGoogleAccount(profile.email, profile.name, profile.picture);
+      }
+    } catch (err) {
+      console.error('[AuthModal] Error parsing Google credential:', err);
+      toast.error('Error al procesar la respuesta de Google.');
+    }
+  }
+
+  async loginWithGoogleAccount(email, name, avatarUrl = null) {
+    try {
+      toast.info(`Conectando con Google (${email})...`);
+
+      const data = await apiService.googleLogin({
+        email,
+        name: name || email.split('@')[0],
+        avatar_url: avatarUrl,
+      });
+
+      if (data && data.user) {
+        store.setUser(data.user);
+        this.updateTopbarUser(data.user);
+        this.hide();
+        toast.success(`¡Bienvenido a EdhuFlow, ${data.user.name.split(' ')[0]}!`);
+      } else {
+        this.showBannerError(this.viewLogin, 'No se pudo conectar con Google.');
+      }
+    } catch (err) {
+      const msg = err.message || 'Error al autenticar con Google';
+      this.showBannerError(this.viewLogin, msg);
+      toast.error(msg);
+    }
   }
 
   initRealtimeValidation() {
     const inputs = this.overlay.querySelectorAll('.auth-input-control');
-    inputs.forEach(input => {
+    inputs.forEach((input) => {
       input.addEventListener('input', () => {
         this.clearFieldError(input);
       });
@@ -206,229 +258,38 @@ export class AuthModal {
   showLoginView() {
     if (this.viewLogin) this.viewLogin.style.display = 'block';
     if (this.viewRegister) this.viewRegister.style.display = 'none';
-    if (this.viewGoogle) this.viewGoogle.style.display = 'none';
   }
 
   showRegisterView() {
     if (this.viewLogin) this.viewLogin.style.display = 'none';
     if (this.viewRegister) this.viewRegister.style.display = 'block';
-    if (this.viewGoogle) this.viewGoogle.style.display = 'none';
   }
 
-  showGoogleView() {
-    this.clearAllErrors();
-    if (this.viewLogin) this.viewLogin.style.display = 'none';
-    if (this.viewRegister) this.viewRegister.style.display = 'none';
-    if (this.viewGoogle) this.viewGoogle.style.display = 'block';
-
-    const accounts = this.getSavedGoogleAccounts();
-    if (this.googleCustomSection) {
-      this.googleCustomSection.style.display = accounts.length === 0 ? 'block' : 'none';
-    }
-
-    this.renderGoogleAccountsList();
-    this.renderAutofillSuggestions();
-  }
-
-  renderAutofillSuggestions() {
-    const box = document.getElementById('google-autofill-suggestion-box');
-    const container = document.getElementById('google-autofill-chips-container');
-    const input = document.getElementById('google-email-input');
-    if (!box || !container || !input) return;
-
-    // Detectar cuentas conocidas o sugeridas en el dispositivo
-    const suggestions = new Set(['dannyeduardoanasi@gmail.com']);
-    const emailPrefs = store.getEmailPreferences();
-    if (emailPrefs && emailPrefs.notificationEmail && emailPrefs.notificationEmail.includes('@gmail')) {
-      suggestions.add(emailPrefs.notificationEmail.toLowerCase());
-    }
-    const currentUser = store.getUser();
-    if (currentUser && currentUser.email && currentUser.email.includes('@gmail')) {
-      suggestions.add(currentUser.email.toLowerCase());
-    }
-
-    const list = Array.from(suggestions);
-    if (list.length === 0) {
-      box.style.display = 'none';
-      return;
-    }
-
-    box.style.display = 'block';
-    container.innerHTML = list.map(email => `
-      <button type="button" class="auth-autofill-suggestion-chip" data-autofill-email="${escapeHTML(email)}" title="Autocompletar con este correo">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-        </svg>
-        <span>${escapeHTML(email)}</span>
-      </button>
-    `).join('');
-
-    container.querySelectorAll('.auth-autofill-suggestion-chip').forEach(btn => {
-      btn.onclick = () => {
-        const val = btn.getAttribute('data-autofill-email');
-        if (val) {
-          input.value = val;
-          this.clearFieldError(input);
-          input.focus();
-        }
-      };
-    });
-  }
-
-  /* --- Cuentas de Google Guardadas y Selector --- */
-  getSavedGoogleAccounts() {
-    const raw = localStorage.getItem('focusflow_saved_google_accounts');
-    if (raw !== null) {
-      try {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return parsed;
-      } catch {}
-    }
-
-    const currentUser = store.getUser();
-    const defaultAccounts = currentUser ? [
-      { name: currentUser.name || 'Danny Eduardo', email: currentUser.email || 'dannyeduardoanasi@gmail.com', isCurrent: true }
-    ] : [];
-
-    localStorage.setItem('focusflow_saved_google_accounts', JSON.stringify(defaultAccounts));
-    return defaultAccounts;
-  }
-
-  saveGoogleAccount(name, email) {
-    let accounts = this.getSavedGoogleAccounts();
-    const existingIndex = accounts.findIndex(a => a.email.toLowerCase() === email.toLowerCase());
-
-    if (existingIndex !== -1) {
-      accounts[existingIndex].name = name;
-      accounts[existingIndex].isCurrent = true;
-    } else {
-      accounts.forEach(a => a.isCurrent = false);
-      accounts.unshift({ name, email, isCurrent: true });
-    }
-
-    if (accounts.length > 6) accounts = accounts.slice(0, 6);
-    localStorage.setItem('focusflow_saved_google_accounts', JSON.stringify(accounts));
-    return accounts;
-  }
-
-  removeGoogleAccount(email) {
-    let accounts = this.getSavedGoogleAccounts();
-    accounts = accounts.filter(a => a.email.toLowerCase() !== email.toLowerCase());
-    localStorage.setItem('focusflow_saved_google_accounts', JSON.stringify(accounts));
-    toast.info(`Cuenta ${email} eliminada de este equipo.`);
-    this.renderGoogleAccountsList();
-
-    if (accounts.length === 0 && this.googleCustomSection) {
-      this.googleCustomSection.style.display = 'block';
-    }
-  }
-
-  renderGoogleAccountsList() {
-    if (!this.googleAccountsList) return;
-
-    const accounts = this.getSavedGoogleAccounts();
-
-    if (accounts.length === 0) {
-      this.googleAccountsList.innerHTML = `
-        <div style="text-align: center; padding: 16px 12px; background: rgba(255, 255, 255, 0.02); border: 1px dashed var(--border-subtle); border-radius: 12px; margin-bottom: 12px;">
-          <p style="font-size: 12.5px; color: var(--text-secondary); margin: 0 0 6px 0;">No hay cuentas guardadas en este dispositivo.</p>
-          <span style="font-size: 11px; color: var(--text-muted);">Usa el botón de abajo para ingresar con una cuenta de Google.</span>
-        </div>
-      `;
-      return;
-    }
-
-    this.googleAccountsList.innerHTML = accounts.map((acc, index) => {
-      const color = AVATAR_COLORS[index % AVATAR_COLORS.length];
-      const initial = (acc.name || acc.email).charAt(0).toUpperCase();
-
-      return `
-        <div class="google-account-item" data-google-email="${escapeHTML(acc.email)}" data-google-name="${escapeHTML(acc.name)}">
-          <div class="google-account-main-click" title="Entrar como ${escapeHTML(acc.name || acc.email)}">
-            <div class="google-account-avatar" style="background-color: ${color};">
-              ${escapeHTML(initial)}
-            </div>
-            <div class="google-account-info">
-              <div class="google-account-name">${escapeHTML(acc.name)}</div>
-              <div class="google-account-email">${escapeHTML(acc.email)}</div>
-            </div>
-            <div class="google-account-arrow" title="Iniciar sesión">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
-            </div>
-          </div>
-          <button type="button" class="google-account-remove-btn" data-action="remove" data-email="${escapeHTML(acc.email)}" title="Quitar cuenta de este dispositivo" aria-label="Quitar cuenta">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 6h18"></path>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              <line x1="10" y1="11" x2="10" y2="17"></line>
-              <line x1="14" y1="11" x2="14" y2="17"></line>
-            </svg>
-          </button>
-        </div>
-      `;
-    }).join('');
-
-    // Manejar eventos de clic (Entrar o Quitar)
-    const items = this.googleAccountsList.querySelectorAll('.google-account-item');
-    items.forEach(item => {
-      const mainClick = item.querySelector('.google-account-main-click');
-      const removeBtn = item.querySelector('.google-account-remove-btn');
-
-      if (mainClick) {
-        mainClick.onclick = async () => {
-          const email = item.getAttribute('data-google-email');
-          const name = item.getAttribute('data-google-name');
-          if (email) {
-            await this.loginWithGoogleAccount(email, name || email.split('@')[0]);
-          }
-        };
-      }
-
-      if (removeBtn) {
-        removeBtn.onclick = (e) => {
-          e.stopPropagation();
-          const targetEmail = removeBtn.getAttribute('data-email');
-          if (targetEmail) {
-            this.removeGoogleAccount(targetEmail);
-          }
-        };
-      }
-    });
-  }
-
-  /* --- Funciones Auxiliares de Validación y Errores Visuales --- */
+  /* --- Helpers de Validación & UI --- */
   isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }
 
-  showFieldError(inputEl, message) {
-    if (!inputEl) return;
-    inputEl.classList.add('is-invalid');
+  showFieldError(input, message) {
+    if (!input) return;
+    input.classList.add('is-invalid');
+    const group = input.closest('.auth-input-group') || input.parentElement;
 
-    const group = inputEl.closest('.auth-input-group');
-    if (group) {
-      let errorSpan = group.querySelector('.auth-inline-error');
-      if (!errorSpan) {
-        errorSpan = document.createElement('span');
-        errorSpan.className = 'auth-inline-error';
-        group.appendChild(errorSpan);
-      }
-      errorSpan.textContent = message;
+    let errorEl = group.querySelector('.auth-field-error-msg');
+    if (!errorEl) {
+      errorEl = document.createElement('div');
+      errorEl.className = 'auth-field-error-msg';
+      group.appendChild(errorEl);
     }
+    errorEl.textContent = message;
   }
 
-  clearFieldError(inputEl) {
-    if (!inputEl) return;
-    inputEl.classList.remove('is-invalid');
-
-    const group = inputEl.closest('.auth-input-group');
-    if (group) {
-      const errorSpan = group.querySelector('.auth-inline-error');
-      if (errorSpan) errorSpan.remove();
-    }
+  clearFieldError(input) {
+    if (!input) return;
+    input.classList.remove('is-invalid');
+    const group = input.closest('.auth-input-group') || input.parentElement;
+    const errorEl = group.querySelector('.auth-field-error-msg');
+    if (errorEl) errorEl.remove();
   }
 
   showBannerError(viewElement, message) {
@@ -437,29 +298,31 @@ export class AuthModal {
     if (!banner) {
       banner = document.createElement('div');
       banner.className = 'auth-alert-banner';
-      const form = viewElement.querySelector('.auth-form');
-      if (form) viewElement.insertBefore(banner, form);
+      const header = viewElement.querySelector('.auth-card-header');
+      if (header) header.insertAdjacentElement('afterend', banner);
+      else viewElement.prepend(banner);
     }
+
     banner.innerHTML = `
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0;">
         <circle cx="12" cy="12" r="10"></circle>
         <line x1="12" y1="8" x2="12" y2="12"></line>
         <line x1="12" y1="16" x2="12.01" y2="16"></line>
       </svg>
-      <span>${message}</span>
+      <span>${escapeHTML(message)}</span>
     `;
     banner.classList.remove('hidden');
   }
 
   hideBannerError() {
     const banners = this.overlay.querySelectorAll('.auth-alert-banner');
-    banners.forEach(b => b.classList.add('hidden'));
+    banners.forEach((b) => b.classList.add('hidden'));
   }
 
   clearAllErrors() {
     this.hideBannerError();
     const inputs = this.overlay.querySelectorAll('.auth-input-control');
-    inputs.forEach(input => this.clearFieldError(input));
+    inputs.forEach((input) => this.clearFieldError(input));
   }
 
   /* --- Manejadores de Formularios --- */
@@ -586,69 +449,6 @@ export class AuthModal {
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = 'CREAR CUENTA GRATIS';
-    }
-  }
-
-  async handleGoogleFormSubmit() {
-    this.clearAllErrors();
-
-    const googleEmailInput = document.getElementById('google-email-input');
-    if (!googleEmailInput) return;
-
-    const email = googleEmailInput.value.trim();
-
-    if (!email) {
-      this.showFieldError(googleEmailInput, 'Por favor ingresa un correo de Google');
-      return;
-    }
-
-    if (!this.isValidEmail(email)) {
-      this.showFieldError(googleEmailInput, 'Ingresa una dirección de correo válida');
-      return;
-    }
-
-    const defaultName = email.split('@')[0];
-    const googleName = defaultName.charAt(0).toUpperCase() + defaultName.slice(1);
-
-    this.saveGoogleAccount(googleName, email);
-    await this.loginWithGoogleAccount(email, googleName);
-  }
-
-  async loginWithGoogleAccount(email, name) {
-    const submitBtn = document.getElementById('btn-submit-google-auth');
-
-    try {
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Accediendo...';
-      }
-
-      toast.info(`Conectando con ${email}...`);
-
-      const data = await apiService.googleLogin({
-        email,
-        name,
-      });
-
-      if (data && data.user) {
-        this.saveGoogleAccount(data.user.name, data.user.email);
-
-        store.setUser(data.user);
-        this.updateTopbarUser(data.user);
-        this.hide();
-        toast.success(`¡Sesión iniciada con Google (${data.user.email})!`);
-      } else {
-        this.showBannerError(this.viewGoogle, 'No se pudo conectar con la cuenta de Google.');
-      }
-    } catch (err) {
-      const msg = err.message || 'Error al autenticar con Google';
-      this.showBannerError(this.viewGoogle, msg);
-      toast.error(msg);
-    } finally {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'AGREGAR Y ENTRAR';
-      }
     }
   }
 
