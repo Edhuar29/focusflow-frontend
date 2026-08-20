@@ -133,34 +133,7 @@ export class SettingsView extends BaseView {
           </div>
         </div>
 
-        <!-- 2. Permisos de Notificaciones en Pantalla -->
-        <div class="settings-section">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-primary);">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-              </svg>
-              <h3 class="settings-section-title" style="margin: 0;">Notificaciones en Pantalla</h3>
-            </div>
-            <span id="settings-desktop-status-badge" style="font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px;">
-              Verificando...
-            </span>
-          </div>
-          <p style="color: var(--text-secondary); font-size: var(--text-sm); margin-bottom: var(--space-3);">
-            Estado de las alertas visuales y timbres de sonido en este dispositivo para tareas e hidratación.
-          </p>
-          <div id="settings-request-permission-wrap" style="display: none;">
-            <button class="btn btn-secondary" id="btn-settings-request-desktop" style="font-size: var(--text-xs); display: flex; align-items: center; gap: 6px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              </svg>
-              <span>Permitir Notificaciones en este Navegador</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- 3. Paleta de Acentos de Color -->
+        <!-- 2. Paleta de Acentos de Color -->
         <div class="settings-section">
           <h3 class="settings-section-title">Paleta de Color de Acento</h3>
           <p style="color: var(--text-secondary); font-size: var(--text-sm); margin-bottom: var(--space-3);">
@@ -279,45 +252,7 @@ export class SettingsView extends BaseView {
       };
     }
 
-    // 4. Estado de Notificaciones del Sistema
-    const desktopStatusBadge = $('#settings-desktop-status-badge', this.container);
-    const requestWrap = $('#settings-request-permission-wrap', this.container);
-
-    const updateDesktopStatusUI = () => {
-      if (!desktopStatusBadge) return;
-      const perm = ('Notification' in window) ? Notification.permission : 'denied';
-      if (perm === 'granted') {
-        desktopStatusBadge.textContent = 'PERMITIDAS (ACTIVAS)';
-        desktopStatusBadge.style.background = 'rgba(16, 185, 129, 0.18)';
-        desktopStatusBadge.style.color = '#10B981';
-        if (requestWrap) requestWrap.style.display = 'none';
-      } else if (perm === 'denied') {
-        desktopStatusBadge.textContent = 'BLOQUEADAS';
-        desktopStatusBadge.style.background = 'rgba(239, 68, 68, 0.18)';
-        desktopStatusBadge.style.color = '#EF4444';
-        if (requestWrap) requestWrap.style.display = 'none';
-      } else {
-        desktopStatusBadge.textContent = 'PENDIENTE';
-        desktopStatusBadge.style.background = 'rgba(245, 158, 11, 0.18)';
-        desktopStatusBadge.style.color = '#F59E0B';
-        if (requestWrap) requestWrap.style.display = 'block';
-      }
-    };
-    updateDesktopStatusUI();
-
-    const requestDesktopBtn = $('#btn-settings-request-desktop', this.container);
-    if (requestDesktopBtn) {
-      requestDesktopBtn.onclick = async () => {
-        soundService.playSoftChime();
-        if ('Notification' in window) {
-          await Notification.requestPermission();
-          updateDesktopStatusUI();
-          toast.info('Permiso de notificaciones actualizado.');
-        }
-      };
-    }
-
-    // 5. Selector de paleta de colores
+    // 4. Selector de paleta de colores
     const swatches = this.container.querySelectorAll('[data-accent-choice]');
     swatches.forEach(swatch => {
       swatch.onclick = () => {
