@@ -425,7 +425,10 @@ class Store {
   }
 
   isAuthenticated() {
-    return !!this.state.user && !!localStorage.getItem('focusflow_auth_token');
+    const user = this.state.user;
+    const hasUser = !!user && !!user.email && user.email !== 'invitado@focusflow.app';
+    const hasToken = !!localStorage.getItem('focusflow_auth_token') || !!this.state.token;
+    return hasUser || hasToken;
   }
 
   _persistAndNotify(key, value, eventName) {

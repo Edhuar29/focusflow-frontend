@@ -470,13 +470,27 @@ function initTopBarTools(router) {
     const popoverUserEmail = $('#popover-user-email');
     const headerAvatarImg = $('#header-avatar-img');
     const popoverAvatarImg = $('#popover-avatar-img');
+    const headerAvatarInitial = $('#header-avatar-initial');
+    const popoverAvatarInitial = $('#popover-avatar-initial');
 
-    if (user && user.email) {
-      if (popoverUserName) popoverUserName.textContent = user.name || 'Danny Eduardo';
-      if (popoverUserEmail) popoverUserEmail.textContent = user.email || 'dannyeduardoanasi@gmail.com';
+    if (user && user.email && user.email !== 'invitado@focusflow.app') {
+      const displayName = user.name || user.email.split('@')[0];
+      if (popoverUserName) popoverUserName.textContent = displayName;
+      if (popoverUserEmail) popoverUserEmail.textContent = user.email;
+
+      const initial = (displayName.charAt(0) || 'U').toUpperCase();
+      if (headerAvatarInitial) headerAvatarInitial.textContent = initial;
+      if (popoverAvatarInitial) popoverAvatarInitial.textContent = initial;
+
       if (user.avatar_url) {
-        if (headerAvatarImg) headerAvatarImg.src = user.avatar_url;
-        if (popoverAvatarImg) popoverAvatarImg.src = user.avatar_url;
+        if (headerAvatarImg) {
+          headerAvatarImg.src = user.avatar_url;
+          headerAvatarImg.style.display = 'block';
+        }
+        if (popoverAvatarImg) {
+          popoverAvatarImg.src = user.avatar_url;
+          popoverAvatarImg.style.display = 'block';
+        }
       }
     } else {
       if (popoverUserName) popoverUserName.textContent = 'Invitado';
