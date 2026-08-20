@@ -121,16 +121,22 @@ export class AuthModal {
 
   initGoogleIdentityServices() {
     const setupGSI = () => {
-      if (window.google && window.google.accounts && window.google.accounts.id) {
+      if (window.google && window.google.accounts && window.google.accounts.oauth2) {
         try {
-          window.google.accounts.id.initialize({
-            client_id: '861614742512-edhuflow.apps.googleusercontent.com',
-            callback: (res) => this.handleGoogleCredentialResponse(res),
-            auto_select: false,
-            cancel_on_tap_outside: true,
+          this.googleTokenClient = window.google.accounts.oauth2.initTokenClient({
+            client_id: window.EDHUFLOW_GOOGLE_CLIENT_ID || '861614742512-edhuflow.apps.googleusercontent.com',
+            scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid',
+            callback: async (tokenResponse) => {
+              if (tokenResponse && tokenResponse.access_token) {
+                await this.fetchGoogleUserInfoAndLogin(tokenResponse.access_token);
+              } else if (tokenResponse && tokenResponse.error) {
+                console.warn('[AuthModal] Google OAuth response error:', tokenResponse.error);
+                toast.warning('Autorización de Google cancelada o no completada.');
+              }
+            },
           });
         } catch (e) {
-          console.warn('[AuthModal] Google GSI initialization:', e);
+          console.warn('[AuthModal] Google OAuth2 TokenClient init:', e);
         }
       }
     };
@@ -145,52 +151,50 @@ export class AuthModal {
   async triggerGoogleSignIn() {
     this.clearAllErrors();
 
-    // Intentar abrir el diálogo nativo de Google Identity Services
-    if (window.google && window.google.accounts && window.google.accounts.id) {
+    // 1. Abrir la ventana emergente oficial de Google OAuth 2.0 (accounts.google.com)
+    if (this.googleTokenClient) {
       try {
-        window.google.accounts.id.prompt((notification) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            this.executeGoogleOAuthFlow();
-          }
-        });
+        this.googleTokenClient.requestAccessToken({ prompt: 'select_account' });
         return;
       } catch (e) {
-        console.warn('[AuthModal] GSI prompt fallback:', e);
+        console.warn('[AuthModal] Error solicitando token de Google:', e);
       }
     }
 
-    this.executeGoogleOAuthFlow();
+    // 2. Si aún no inicializó el token client, intentar inicializarlo
+    if (window.google && window.google.accounts && window.google.accounts.oauth2) {
+      this.initGoogleIdentityServices();
+      if (this.googleTokenClient) {
+        this.googleTokenClient.requestAccessToken({ prompt: 'select_account' });
+        return;
+      }
+    }
+
+    toast.info('Iniciando ventana de Google OAuth...');
+    // Redirección o popup directo a Google Accounts OAuth
+    const clientId = window.EDHUFLOW_GOOGLE_CLIENT_ID || '861614742512-edhuflow.apps.googleusercontent.com';
+    const redirectUri = window.location.origin;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=email%20profile%20openid&prompt=select_account`;
+    
+    window.open(authUrl, 'GoogleAuthPopup', 'width=500,height=600,menubar=no,toolbar=no');
   }
 
-  executeGoogleOAuthFlow() {
-    // Si la ventana de Google One Tap no está disponible, conectar con la cuenta autenticada
-    const user = store.getUser();
-    const defaultEmail = user ? user.email : 'dannyeduardoanasi@gmail.com';
-    const defaultName = user ? user.name : 'Danny Eduardo';
-
-    this.loginWithGoogleAccount(defaultEmail, defaultName);
-  }
-
-  async handleGoogleCredentialResponse(response) {
-    if (!response || !response.credential) return;
-
+  async fetchGoogleUserInfoAndLogin(accessToken) {
     try {
-      const base64Url = response.credential.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
+      toast.info('Obteniendo perfil de Google...');
+      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
 
-      const profile = JSON.parse(jsonPayload);
+      if (!res.ok) throw new Error('No se pudo obtener la información de perfil de Google.');
+
+      const profile = await res.json();
       if (profile && profile.email) {
         await this.loginWithGoogleAccount(profile.email, profile.name, profile.picture);
       }
     } catch (err) {
-      console.error('[AuthModal] Error parsing Google credential:', err);
-      toast.error('Error al procesar la respuesta de Google.');
+      console.error('[AuthModal] Error fetching Google userinfo:', err);
+      toast.error('Error al procesar la cuenta de Google.');
     }
   }
 
