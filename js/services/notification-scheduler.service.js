@@ -181,6 +181,13 @@ class NotificationSchedulerService {
         // Actualizar marca de tiempo persistente
         StorageService.set('last_water_check_ts', Date.now());
 
+        console.log('💧 [NotificationScheduler] ¡Intervalo de hidratación cumplido! Ejecutando sonido, aviso y correo...');
+
+        // Etapa 1: Sonido especial de agua y campana
+        try {
+          soundService.playWaterChime();
+        } catch (e) {}
+
         try {
           this.addNotification({
             id: `notif-water-${Date.now()}`,
@@ -192,7 +199,7 @@ class NotificationSchedulerService {
           });
         } catch (e) {}
 
-        // Notificación Nativa de Escritorio
+        // Etapa 2: Notificación Nativa de Escritorio (PC / Mac)
         try {
           const perm = notificationService.getPermissionStatus();
           if (perm === 'granted') {
@@ -204,7 +211,7 @@ class NotificationSchedulerService {
           }
         } catch (e) {}
 
-        // Despacho de Correo Electrónico para Hidratación
+        // Etapa 3: Despacho Directo de Correo Electrónico para Hidratación
         const emailPrefs = store.getEmailPreferences() || {};
         const currentUser = store.getUser() || {};
         const targetEmail = (hydration.reminder && hydration.reminder.email) || (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'dannyeduardoanasi@gmail.com';
