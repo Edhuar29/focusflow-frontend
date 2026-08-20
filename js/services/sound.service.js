@@ -254,35 +254,35 @@ class SoundService {
 
     try {
       const a = new Audio(SOFT_CHIME_WAV);
-      a.volume = 0.7;
+      a.volume = 1.0;
       a.play().catch(() => {});
     } catch (e) {}
 
-    this.init();
-    if (this.ctx && this.ctx.state === 'suspended') {
-      try { await this.ctx.resume(); } catch (e) {}
-    }
-    if (!this.ctx) return;
-
     try {
-      const notes = [587.33, 880.00, 1174.66]; // D5, A5, D6 (Acorde brillante de gota de agua)
-      notes.forEach((freq, i) => {
-        const now = this.ctx.currentTime + (i * 0.12);
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
+      this.init();
+      if (this.ctx && this.ctx.state === 'suspended') {
+        await this.ctx.resume().catch(() => {});
+      }
+      if (this.ctx) {
+        const notes = [587.33, 880.00, 1174.66]; // D5, A5, D6
+        notes.forEach((freq, i) => {
+          const now = this.ctx.currentTime + (i * 0.12);
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
 
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now);
 
-        gain.gain.setValueAtTime(0.25, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+          gain.gain.setValueAtTime(0.35, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
 
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
 
-        osc.start(now);
-        osc.stop(now + 0.45);
-      });
+          osc.start(now);
+          osc.stop(now + 0.5);
+        });
+      }
     } catch (e) {}
   }
 

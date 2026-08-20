@@ -181,15 +181,18 @@ class NotificationSchedulerService {
         // Actualizar marca de tiempo persistente
         StorageService.set('last_water_check_ts', Date.now());
 
-        console.log('💧 [NotificationScheduler] ¡Intervalo de hidratación cumplido! Ejecutando sonido, aviso y correo...');
+        console.log('💧 [NotificationScheduler] ¡Intervalo de hidratación cumplido! Despachando sonido, alerta y correo...');
 
-        // Etapa 1: Sonido especial de agua y campana
+        // 1. Sonido especial de hidratación
         try {
           soundService.playWaterChime();
-        } catch (e) {}
+        } catch (e) {
+          console.warn('[NotificationScheduler] Error en playWaterChime:', e);
+        }
 
+        // 2. Registro en campana
         try {
-          this.addNotification({
+          store.addNotification({
             id: `notif-water-${Date.now()}`,
             title: 'Recordatorio de Hidratación',
             description: 'Momento de beber un vaso de agua (+250 ml) para mantener tu concentración.',
@@ -199,7 +202,7 @@ class NotificationSchedulerService {
           });
         } catch (e) {}
 
-        // Etapa 2: Notificación Nativa de Escritorio (PC / Mac)
+        // 3. Notificación Nativa en Pantalla (PC / Mac)
         try {
           const perm = notificationService.getPermissionStatus();
           if (perm === 'granted') {
@@ -211,23 +214,20 @@ class NotificationSchedulerService {
           }
         } catch (e) {}
 
-        // Etapa 3: Despacho Directo de Correo Electrónico para Hidratación
+        // 4. Despacho Directo e Incondicional de Correo Electrónico a Gmail
         const emailPrefs = store.getEmailPreferences() || {};
         const currentUser = store.getUser() || {};
         const targetEmail = (hydration.reminder && hydration.reminder.email) || (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'dannyeduardoanasi@gmail.com';
-        const isEmailActive = hydration.reminder ? hydration.reminder.emailNotification !== false : true;
 
-        if (targetEmail && isEmailActive) {
-          console.log(`[NotificationScheduler] Enviando correo de hidratación a ${targetEmail}...`);
-          apiService.sendHydrationEmailReminder(targetEmail)
-            .then((res) => {
-              console.log(`[NotificationScheduler] Correo de hidratación entregado a ${targetEmail}:`, res);
-              toast.success(`Recordatorio de hidratación enviado a tu Gmail (${targetEmail})`);
-            })
-            .catch((err) => {
-              console.warn('[NotificationScheduler] Error enviando correo de hidratación:', err);
-            });
-        }
+        console.log(`[NotificationScheduler] Despachando correo de hidratación a ${targetEmail}...`);
+        apiService.sendHydrationEmailReminder(targetEmail)
+          .then((res) => {
+            console.log(`[NotificationScheduler] Correo de hidratación entregado a ${targetEmail}:`, res);
+            toast.success(`Recordatorio de hidratación enviado a tu Gmail (${targetEmail})`);
+          })
+          .catch((err) => {
+            console.warn('[NotificationScheduler] Error enviando correo de hidratación:', err);
+          });
       }
     }
   }
