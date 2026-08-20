@@ -204,11 +204,11 @@ class NotificationSchedulerService {
           }
         } catch (e) {}
 
-        // Despacho de Correo Electrónico para Hidratación (Solo si está activo)
+        // Despacho de Correo Electrónico para Hidratación
         const emailPrefs = store.getEmailPreferences() || {};
         const currentUser = store.getUser() || {};
         const targetEmail = (hydration.reminder && hydration.reminder.email) || (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'dannyeduardoanasi@gmail.com';
-        const isEmailActive = hydration.reminder.emailNotification !== false;
+        const isEmailActive = hydration.reminder ? hydration.reminder.emailNotification !== false : true;
 
         if (targetEmail && isEmailActive) {
           console.log(`[NotificationScheduler] Enviando correo de hidratación a ${targetEmail}...`);
