@@ -52,10 +52,13 @@ document.addEventListener('DOMContentLoaded', () => {
   initAvatarCustomization();
   initEditProfileModal();
 
-  // 7. Inicializar Programador de Notificaciones Dinámicas
+  // 7. Inicializar Modal de Términos de Servicio y Privacidad Legal
+  initLegalDocsModal();
+
+  // 8. Inicializar Programador de Notificaciones Dinámicas
   notificationScheduler.init();
 
-  // 8. Inicializar selector de prioridades visuales en modal
+  // 9. Inicializar selector de prioridades visuales en modal
   initModalPrioritySelector();
 
   console.log('EdhuFlow inicializado correctamente.');
@@ -1002,3 +1005,72 @@ function initEditProfileModal() {
     });
   }
 }
+
+/**
+ * Inicializa el Modal de Documentos Legales (Términos de Servicio y Política de Privacidad)
+ */
+function initLegalDocsModal() {
+  const modal = $('#legal-docs-modal');
+  const closeBtn = $('#btn-close-legal-modal');
+  const agreeBtn = $('#btn-agree-legal-modal');
+  const openTermsBtns = $$('#btn-open-terms');
+  const openPrivacyBtns = $$('#btn-open-privacy');
+  const tabTerms = $('#tab-legal-terms');
+  const tabPrivacy = $('#tab-legal-privacy');
+  const sectionTerms = $('#section-legal-terms');
+  const sectionPrivacy = $('#section-legal-privacy');
+
+  if (!modal) return;
+
+  const selectTab = (tabName) => {
+    if (tabName === 'terms') {
+      if (tabTerms) tabTerms.classList.add('active');
+      if (tabPrivacy) tabPrivacy.classList.remove('active');
+      if (sectionTerms) sectionTerms.classList.add('active');
+      if (sectionPrivacy) sectionPrivacy.classList.remove('active');
+    } else {
+      if (tabTerms) tabTerms.classList.remove('active');
+      if (tabPrivacy) tabPrivacy.classList.add('active');
+      if (sectionTerms) sectionTerms.classList.remove('active');
+      if (sectionPrivacy) sectionPrivacy.classList.add('active');
+    }
+  };
+
+  const openModal = (tab = 'terms') => {
+    soundService.playClick();
+    selectTab(tab);
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+  };
+
+  const closeModal = () => {
+    soundService.playClick();
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+  };
+
+  openTermsBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openModal('terms');
+    });
+  });
+
+  openPrivacyBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openModal('privacy');
+    });
+  });
+
+  if (tabTerms) tabTerms.addEventListener('click', () => selectTab('terms'));
+  if (tabPrivacy) tabPrivacy.addEventListener('click', () => selectTab('privacy'));
+
+  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+  if (agreeBtn) agreeBtn.addEventListener('click', closeModal);
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+}
+

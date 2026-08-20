@@ -589,6 +589,118 @@
   text-decoration: underline;
 }
 
+/* Aviso Legal y Términos al pie de la tarjeta */
+.auth-legal-footer {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--text-muted, #64748B);
+  text-align: center;
+}
+
+.auth-legal-link {
+  color: var(--color-primary-light, #818CF8);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s ease, text-decoration 0.15s ease;
+}
+
+.auth-legal-link:hover {
+  color: #A5B4FC;
+  text-decoration: underline;
+}
+
+/* Modal de Términos de Servicio y Privacidad */
+.legal-modal-card {
+  max-width: 680px;
+  width: 100%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.legal-tabs-header {
+  display: flex;
+  gap: 8px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.legal-tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #94A3B8);
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.legal-tab-btn:hover {
+  color: var(--text-primary, #FFFFFF);
+}
+
+.legal-tab-btn.active {
+  color: var(--color-primary-light, #818CF8);
+  border-bottom-color: var(--color-primary-light, #818CF8);
+}
+
+.legal-content-body {
+  padding: 22px 24px;
+  overflow-y: auto;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--text-secondary, #CBD5E1);
+}
+
+.legal-content-section {
+  display: none;
+}
+
+.legal-content-section.active {
+  display: block;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.legal-section-block {
+  margin-bottom: 24px;
+}
+
+.legal-section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary, #FFFFFF);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legal-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.15);
+  color: #818CF8;
+}
+
+.legal-bullet-list {
+  margin: 8px 0 0 16px;
+  padding: 0;
+}
+
+.legal-bullet-list li {
+  margin-bottom: 6px;
+}
+
 /* Responsividad para móviles y tablets */
 @media (max-width: 860px) {
   .auth-container-grid {

@@ -943,7 +943,197 @@
             </div>
           </div>
 
+          <!-- Aviso Legal y Términos de Cumplimiento -->
+          <div class="auth-legal-footer">
+            Al continuar con Google o registrarte, aceptas nuestros 
+            <a href="javascript:void(0)" class="auth-legal-link" id="btn-open-terms">Términos de Servicio</a> 
+            y 
+            <a href="javascript:void(0)" class="auth-legal-link" id="btn-open-privacy">Política de Privacidad</a>.
+          </div>
+
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Oficial de Documentos Legales: Términos de Servicio y Política de Privacidad -->
+  <div class="modal-backdrop" id="legal-docs-modal" aria-hidden="true" role="dialog" style="z-index: 10005;">
+    <div class="modal-card legal-modal-card">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(99, 102, 241, 0.15); display: flex; align-items: center; justify-content: center; color: var(--color-primary-light);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-title" style="margin: 0;">Transparencia y Legalidad</h3>
+            <span style="font-size: 11px; color: var(--text-muted);">EdhuFlow — Última actualización: Agosto 2026</span>
+          </div>
+        </div>
+        <button class="btn-modal-close" id="btn-close-legal-modal" aria-label="Cerrar ventana">&times;</button>
+      </div>
+
+      <!-- Pestañas de Navegación -->
+      <div class="legal-tabs-header">
+        <button type="button" class="legal-tab-btn active" id="tab-legal-terms" data-target="section-legal-terms">
+          Términos de Servicio
+        </button>
+        <button type="button" class="legal-tab-btn" id="tab-legal-privacy" data-target="section-legal-privacy">
+          Política de Privacidad
+        </button>
+      </div>
+
+      <div class="legal-content-body">
+        <!-- Sección 1: Términos de Servicio -->
+        <div id="section-legal-terms" class="legal-content-section active">
+          <div class="legal-section-block">
+            <div class="legal-section-title">
+              <span class="legal-badge">01</span>
+              Aceptación de los Términos
+            </div>
+            <p>
+              Al acceder, registrarte o utilizar la plataforma <strong>EdhuFlow</strong> (a través de la web o mediante autenticación con Google OAuth), aceptas quedar vinculado legalmente por los presentes Términos y Condiciones. Si no estás de acuerdo con alguna disposición, deberás abstenerte de utilizar la plataforma.
+            </p>
+          </div>
+
+          <div class="legal-section-block">
+            <div class="legal-section-title">
+              <span class="legal-badge">02</span>
+              Descripción del Servicio
+            </div>
+            <p>
+              EdhuFlow es una aplicación web integral diseñada para la optimización de la productividad personal, gestión de tareas académicas y laborales, temporizadores de enfoque (Técnica Pomodoro), registro de hidratación y asistencia de inteligencia artificial.
+            </p>
+          </div>
+
+          <div class="legal-section-block">
+            <div class="legal-section-title">
+              <span class="legal-badge">03</span>
+              Cuentas de Usuario y Seguridad
+            </div>
+            <p>
+              Para acceder a las funciones avanzadas y sincronización de datos, debes registrar una cuenta o autenticarte a través de Google. Eres responsable de mantener la confidencialidad de tu contraseña y de todas las actividades efectuadas bajo tu cuenta.
+            </p>
+          </div>
+
+          <div class="legal-section-block">
+            <div class="legal-section-title">
+              <span class="legal-badge">04</span>
+              Uso Aceptable
+            </div>
+            <p>
+              Te comprometes a utilizar EdhuFlow únicamente con fines lícitos. Queda estrictamente prohibido intentar vulnerar la seguridad del sistema, realizar ingeniería inversa, enviar spam o saturar los servidores mediante peticiones automatizadas no autorizadas.
+            </p>
+          </div>
+
+          <div class="legal-section-block">
+            <div class="legal-section-title">
+              <span class="legal-badge">05</span>
+              Propiedad Intelectual
+            </div>
+            <p>
+              Todos los derechos de autor, marcas, interfaces visuales, código fuente y elementos gráficos de EdhuFlow son propiedad exclusiva de sus desarrolladores. Tus tareas y contenidos personales siguen siendo 100% de tu propiedad.
+            </p>
+          </div>
+
+          <div class="legal-section-block">
+            <div class="legal-section-title">
+              <span class="legal-badge">06</span>
+              Modificaciones y Disponibilidad
+            </div>
+            <p>
+              Nos reservamos el derecho de actualizar o mejorar la plataforma en cualquier momento para ofrecer una mejor experiencia y rendimiento continuo.
+            </p>
+          </div>
+        </div>
+
+        <!-- Sección 2: Política de Privacidad (Cumplimiento Google OAuth) -->
+        <div id="section-legal-privacy" class="legal-content-section">
+          <div class="legal-section-block">
+            <div class="legal-section-title">
+              <span class="legal-badge">01</span>
+              Información que Recopilamos
+            </div>
+            <p>
+              En EdhuFlow respetamos profundamente tu privacidad y aplicamos el principio de minimización de datos:
+            </p>
+            <ul class="legal-bullet-list">
+              <li><strong>Datos de Google OAuth:</strong> Al iniciar sesión con Google, únicamente recibimos tu nombre completo, dirección de correo electrónico y fotografía de perfil pública. No accedemos a tus correos de Gmail, contactos ni archivos privados de Google Drive.</li>
+              <li><strong>Datos de Productividad:</strong> Tareas creadas, tiempos de Pomodoro, metas de agua y preferencias de interfaz (modo oscuro/tema).</li>
+            </ul>
+          </div>
+
+          <div class="legal-section-block">
+            <div class="legal-section-title">
+              <span class="legal-badge">02</span>
+              Finalidad del Tratamiento de Datos
+            </div>
+            <p>
+              Tus datos son utilizados exclusivamente para:
+            </p>
+            <ul class="legal-bullet-list">
+              <li>Autenticar tu identidad y mantener tu sesión activa de manera segura.</li>
+              <li>Sincronizar tus tareas, alarmas y estadísticas en tus dispositivos.</li>
+              <li>Enviarte notificaciones de correo para recordatorios que tú mismo programes voluntariamente.</li>
+            </ul>
+          </div>
+
+          <div class="legal-section-block">
+            <div class="legal-section-title">
+              <span class="legal-badge">03</span>
+              Compromiso de No Venta ni Transferencia a Terceros
+            </div>
+            <p style="color: #34D399; font-weight: 500;">
+              EdhuFlow NUNCA vende, alquila, comercializa ni transfiere tus datos personales a empresas de publicidad ni a terceros con fines de lucro.
+            </p>
+          </div>
+
+          <div class="legal-section-block">
+            <div class="legal-section-title">
+              <span class="legal-badge">04</span>
+              Seguridad y Protección de Datos
+            </div>
+            <p>
+              Implementamos estándares de seguridad de nivel bancario:
+            </p>
+            <ul class="legal-bullet-list">
+              <li>Cifrado de base de datos con Seguridad a Nivel de Fila (Row Level Security - RLS).</li>
+              <li>Contraseñas protegidas mediante algoritmos de hashing seguro (Bcrypt).</li>
+              <li>Comunicaciones 100% cifradas bajo protocolo seguro HTTPS / SSL.</li>
+            </ul>
+          </div>
+
+          <div class="legal-section-block">
+            <div class="legal-section-title">
+              <span class="legal-badge">05</span>
+              Control y Eliminación de Datos (Derechos del Usuario)
+            </div>
+            <p>
+              Tienes el derecho total de consultar, rectificar o solicitar la eliminación definitiva de tu cuenta y todos tus registros en cualquier momento.
+            </p>
+          </div>
+
+          <div class="legal-section-block">
+            <div class="legal-section-title">
+              <span class="legal-badge">06</span>
+              Contacto de Privacidad
+            </div>
+            <p>
+              Para cualquier consulta legal o solicitud de privacidad, puedes contactar directamente al equipo de desarrollo en: <a href="mailto:dannyeduardoanasi@gmail.com" style="color: var(--color-primary-light);">dannyeduardoanasi@gmail.com</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 14px 20px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: flex-end;">
+        <button type="button" class="btn btn-primary" id="btn-agree-legal-modal" style="min-width: 120px;">
+          Entendido
+        </button>
       </div>
     </div>
   </div>
