@@ -148,12 +148,12 @@ class NotificationSchedulerService {
             console.warn('[NotificationScheduler] Error en notificación de escritorio:', e);
           }
 
-          // Etapa D: Despacho Directo de Correo Electrónico para Tareas a Gmail
+          // Etapa C: Despacho de Correo Electrónico para Tareas a Gmail (Solo si está activo)
           const emailPrefs = store.getEmailPreferences() || {};
           const currentUser = store.getUser() || {};
           const targetEmail = (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'dannyeduardoanasi@gmail.com';
 
-          if (targetEmail && task.emailAlert !== false) {
+          if (targetEmail && task.emailAlert === true) {
             console.log(`[NotificationScheduler] Enviando correo de tarea "${task.title}" a ${targetEmail}...`);
             apiService.sendTaskEmailReminder(targetEmail, task.title, task.time, task.category || 'General')
               .then((res) => {
@@ -204,12 +204,12 @@ class NotificationSchedulerService {
           }
         } catch (e) {}
 
-        // Despacho de Correo Electrónico para Hidratación
+        // Despacho de Correo Electrónico para Hidratación (Solo si está activo)
         const emailPrefs = store.getEmailPreferences() || {};
         const currentUser = store.getUser() || {};
         const targetEmail = (hydration.reminder && hydration.reminder.email) || (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'dannyeduardoanasi@gmail.com';
 
-        if (targetEmail && hydration.reminder.emailNotification !== false) {
+        if (targetEmail && hydration.reminder.emailNotification === true) {
           console.log(`[NotificationScheduler] Enviando correo de hidratación a ${targetEmail}...`);
           apiService.sendHydrationEmailReminder(targetEmail)
             .then((res) => {
