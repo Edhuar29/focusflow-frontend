@@ -228,17 +228,10 @@ export class HydrationView extends BaseView {
               />
             </div>
 
-            <!-- Botones de Acción y Prueba Inmediata -->
-            <div style="display: flex; gap: 8px;">
-              <button class="btn btn-secondary" id="btn-save-reminder" style="flex: 1; font-size: var(--text-xs); padding: 8px 10px;">
+            <!-- Botón de Acción Principal -->
+            <div>
+              <button class="btn btn-primary" id="btn-save-reminder" style="width: 100%; font-size: var(--text-xs); padding: 9px 12px; font-weight: 600;">
                 Guardar Configuración
-              </button>
-              <button class="btn btn-primary" id="btn-test-water-now" style="font-size: var(--text-xs); padding: 8px 14px; white-space: nowrap; display: flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #4F46E5, #0284C7); border-color: transparent; font-weight: 600;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M22 2L11 13"></path>
-                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                </svg>
-                <span>Probar Ahora</span>
               </button>
             </div>
           </div>
@@ -400,46 +393,6 @@ export class HydrationView extends BaseView {
           toast.success(`Recordatorio de hidratación programado cada ${totalMinutes} minutos para ${targetEmail}`);
         } else {
           toast.info('Recordatorio de hidratación desactivado');
-        }
-      };
-    }
-
-    // 4.1 Botón de Probar Notificación y Correo Inmediato
-    const testWaterBtn = $('#btn-test-water-now', this.container);
-    if (testWaterBtn) {
-      testWaterBtn.onclick = async () => {
-        soundService.playSoftChime();
-        testWaterBtn.disabled = true;
-        const origText = testWaterBtn.innerHTML;
-        testWaterBtn.innerHTML = `<span>Enviando correo...</span>`;
-
-        const inputEmail = emailInput ? emailInput.value.trim() : accountEmail;
-        const targetEmail = isCustomSelected ? inputEmail : accountEmail;
-
-        try {
-          // 1. Notificación en pantalla de la computadora (Desktop)
-          const perm = notificationService.getPermissionStatus();
-          if (perm === 'granted') {
-            notificationService.send('EdhuFlow: Hora de Hidratarte', {
-              body: 'Momento de tomar un vaso de agua (+250 ml). Mantén tu concentración y energía.',
-              tag: 'edhuflow-test-water'
-            });
-          } else if (perm === 'default') {
-            eventBus.emit('desktopNotif:requestPermission');
-          }
-
-          // 2. Correo electrónico real entregado a Gmail
-          const res = await apiService.sendHydrationEmailReminder(targetEmail);
-          if (res && res.success) {
-            toast.success(`¡Alerta emitida y correo entregado a ${targetEmail}!`);
-          } else {
-            toast.info(`Recordatorio procesado para ${targetEmail}`);
-          }
-        } catch (err) {
-          toast.error(`Error enviando correo: ${err.message || 'Verifica tu conexión'}`);
-        } finally {
-          testWaterBtn.disabled = false;
-          testWaterBtn.innerHTML = origText;
         }
       };
     }
