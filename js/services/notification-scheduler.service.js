@@ -134,14 +134,7 @@ class NotificationSchedulerService {
             console.warn('[NotificationScheduler] Error en addNotification:', e);
           }
 
-          // Etapa B: Abrir modal destacado en pantalla
-          try {
-            this._showActiveAlarmModal(task, priority);
-          } catch (e) {
-            console.warn('[NotificationScheduler] Error en _showActiveAlarmModal:', e);
-          }
-
-          // Etapa C: Disparar Notificación Nativa de Escritorio (PC / Mac)
+          // Etapa B: Disparar Notificación Nativa de Escritorio (PC / Mac)
           try {
             const perm = notificationService.getPermissionStatus();
             if (perm === 'granted') {
