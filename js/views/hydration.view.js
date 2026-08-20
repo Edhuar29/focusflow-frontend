@@ -210,9 +210,18 @@ export class HydrationView extends BaseView {
               />
             </div>
 
-            <button class="btn btn-secondary" id="btn-save-reminder" style="width: 100%; margin-top: var(--space-3); font-size: var(--text-xs);">
-              Guardar Configuración
-            </button>
+            <div style="display: flex; gap: 8px; margin-top: var(--space-3);">
+              <button class="btn btn-secondary" id="btn-save-reminder" style="flex: 1; font-size: var(--text-xs);">
+                Guardar Configuración
+              </button>
+              <button class="btn btn-primary" id="btn-test-water-now" style="font-size: var(--text-xs); padding: 7px 12px; white-space: nowrap; display: flex; align-items: center; gap: 5px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M22 2L11 13"></path>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+                <span>Probar Ahora</span>
+              </button>
+            </div>
           </div>
 
         </div>
@@ -341,6 +350,37 @@ export class HydrationView extends BaseView {
         } else {
           notificationScheduler.removeNotification('notif-water-reminder');
           toast.info('Recordatorio de hidratación desactivado');
+        }
+      };
+    }
+
+    // 4.1 Botón de Probar Notificación y Correo Inmediato
+    const testWaterBtn = $('#btn-test-water-now', this.container);
+    if (testWaterBtn) {
+      testWaterBtn.onclick = async () => {
+        soundService.playSoftChime();
+        testWaterBtn.disabled = true;
+        const origText = testWaterBtn.innerHTML;
+        testWaterBtn.innerHTML = `<span>Enviando...</span>`;
+
+        const inputEmail = emailInput ? emailInput.value.trim() : accountEmail;
+        const targetEmail = isCustomSelected ? inputEmail : accountEmail;
+
+        try {
+          // 1. Notificación en pantalla de la computadora (Desktop)
+          notificationService.send('EdhuFlow: Hora de Hidratarte', {
+            body: '¡Momento de tomar un vaso de agua (+250 ml)! Mantén tu enfoque y energía.',
+            tag: 'edhuflow-test-water'
+          });
+
+          // 2. Correo electrónico a Gmail
+          await apiService.sendHydrationEmailReminder(targetEmail);
+          toast.success(`¡Alerta enviada a tu pantalla y correo (${targetEmail})!`);
+        } catch (err) {
+          toast.info(`Recordatorio emitido para ${targetEmail}`);
+        } finally {
+          testWaterBtn.disabled = false;
+          testWaterBtn.innerHTML = origText;
         }
       };
     }

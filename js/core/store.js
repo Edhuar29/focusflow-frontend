@@ -44,12 +44,26 @@ class Store {
         ? StorageService.get(`user_${currentUser.id}_hydration`, {
             currentMl: 0,
             goalMl: 2000,
-            logsToday: 0
+            logsToday: 0,
+            reminder: {
+              enabled: true,
+              intervalHours: 1,
+              emailNotification: true,
+              useCustomEmail: false,
+              email: currentUser.email || 'dannyeduardoanasi@gmail.com'
+            }
           })
         : StorageService.get('hydration', {
             currentMl: 0,
             goalMl: 2000,
-            logsToday: 0
+            logsToday: 0,
+            reminder: {
+              enabled: true,
+              intervalHours: 1,
+              emailNotification: true,
+              useCustomEmail: false,
+              email: 'dannyeduardoanasi@gmail.com'
+            }
           }),
       settings: StorageService.get('settings', {
         soundEnabled: true,
@@ -57,14 +71,16 @@ class Store {
       }),
       emailPreferences: currentUser && currentUser.id
         ? StorageService.get(`user_${currentUser.id}_email_pref`, {
-            notificationEmail: currentUser.email || '',
+            notificationEmail: currentUser.email || 'dannyeduardoanasi@gmail.com',
             emailTaskAlerts: true,
-            emailWaterAlerts: true
+            emailWaterAlerts: true,
+            useCustomEmail: false
           })
         : StorageService.get('email_preferences', {
-            notificationEmail: '',
+            notificationEmail: 'dannyeduardoanasi@gmail.com',
             emailTaskAlerts: true,
-            emailWaterAlerts: true
+            emailWaterAlerts: true,
+            useCustomEmail: false
           })
     };
   }

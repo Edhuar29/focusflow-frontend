@@ -130,9 +130,9 @@ class NotificationSchedulerService {
           // Despacho de Correo Electrónico para Tareas
           const emailPrefs = store.getEmailPreferences() || {};
           const currentUser = store.getUser() || {};
-          const targetEmail = emailPrefs.notificationEmail || currentUser.email || 'dannyeduardoanasi@gmail.com';
+          const targetEmail = (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'dannyeduardoanasi@gmail.com';
 
-          if (targetEmail) {
+          if (targetEmail && (task.emailAlert !== false) && (emailPrefs.emailTaskAlerts !== false)) {
             apiService.sendTaskEmailReminder(targetEmail, task.title, task.time, task.category || 'General')
               .then(() => {
                 console.log(`[NotificationScheduler] Correo de tarea enviado exitosamente a ${targetEmail}`);
@@ -167,13 +167,16 @@ class NotificationSchedulerService {
         });
 
         // Despacho de Correo Electrónico para Hidratación
-        const emailPrefs = store.getEmailPreferences();
-        const currentUser = store.getUser();
-        const targetEmail = hydration.reminder.email || emailPrefs.notificationEmail || (currentUser ? currentUser.email : '');
+        const emailPrefs = store.getEmailPreferences() || {};
+        const currentUser = store.getUser() || {};
+        const targetEmail = (hydration.reminder && hydration.reminder.email) || (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'dannyeduardoanasi@gmail.com';
 
-        if (targetEmail && hydration.reminder.emailNotification !== false) {
+        if (targetEmail && (hydration.reminder.emailNotification !== false) && (emailPrefs.emailWaterAlerts !== false)) {
           apiService.sendHydrationEmailReminder(targetEmail)
-            .then(() => console.log(`[NotificationScheduler] Correo de hidratación enviado a ${targetEmail}`))
+            .then(() => {
+              console.log(`[NotificationScheduler] Correo de hidratación enviado a ${targetEmail}`);
+              toast.info(`Hidratación: Correo enviado a ${targetEmail}`);
+            })
             .catch(err => console.warn('[NotificationScheduler] Fallo de correo de hidratación:', err));
         }
       }

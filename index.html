@@ -1345,6 +1345,35 @@
     </div>
   </div>
 
+  <!-- Modal de Solicitud de Permiso Explícito para Notificaciones de Escritorio -->
+  <div class="modal-backdrop" id="desktop-permission-modal" aria-hidden="true" role="dialog">
+    <div class="modal-card" style="max-width: 420px; text-align: center; padding: 26px 22px;">
+      <div style="width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(59, 130, 246, 0.15)); color: #38BDF8; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; border: 1.5px solid rgba(56, 189, 248, 0.3);">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+      </div>
+
+      <h3 style="font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">
+        ¿Activar Notificaciones en tu Computadora?
+      </h3>
+      
+      <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 22px;">
+        Te mostraremos avisos visuales en tu pantalla y alertas de sonido cuando se cumpla la hora de tus tareas programadas y recordatorios de hidratación.
+      </p>
+
+      <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 10px;">
+        <button type="button" class="btn btn-secondary" id="btn-perm-notif-later" style="width: 100%; justify-content: center; padding: 9px 12px; font-size: 12.5px;">
+          Ahora no
+        </button>
+        <button type="button" class="btn btn-primary" id="btn-perm-notif-allow" style="width: 100%; justify-content: center; padding: 9px 12px; font-size: 12.5px; font-weight: 600;">
+          Activar Alertas
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div class="toast-container" aria-live="polite"></div>
 

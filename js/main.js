@@ -58,6 +58,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // 8. Inicializar Programador de Notificaciones Dinámicas
   notificationScheduler.init();
 
+  // 8.1 Solicitar permiso explícito y respetuoso para notificaciones de escritorio
+  initDesktopPermissionModal();
+
   // 9. Inicializar selector de prioridades visuales en modal
   initModalPrioritySelector();
 
@@ -1096,4 +1099,65 @@ function initLegalDocsModal() {
     if (e.target === modal) closeModal();
   });
 }
+
+/**
+ * Solicita permiso explícito al usuario para notificaciones nativas de escritorio
+ */
+function initDesktopPermissionModal() {
+  const modal = $('#desktop-permission-modal');
+  const allowBtn = $('#btn-perm-notif-allow');
+  const laterBtn = $('#btn-perm-notif-later');
+
+  if (!modal) return;
+
+  const hasAsked = StorageService.get('edhuflow_desktop_perm_prompted', false);
+  const currentStatus = notificationService.getPermissionStatus();
+
+  // Si el permiso aún no se ha pedido ('default') y el usuario ha iniciado sesión
+  if (currentStatus === 'default' && !hasAsked && store.isAuthenticated()) {
+    setTimeout(() => {
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+    }, 1500);
+  }
+
+  if (allowBtn) {
+    allowBtn.addEventListener('click', async () => {
+      soundService.playClick();
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      StorageService.set('edhuflow_desktop_perm_prompted', true);
+
+      const granted = await notificationService.requestPermission();
+      if (granted) {
+        StorageService.set('edhuflow_desktop_notifs_enabled', true);
+        soundService.playSoftChime();
+        toast.success('¡Notificaciones en pantalla activadas!');
+        notificationService.send('EdhuFlow — Alertas de Pantalla Activadas', {
+          body: 'Recibirás avisos visuales de tareas e hidratación en tu computadora.',
+          tag: 'edhuflow-welcome-alert'
+        });
+      } else {
+        toast.info('Puedes activar las notificaciones más tarde desde Ajustes.');
+      }
+    });
+  }
+
+  if (laterBtn) {
+    laterBtn.addEventListener('click', () => {
+      soundService.playClick();
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      StorageService.set('edhuflow_desktop_perm_prompted', true);
+      toast.info('Puedes activar las notificaciones más tarde desde Ajustes.');
+    });
+  }
+
+  // Permitir reapertura desde eventos externos
+  eventBus.on('desktopNotif:requestPermission', () => {
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+  });
+}
+
 
