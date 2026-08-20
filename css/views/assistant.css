@@ -72,3 +72,21 @@
   70% { transform: scale(1.08); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
   100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
+
+@media (max-width: 768px) {
+  .assistant-container {
+    height: calc(100dvh - 130px - env(safe-area-inset-bottom, 0px));
+    border-radius: var(--radius-lg);
+  }
+  .chat-history {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+  .chat-message {
+    max-width: 92%;
+  }
+  .chat-input-area {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+}

@@ -140,5 +140,12 @@
 @media (max-width: 768px) {
   .hydration-container {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .bottle-visual-card {
+    padding: 20px 16px;
+  }
+  .hydration-action-card {
+    padding: 18px 16px;
   }
 }

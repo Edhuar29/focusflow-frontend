@@ -383,3 +383,38 @@
   border-radius: 9999px;
 }
 
+/* ====================================================================
+   Mobile Responsive Tasks View
+   ==================================================================== */
+@media (max-width: 640px) {
+  .tasks-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .tasks-search-wrap {
+    min-width: 100%;
+    width: 100%;
+  }
+  .tasks-filters-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+    display: flex;
+    gap: 6px;
+  }
+  .tasks-filters-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  .tasks-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .task-item {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+}
+
