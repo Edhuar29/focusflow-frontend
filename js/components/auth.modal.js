@@ -24,6 +24,15 @@ export class AuthModal {
     this.btnGoogleLogin = document.getElementById('btn-login-google');
     this.btnGoogleRegister = document.getElementById('btn-register-google');
 
+    this.savedAccountCard = document.getElementById('auth-saved-account-card');
+    this.savedAccountAvatar = document.getElementById('saved-account-avatar');
+    this.savedAccountName = document.getElementById('saved-account-name');
+    this.savedAccountEmail = document.getElementById('saved-account-email');
+    this.btnFastContinue = document.getElementById('btn-fast-continue-user');
+    this.btnFastContinueText = document.getElementById('btn-fast-continue-text');
+    this.btnSwitchSavedAccount = document.getElementById('btn-switch-saved-account');
+    this.standardGoogleSection = document.getElementById('auth-standard-google-section');
+
     this.toggleLoginPass = document.getElementById('toggle-login-pass');
     this.toggleRegisterPass = document.getElementById('toggle-register-pass');
     this.btnForgotPassword = document.getElementById('btn-forgot-password');
@@ -94,6 +103,20 @@ export class AuthModal {
       this.btnGoogleRegister.addEventListener('click', () => this.triggerGoogleSignIn());
     }
 
+    // 5.1 Acceso Rápido en 1-Clic para Usuario Frecuente
+    if (this.btnFastContinue) {
+      this.btnFastContinue.addEventListener('click', async () => {
+        await this.loginWithSavedProfile();
+      });
+    }
+
+    if (this.btnSwitchSavedAccount) {
+      this.btnSwitchSavedAccount.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.toggleSwitchAccount(true);
+      });
+    }
+
     // 6. Olvidé mi contraseña
     if (this.btnForgotPassword) {
       this.btnForgotPassword.addEventListener('click', (e) => {
@@ -105,18 +128,100 @@ export class AuthModal {
     // 7. Eventos globales
     eventBus.on('auth:open', () => {
       this.clearAllErrors();
+      this.renderSavedAccountCard();
       this.show();
     });
 
     eventBus.on('user:loggedOut', () => {
       this.clearAllErrors();
       this.showLoginView();
+      this.renderSavedAccountCard();
       this.show();
     });
 
     this.initRealtimeValidation();
     this.initGoogleIdentityServices();
     this.checkInitialAuthState();
+  }
+
+  /* --- Manejo de Perfil Guardado (Acceso Rápido en 1 Clic) --- */
+  getSavedProfile() {
+    const raw = localStorage.getItem('edhuflow_saved_google_profile');
+    if (raw) {
+      try {
+        return JSON.parse(raw);
+      } catch {}
+    }
+    return null;
+  }
+
+  saveSavedProfile(user) {
+    if (!user || !user.email) return;
+    const profile = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      avatarUrl: user.avatar_url,
+      lastLogin: Date.now()
+    };
+    localStorage.setItem('edhuflow_saved_google_profile', JSON.stringify(profile));
+  }
+
+  renderSavedAccountCard() {
+    const profile = this.getSavedProfile();
+    if (!this.savedAccountCard) return;
+
+    if (profile && profile.email) {
+      const firstName = (profile.name || profile.email).split(' ')[0];
+      const initial = (profile.name || profile.email).charAt(0).toUpperCase();
+
+      if (this.savedAccountName) this.savedAccountName.textContent = profile.name || profile.email;
+      if (this.savedAccountEmail) this.savedAccountEmail.textContent = profile.email;
+      if (this.btnFastContinueText) this.btnFastContinueText.textContent = `Continuar como ${firstName}`;
+
+      if (this.savedAccountAvatar) {
+        if (profile.avatarUrl) {
+          this.savedAccountAvatar.innerHTML = `<img src="${escapeHTML(profile.avatarUrl)}" alt="${escapeHTML(firstName)}" />`;
+        } else {
+          this.savedAccountAvatar.textContent = initial;
+        }
+      }
+
+      this.savedAccountCard.style.display = 'block';
+      if (this.standardGoogleSection) this.standardGoogleSection.style.display = 'none';
+    } else {
+      this.savedAccountCard.style.display = 'none';
+      if (this.standardGoogleSection) this.standardGoogleSection.style.display = 'block';
+    }
+  }
+
+  toggleSwitchAccount(showStandard) {
+    if (showStandard) {
+      if (this.savedAccountCard) this.savedAccountCard.style.display = 'none';
+      if (this.standardGoogleSection) this.standardGoogleSection.style.display = 'block';
+    } else {
+      this.renderSavedAccountCard();
+    }
+  }
+
+  async loginWithSavedProfile() {
+    const profile = this.getSavedProfile();
+    if (!profile || !profile.email) {
+      this.triggerGoogleSignIn();
+      return;
+    }
+
+    if (this.btnFastContinue) {
+      this.btnFastContinue.disabled = true;
+      this.btnFastContinue.style.opacity = '0.75';
+    }
+
+    await this.loginWithGoogleAccount(profile.email, profile.name, profile.avatarUrl);
+
+    if (this.btnFastContinue) {
+      this.btnFastContinue.disabled = false;
+      this.btnFastContinue.style.opacity = '1';
+    }
   }
 
   initGoogleIdentityServices() {
@@ -171,7 +276,6 @@ export class AuthModal {
     }
 
     toast.info('Iniciando ventana de Google OAuth...');
-    // Redirección o popup directo a Google Accounts OAuth
     const clientId = window.EDHUFLOW_GOOGLE_CLIENT_ID || '260931319911-qfpm8hspt344ubplhmudij7480fdseho.apps.googleusercontent.com';
     const redirectUri = window.location.origin;
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=email%20profile%20openid&prompt=select_account`;
@@ -209,6 +313,7 @@ export class AuthModal {
       });
 
       if (data && data.user) {
+        this.saveSavedProfile(data.user);
         store.setUser(data.user);
         this.updateTopbarUser(data.user);
         this.hide();
@@ -237,6 +342,7 @@ export class AuthModal {
     const token = localStorage.getItem('focusflow_auth_token');
 
     if (!user || !token) {
+      this.renderSavedAccountCard();
       this.show();
     } else {
       this.updateTopbarUser(user);
@@ -262,6 +368,7 @@ export class AuthModal {
   showLoginView() {
     if (this.viewLogin) this.viewLogin.style.display = 'block';
     if (this.viewRegister) this.viewRegister.style.display = 'none';
+    this.renderSavedAccountCard();
   }
 
   showRegisterView() {
