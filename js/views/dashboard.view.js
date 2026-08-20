@@ -32,7 +32,7 @@ export class DashboardView extends BaseView {
 
     const greeting = getGreetingForNow();
     const currentUser = store.getUser();
-    const userName = currentUser && currentUser.name ? currentUser.name.split(' ')[0] : 'Francisco';
+    const userName = currentUser && currentUser.name ? currentUser.name.split(' ')[0] : 'Danny';
 
     this.container.innerHTML = `
       <div class="dashboard-container">

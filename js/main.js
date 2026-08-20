@@ -459,19 +459,36 @@ function initTopBarTools(router) {
 
   const authSwitchBtn = $('#btn-profile-auth-switch');
   
-  const updateProfilePopoverAuthButtons = () => {
+  const syncUserProfileUI = () => {
+    const user = store.getUser();
     const isAuth = store.isAuthenticated();
-    if (authSwitchBtn) {
-      authSwitchBtn.style.display = isAuth ? 'none' : 'block';
+    
+    const popoverUserName = $('#popover-user-name');
+    const popoverUserEmail = $('#popover-user-email');
+    const headerAvatarImg = $('#header-avatar-img');
+    const popoverAvatarImg = $('#popover-avatar-img');
+
+    if (user && user.email) {
+      if (popoverUserName) popoverUserName.textContent = user.name || 'Danny Eduardo';
+      if (popoverUserEmail) popoverUserEmail.textContent = user.email || 'dannyeduardoanasi@gmail.com';
+      if (user.avatar_url) {
+        if (headerAvatarImg) headerAvatarImg.src = user.avatar_url;
+        if (popoverAvatarImg) popoverAvatarImg.src = user.avatar_url;
+      }
+    } else {
+      if (popoverUserName) popoverUserName.textContent = 'Invitado';
+      if (popoverUserEmail) popoverUserEmail.textContent = 'Sin sesión activa';
     }
-    if (profileLogoutBtn) {
-      profileLogoutBtn.style.display = isAuth ? 'block' : 'none';
-    }
+
+    if (authSwitchBtn) authSwitchBtn.style.display = isAuth ? 'none' : 'block';
+    if (profileLogoutBtn) profileLogoutBtn.style.display = isAuth ? 'block' : 'none';
   };
 
-  updateProfilePopoverAuthButtons();
-  eventBus.on('auth:changed', updateProfilePopoverAuthButtons);
-  eventBus.on('store:userUpdated', updateProfilePopoverAuthButtons);
+  syncUserProfileUI();
+  eventBus.on('auth:changed', syncUserProfileUI);
+  eventBus.on('auth:loginSuccess', syncUserProfileUI);
+  eventBus.on('store:userUpdated', syncUserProfileUI);
+  eventBus.on('user:loggedOut', syncUserProfileUI);
 
   if (authSwitchBtn) {
     authSwitchBtn.addEventListener('click', () => {
