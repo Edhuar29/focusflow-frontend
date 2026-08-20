@@ -7,6 +7,8 @@ import { BaseView } from './base.view.js';
 import { store } from '../core/store.js';
 import { eventBus } from '../core/event-bus.js';
 import { soundService } from '../services/sound.service.js';
+import { notificationService } from '../services/notification.service.js';
+import { apiService } from '../services/api.service.js';
 import { toast } from '../components/toast.component.js';
 import { getWeekDays, getWeekRangeTitle, formatCleanTime, getTodayISO } from '../utils/date.utils.js';
 import { $, $$, escapeHTML } from '../utils/dom.utils.js';
@@ -244,6 +246,12 @@ export class TasksView extends BaseView {
     return `
       <div class="task-card ${completedClass}" data-task-id="${task.id}">
         <div class="task-quick-actions">
+          <button class="quick-action-btn" data-action="test-alert" data-task-id="${task.id}" title="Probar Alarma y Correo de esta tarea">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+          </button>
           <button class="quick-action-btn btn-focus" data-action="focus" data-task-id="${task.id}" title="Iniciar Sesión Pomodoro">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <polygon points="5 3 19 12 5 21 5 3"></polygon>
@@ -499,6 +507,45 @@ export class TasksView extends BaseView {
         const emptyAddBtn = e.target.closest('#btn-empty-add-task');
         if (emptyAddBtn) {
           this._openCreateModal();
+          return;
+        }
+
+        const testAlertBtn = e.target.closest('[data-action="test-alert"]');
+        if (testAlertBtn) {
+          e.stopPropagation();
+          const taskId = testAlertBtn.getAttribute('data-task-id');
+          const task = store.getTasks().find(t => t.id === taskId);
+          if (task) {
+            soundService.playSoftChime();
+            const emailPrefs = store.getEmailPreferences() || {};
+            const currentUser = store.getUser() || {};
+            const targetEmail = (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'dannyeduardoanasi@gmail.com';
+
+            // 1. Notificación en la pantalla de la computadora
+            const perm = notificationService.getPermissionStatus();
+            if (perm === 'granted') {
+              notificationService.send(`EdhuFlow: ${task.title}`, {
+                body: `Hora programada: ${task.time} (${task.category || 'General'})`,
+                tag: `edhuflow-task-${task.id}`
+              });
+            } else if (perm === 'default') {
+              eventBus.emit('desktopNotif:requestPermission');
+            }
+
+            // 2. Correo electrónico a Gmail
+            toast.info(`Enviando correo de tarea a ${targetEmail}...`);
+            apiService.sendTaskEmailReminder(targetEmail, task.title, task.time, task.category || 'General')
+              .then((res) => {
+                if (res && res.success) {
+                  toast.success(`¡Alarma en pantalla y correo enviados a ${targetEmail}!`);
+                } else {
+                  toast.info(`Recordatorio procesado para ${targetEmail}`);
+                }
+              })
+              .catch((err) => {
+                toast.error(`Error al enviar correo: ${err.message || 'Verifica la conexión'}`);
+              });
+          }
           return;
         }
 
