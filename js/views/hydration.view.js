@@ -397,16 +397,8 @@ export class HydrationView extends BaseView {
 
         if (enabled) {
           notificationScheduler.resetWaterTimer();
-          notificationScheduler.addNotification({
-            id: 'notif-water-reminder',
-            title: 'Recordatorio de Hidratación Activado',
-            description: `Avisos programados cada ${totalMinutes} minutos en tu computadora${emailNotification ? ` y a ${targetEmail}` : ''}.`,
-            priority: 'medium',
-            type: 'hydration'
-          });
-          toast.success(`Recordatorio guardado cada ${totalMinutes} minutos para ${targetEmail}`);
+          toast.success(`Recordatorio de hidratación programado cada ${totalMinutes} minutos para ${targetEmail}`);
         } else {
-          notificationScheduler.removeNotification('notif-water-reminder');
           toast.info('Recordatorio de hidratación desactivado');
         }
       };

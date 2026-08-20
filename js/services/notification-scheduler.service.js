@@ -208,8 +208,9 @@ class NotificationSchedulerService {
         const emailPrefs = store.getEmailPreferences() || {};
         const currentUser = store.getUser() || {};
         const targetEmail = (hydration.reminder && hydration.reminder.email) || (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'dannyeduardoanasi@gmail.com';
+        const isEmailActive = hydration.reminder.emailNotification !== false;
 
-        if (targetEmail && hydration.reminder.emailNotification === true) {
+        if (targetEmail && isEmailActive) {
           console.log(`[NotificationScheduler] Enviando correo de hidratación a ${targetEmail}...`);
           apiService.sendHydrationEmailReminder(targetEmail)
             .then((res) => {
