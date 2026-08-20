@@ -7,6 +7,8 @@ import { BaseView } from './base.view.js';
 import { store } from '../core/store.js';
 import { eventBus } from '../core/event-bus.js';
 import { soundService } from '../services/sound.service.js';
+import { notificationService } from '../services/notification.service.js';
+import { apiService } from '../services/api.service.js';
 import { toast } from '../components/toast.component.js';
 import { notificationScheduler } from '../services/notification-scheduler.service.js';
 import { $, escapeHTML } from '../utils/dom.utils.js';
