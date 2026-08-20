@@ -117,36 +117,51 @@ class NotificationSchedulerService {
           this.firedAlarms.add(alarmKey);
           const priority = (task.priorities && task.priorities[0]) || 'medium';
 
-          const notif = this.addNotification({
-            id: `notif-task-${task.id}`,
-            taskId: task.id,
-            title: task.title,
-            description: `Hora programada: ${task.time} (${task.category || 'General'})`,
-            priority: priority,
-            type: 'task',
-            time: task.time
-          });
+          console.log(`⏰ [NotificationScheduler] ¡Hora cumplida para la tarea "${task.title}"! Ejecutando despacho...`);
 
-          // 1. Abrir modal destacado en pantalla
-          this._showActiveAlarmModal(task, priority);
-
-          // 2. Disparar Notificación Nativa de Escritorio
-          const perm = notificationService.getPermissionStatus();
-          if (perm === 'granted') {
-            notificationService.send(`EdhuFlow: ${task.title}`, {
-              body: `Hora programada: ${task.time} (${task.category || 'General'})`,
-              tag: `edhuflow-task-${task.id}`,
-              requireInteraction: false
+          // Etapa A: Guardar en campana y emitir sonido/toast
+          try {
+            this.addNotification({
+              id: `notif-task-${task.id}`,
+              taskId: task.id,
+              title: task.title,
+              description: `Hora programada: ${task.time} (${task.category || 'General'})`,
+              priority: priority,
+              type: 'task',
+              time: task.time
             });
+          } catch (e) {
+            console.warn('[NotificationScheduler] Error en addNotification:', e);
           }
 
-          // 3. Despacho Directo de Correo Electrónico para Tareas a Gmail
+          // Etapa B: Abrir modal destacado en pantalla
+          try {
+            this._showActiveAlarmModal(task, priority);
+          } catch (e) {
+            console.warn('[NotificationScheduler] Error en _showActiveAlarmModal:', e);
+          }
+
+          // Etapa C: Disparar Notificación Nativa de Escritorio (PC / Mac)
+          try {
+            const perm = notificationService.getPermissionStatus();
+            if (perm === 'granted') {
+              notificationService.send(`EdhuFlow: ${task.title}`, {
+                body: `Hora programada: ${task.time} (${task.category || 'General'})`,
+                tag: `edhuflow-task-${task.id}`,
+                requireInteraction: false
+              });
+            }
+          } catch (e) {
+            console.warn('[NotificationScheduler] Error en notificación de escritorio:', e);
+          }
+
+          // Etapa D: Despacho Directo de Correo Electrónico para Tareas a Gmail
           const emailPrefs = store.getEmailPreferences() || {};
           const currentUser = store.getUser() || {};
           const targetEmail = (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'dannyeduardoanasi@gmail.com';
 
           if (targetEmail && task.emailAlert !== false) {
-            console.log(`[NotificationScheduler] Despachando correo de tarea "${task.title}" a ${targetEmail}...`);
+            console.log(`[NotificationScheduler] Enviando correo de tarea "${task.title}" a ${targetEmail}...`);
             apiService.sendTaskEmailReminder(targetEmail, task.title, task.time, task.category || 'General')
               .then((res) => {
                 console.log(`[NotificationScheduler] Correo de tarea entregado a ${targetEmail}:`, res);
@@ -173,24 +188,28 @@ class NotificationSchedulerService {
         // Actualizar marca de tiempo persistente
         StorageService.set('last_water_check_ts', Date.now());
 
-        this.addNotification({
-          id: `notif-water-${Date.now()}`,
-          title: 'Recordatorio de Hidratación',
-          description: 'Momento de beber un vaso de agua (+250 ml) para mantener tu concentración.',
-          priority: 'medium',
-          type: 'hydration',
-          time: 'Ahora'
-        });
+        try {
+          this.addNotification({
+            id: `notif-water-${Date.now()}`,
+            title: 'Recordatorio de Hidratación',
+            description: 'Momento de beber un vaso de agua (+250 ml) para mantener tu concentración.',
+            priority: 'medium',
+            type: 'hydration',
+            time: 'Ahora'
+          });
+        } catch (e) {}
 
         // Notificación Nativa de Escritorio
-        const perm = notificationService.getPermissionStatus();
-        if (perm === 'granted') {
-          notificationService.send('EdhuFlow: Hora de Hidratarte', {
-            body: 'Momento de tomar un vaso de agua (+250 ml) para mantener tu concentración.',
-            tag: `edhuflow-water-${Date.now()}`,
-            requireInteraction: false
-          });
-        }
+        try {
+          const perm = notificationService.getPermissionStatus();
+          if (perm === 'granted') {
+            notificationService.send('EdhuFlow: Hora de Hidratarte', {
+              body: 'Momento de tomar un vaso de agua (+250 ml) para mantener tu concentración.',
+              tag: `edhuflow-water-${Date.now()}`,
+              requireInteraction: false
+            });
+          }
+        } catch (e) {}
 
         // Despacho de Correo Electrónico para Hidratación
         const emailPrefs = store.getEmailPreferences() || {};
@@ -198,7 +217,7 @@ class NotificationSchedulerService {
         const targetEmail = (hydration.reminder && hydration.reminder.email) || (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'dannyeduardoanasi@gmail.com';
 
         if (targetEmail && hydration.reminder.emailNotification !== false) {
-          console.log(`[NotificationScheduler] Despachando correo de hidratación a ${targetEmail}...`);
+          console.log(`[NotificationScheduler] Enviando correo de hidratación a ${targetEmail}...`);
           apiService.sendHydrationEmailReminder(targetEmail)
             .then((res) => {
               console.log(`[NotificationScheduler] Correo de hidratación entregado a ${targetEmail}:`, res);
