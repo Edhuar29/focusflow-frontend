@@ -150,13 +150,23 @@ export class TasksView extends BaseView {
             <span class="section-count-badge" id="tasks-header-count">${filteredTasks.length} tareas</span>
           </div>
 
-          <button class="btn-add-task-subtle" id="btn-add-task-header" title="Crear nueva tarea">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            <span>Nueva Tarea</span>
-          </button>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="btn btn-secondary" id="btn-test-tasks-header" style="font-size: var(--text-xs); padding: 7px 12px; display: flex; align-items: center; gap: 6px;" title="Probar alarma en pantalla y correo de prueba a Gmail">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <span>Probar Alerta y Correo</span>
+            </button>
+
+            <button class="btn-add-task-subtle" id="btn-add-task-header" title="Crear nueva tarea">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Nueva Tarea</span>
+            </button>
+          </div>
         </div>
 
         <!-- 4. Tasks Grid / List (Smart Ordered) -->
@@ -588,12 +598,55 @@ export class TasksView extends BaseView {
       };
     }
 
-    // 6. Botón sutil en cabecera
+    // 6. Botones en cabecera
     const headerAddBtn = $('#btn-add-task-header', this.container);
     if (headerAddBtn) {
       headerAddBtn.onclick = () => {
         soundService.playClick();
         this._openCreateModal();
+      };
+    }
+
+    const testHeaderBtn = $('#btn-test-tasks-header', this.container);
+    if (testHeaderBtn) {
+      testHeaderBtn.onclick = async () => {
+        soundService.playSoftChime();
+        testHeaderBtn.disabled = true;
+        const origText = testHeaderBtn.innerHTML;
+        testHeaderBtn.innerHTML = `<span>Enviando correo...</span>`;
+
+        const emailPrefs = store.getEmailPreferences() || {};
+        const currentUser = store.getUser() || {};
+        const targetEmail = (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'dannyeduardoanasi@gmail.com';
+
+        // 1. Notificación en pantalla
+        const perm = notificationService.getPermissionStatus();
+        if (perm === 'granted') {
+          notificationService.send('EdhuFlow: Alarma de Prueba', {
+            body: '¡Excelente! Las notificaciones en la pantalla de tu Mac están activas.',
+            tag: 'edhuflow-test-header'
+          });
+        }
+
+        // 2. Correo a Gmail
+        try {
+          const res = await apiService.sendTaskEmailReminder(
+            targetEmail,
+            'Tarea de Prueba EdhuFlow',
+            new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            'Prueba'
+          );
+          if (res && res.success) {
+            toast.success(`¡Alarma en pantalla y correo entregado a ${targetEmail}!`);
+          } else {
+            toast.info(`Alerta procesada para ${targetEmail}`);
+          }
+        } catch (err) {
+          toast.error(`Error enviando correo: ${err.message || 'Verifica la conexión'}`);
+        } finally {
+          testHeaderBtn.disabled = false;
+          testHeaderBtn.innerHTML = origText;
+        }
       };
     }
 

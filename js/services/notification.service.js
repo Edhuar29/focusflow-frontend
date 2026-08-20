@@ -42,13 +42,17 @@ class NotificationService {
     this.checkPermission();
     if (this.hasPermission && 'Notification' in window) {
       try {
-        const iconUrl = new URL('./assets/images/logo.png', window.location.href).href;
-        const badgeUrl = new URL('./assets/images/favicon.png', window.location.href).href;
-        const notif = new Notification(title, {
-          icon: iconUrl,
-          badge: badgeUrl,
-          ...options
-        });
+        const notifOptions = {
+          body: options.body || '',
+          tag: options.tag || `edhuflow-${Date.now()}`
+        };
+
+        // Solo agregar icon si no es Safari estricto para evitar fallos de renderizado
+        try {
+          notifOptions.icon = new URL('./assets/images/logo.png', window.location.href).href;
+        } catch (e) {}
+
+        const notif = new Notification(title, notifOptions);
 
         notif.onclick = () => {
           window.focus();
@@ -57,7 +61,12 @@ class NotificationService {
 
         return notif;
       } catch (e) {
-        console.warn('[NotificationService] Error al disparar notificación de escritorio:', e);
+        console.warn('[NotificationService] Reintentando con opciones básicas:', e);
+        try {
+          return new Notification(title, { body: options.body || '' });
+        } catch (err2) {
+          console.warn('[NotificationService] No fue posible emitir notificación nativa:', err2);
+        }
       }
     }
     return null;
