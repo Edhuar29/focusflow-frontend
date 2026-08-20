@@ -152,27 +152,43 @@ export class HydrationView extends BaseView {
             </div>
             
             <p style="color: var(--text-secondary); font-size: var(--text-xs); margin-bottom: var(--space-3);">
-              Recibe avisos periódicos en tu computadora y correo electrónico para mantener tu nivel de concentración.
+              Recibe avisos periódicos en la pantalla de tu computadora y en tu correo electrónico según el tiempo que elijas.
             </p>
 
-            <div style="display: flex; gap: var(--space-3); align-items: center; margin-bottom: var(--space-3);">
-              <label for="reminder-interval-select" style="font-size: var(--text-xs); color: var(--text-secondary);">Frecuencia:</label>
-              <select id="reminder-interval-select" class="form-control" style="max-width: 185px; padding: 6px 10px; font-size: var(--text-xs); cursor: pointer;">
-                <option value="0.25" ${reminder.intervalHours === 0.25 ? 'selected' : ''}>Cada 15 minutos</option>
-                <option value="0.5" ${reminder.intervalHours === 0.5 ? 'selected' : ''}>Cada 30 minutos</option>
-                <option value="0.75" ${reminder.intervalHours === 0.75 ? 'selected' : ''}>Cada 45 minutos</option>
-                <option value="1" ${reminder.intervalHours === 1 ? 'selected' : ''}>Cada 1 hora</option>
-                <option value="1.5" ${reminder.intervalHours === 1.5 ? 'selected' : ''}>Cada 1 hora y media</option>
-                <option value="2" ${reminder.intervalHours === 2 ? 'selected' : ''}>Cada 2 horas</option>
-                <option value="3" ${reminder.intervalHours === 3 ? 'selected' : ''}>Cada 3 horas</option>
-              </select>
+            <!-- Selector Flexible de Frecuencia / Minutos Personalizados -->
+            <div style="margin-bottom: var(--space-3); background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 10px 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label for="reminder-interval-select" style="font-size: var(--text-xs); font-weight: 600; color: var(--text-primary);">Frecuencia de Aviso:</label>
+                <span id="water-current-interval-badge" style="font-size: 10px; font-weight: 700; color: #38BDF8; background: rgba(56, 189, 248, 0.12); padding: 2px 7px; border-radius: 999px;">
+                  Cada ${Math.round(parseFloat(reminder.intervalHours || 1) * 60)} min
+                </span>
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <select id="reminder-interval-select" class="form-control" style="flex: 1; min-width: 160px; padding: 7px 10px; font-size: var(--text-xs); cursor: pointer;">
+                  <option value="0.0833" ${Math.abs(reminder.intervalHours - 0.0833) < 0.01 ? 'selected' : ''}>Cada 5 minutos (Prueba rápida)</option>
+                  <option value="0.1666" ${Math.abs(reminder.intervalHours - 0.1666) < 0.01 ? 'selected' : ''}>Cada 10 minutos</option>
+                  <option value="0.25" ${Math.abs(reminder.intervalHours - 0.25) < 0.01 ? 'selected' : ''}>Cada 15 minutos</option>
+                  <option value="0.3333" ${Math.abs(reminder.intervalHours - 0.3333) < 0.01 ? 'selected' : ''}>Cada 20 minutos</option>
+                  <option value="0.5" ${Math.abs(reminder.intervalHours - 0.5) < 0.01 ? 'selected' : ''}>Cada 30 minutos</option>
+                  <option value="0.75" ${Math.abs(reminder.intervalHours - 0.75) < 0.01 ? 'selected' : ''}>Cada 45 minutos</option>
+                  <option value="1" ${Math.abs(reminder.intervalHours - 1) < 0.01 ? 'selected' : ''}>Cada 1 hora (Recomendado)</option>
+                  <option value="1.5" ${Math.abs(reminder.intervalHours - 1.5) < 0.01 ? 'selected' : ''}>Cada 1 hora y media</option>
+                  <option value="2" ${Math.abs(reminder.intervalHours - 2) < 0.01 ? 'selected' : ''}>Cada 2 horas</option>
+                  <option value="3" ${Math.abs(reminder.intervalHours - 3) < 0.01 ? 'selected' : ''}>Cada 3 horas</option>
+                  <option value="custom">Personalizado en minutos...</option>
+                </select>
+                <div id="custom-minutes-wrap" style="display: none; align-items: center; gap: 6px; width: 100%;">
+                  <input type="number" id="input-custom-water-minutes" class="form-control" placeholder="Minutos (ej. 25)" min="1" max="720" value="${Math.round(parseFloat(reminder.intervalHours || 1) * 60)}" style="flex: 1; padding: 6px 10px; font-size: var(--text-xs);" />
+                  <span style="font-size: var(--text-xs); color: var(--text-muted);">minutos</span>
+                </div>
+              </div>
             </div>
 
             <!-- Email Notification Section -->
-            <div style="background-color: var(--bg-input); padding: var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+            <div style="background-color: var(--bg-input); padding: var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--border-subtle); margin-bottom: var(--space-3);">
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                 <span style="font-size: var(--text-xs); font-weight: var(--fw-semibold); color: var(--text-primary);">
-                  Notificar a mi correo electrónico
+                  Enviar aviso a mi correo electrónico
                 </span>
                 <input type="checkbox" id="toggle-water-email" ${reminder.emailNotification !== false ? 'checked' : ''} style="cursor: pointer;" />
               </div>
@@ -184,7 +200,7 @@ export class HydrationView extends BaseView {
                     <div class="email-choice-radio-inner" style="width: 5px; height: 5px;"></div>
                   </div>
                   <div>
-                    <span class="email-choice-title" style="font-size: 11.5px;">Correo de mi cuenta</span>
+                    <span class="email-choice-title" style="font-size: 11.5px;">Correo de mi cuenta (Gmail)</span>
                     <span class="email-choice-desc" style="font-size: 10px;">${escapeHTML(accountEmail)}</span>
                   </div>
                 </div>
@@ -210,11 +226,12 @@ export class HydrationView extends BaseView {
               />
             </div>
 
-            <div style="display: flex; gap: 8px; margin-top: var(--space-3);">
-              <button class="btn btn-secondary" id="btn-save-reminder" style="flex: 1; font-size: var(--text-xs);">
+            <!-- Botones de Acción y Prueba Inmediata -->
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-secondary" id="btn-save-reminder" style="flex: 1; font-size: var(--text-xs); padding: 8px 10px;">
                 Guardar Configuración
               </button>
-              <button class="btn btn-primary" id="btn-test-water-now" style="font-size: var(--text-xs); padding: 7px 12px; white-space: nowrap; display: flex; align-items: center; gap: 5px;">
+              <button class="btn btn-primary" id="btn-test-water-now" style="font-size: var(--text-xs); padding: 8px 14px; white-space: nowrap; display: flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #4F46E5, #0284C7); border-color: transparent; font-weight: 600;">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M22 2L11 13"></path>
                   <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
@@ -269,6 +286,40 @@ export class HydrationView extends BaseView {
       };
     }
 
+    // 1.1 Manejo de intervalo personalizado de hidratación
+    const intervalSelect = $('#reminder-interval-select', this.container);
+    const customWrap = $('#custom-minutes-wrap', this.container);
+    const customInput = $('#input-custom-water-minutes', this.container);
+    const intervalBadge = $('#water-current-interval-badge', this.container);
+
+    const updateIntervalDisplay = () => {
+      if (!intervalSelect) return;
+      if (intervalSelect.value === 'custom') {
+        if (customWrap) customWrap.style.display = 'flex';
+        const mins = customInput ? (parseInt(customInput.value, 10) || 30) : 30;
+        if (intervalBadge) intervalBadge.textContent = `Cada ${mins} min`;
+      } else {
+        if (customWrap) customWrap.style.display = 'none';
+        const hours = parseFloat(intervalSelect.value) || 1;
+        const mins = Math.round(hours * 60);
+        if (intervalBadge) intervalBadge.textContent = `Cada ${mins} min`;
+      }
+    };
+
+    if (intervalSelect) {
+      intervalSelect.onchange = () => {
+        soundService.playClick();
+        updateIntervalDisplay();
+      };
+    }
+
+    if (customInput) {
+      customInput.oninput = () => {
+        const mins = parseInt(customInput.value, 10) || 1;
+        if (intervalBadge) intervalBadge.textContent = `Cada ${mins} min`;
+      };
+    }
+
     // 2. Botón de Tomar Agua (+250 ml)
     const drinkBtn = $('#btn-drink-water-single', this.container);
     if (drinkBtn) {
@@ -302,13 +353,16 @@ export class HydrationView extends BaseView {
     if (saveReminderBtn) {
       saveReminderBtn.onclick = () => {
         soundService.playClick();
-        
-        if ('Notification' in window && Notification.permission === 'default') {
-          Notification.requestPermission().catch(() => {});
+
+        let interval = 1;
+        if (intervalSelect && intervalSelect.value === 'custom') {
+          const mins = parseInt(customInput ? customInput.value : '30', 10) || 30;
+          interval = Math.max(0.016, mins / 60);
+        } else if (intervalSelect) {
+          interval = parseFloat(intervalSelect.value) || 1;
         }
 
         const enabled = $('#toggle-water-reminder', this.container)?.checked || false;
-        const interval = parseFloat($('#reminder-interval-select', this.container)?.value || '1');
         const emailNotification = $('#toggle-water-email', this.container)?.checked || false;
         const inputEmail = emailInput ? emailInput.value.trim() : accountEmail;
         const targetEmail = isCustomSelected ? inputEmail : accountEmail;
@@ -337,16 +391,18 @@ export class HydrationView extends BaseView {
           useCustomEmail: isCustomSelected
         });
 
+        const totalMinutes = Math.round(interval * 60);
+
         if (enabled) {
           notificationScheduler.resetWaterTimer();
           notificationScheduler.addNotification({
             id: 'notif-water-reminder',
             title: 'Recordatorio de Hidratación Activado',
-            description: `Avisos programados cada ${interval * 60} minutos en tu computadora${emailNotification ? ` y a ${targetEmail}` : ''}.`,
+            description: `Avisos programados cada ${totalMinutes} minutos en tu computadora${emailNotification ? ` y a ${targetEmail}` : ''}.`,
             priority: 'medium',
             type: 'hydration'
           });
-          toast.success(`Recordatorio de hidratación guardado para ${targetEmail} (cada ${interval * 60} min)`);
+          toast.success(`Recordatorio guardado cada ${totalMinutes} minutos para ${targetEmail}`);
         } else {
           notificationScheduler.removeNotification('notif-water-reminder');
           toast.info('Recordatorio de hidratación desactivado');
@@ -361,23 +417,32 @@ export class HydrationView extends BaseView {
         soundService.playSoftChime();
         testWaterBtn.disabled = true;
         const origText = testWaterBtn.innerHTML;
-        testWaterBtn.innerHTML = `<span>Enviando...</span>`;
+        testWaterBtn.innerHTML = `<span>Enviando correo...</span>`;
 
         const inputEmail = emailInput ? emailInput.value.trim() : accountEmail;
         const targetEmail = isCustomSelected ? inputEmail : accountEmail;
 
         try {
           // 1. Notificación en pantalla de la computadora (Desktop)
-          notificationService.send('EdhuFlow: Hora de Hidratarte', {
-            body: '¡Momento de tomar un vaso de agua (+250 ml)! Mantén tu enfoque y energía.',
-            tag: 'edhuflow-test-water'
-          });
+          const perm = notificationService.getPermissionStatus();
+          if (perm === 'granted') {
+            notificationService.send('EdhuFlow: Hora de Hidratarte', {
+              body: 'Momento de tomar un vaso de agua (+250 ml). Mantén tu concentración y energía.',
+              tag: 'edhuflow-test-water'
+            });
+          } else if (perm === 'default') {
+            eventBus.emit('desktopNotif:requestPermission');
+          }
 
-          // 2. Correo electrónico a Gmail
-          await apiService.sendHydrationEmailReminder(targetEmail);
-          toast.success(`¡Alerta enviada a tu pantalla y correo (${targetEmail})!`);
+          // 2. Correo electrónico real entregado a Gmail
+          const res = await apiService.sendHydrationEmailReminder(targetEmail);
+          if (res && res.success) {
+            toast.success(`¡Alerta emitida y correo entregado a ${targetEmail}!`);
+          } else {
+            toast.info(`Recordatorio procesado para ${targetEmail}`);
+          }
         } catch (err) {
-          toast.info(`Recordatorio emitido para ${targetEmail}`);
+          toast.error(`Error enviando correo: ${err.message || 'Verifica tu conexión'}`);
         } finally {
           testWaterBtn.disabled = false;
           testWaterBtn.innerHTML = origText;

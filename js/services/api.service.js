@@ -205,42 +205,29 @@ class ApiService {
 
   /* --- Recordatorios por Correo --- */
   async sendTaskEmailReminder(email, taskTitle, taskTime, category) {
-    try {
-      const res = await this._request('/reminders/task-email', {
-        method: 'POST',
-        body: JSON.stringify({ email, task_title: taskTitle, task_time: taskTime, category }),
-      });
-      return res;
-    } catch (err) {
-      console.warn('[ApiService] Error sending task email reminder:', err.message);
-      return null;
-    }
+    return this._request('/reminders/task-email', {
+      method: 'POST',
+      body: JSON.stringify({ email, task_title: taskTitle, task_time: taskTime, category }),
+    });
   }
 
   async sendHydrationEmailReminder(email) {
-    try {
-      const res = await this._request('/reminders/hydration-email', {
-        method: 'POST',
-        body: JSON.stringify({ email }),
-      });
-      return res;
-    } catch (err) {
-      console.warn('[ApiService] Error sending hydration email reminder:', err.message);
-      return null;
-    }
+    return this._request('/reminders/hydration-email', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
   }
 
   async sendTestEmail(email) {
-    const res = await this._request('/reminders/task-email', {
+    return this._request('/reminders/task-email', {
       method: 'POST',
       body: JSON.stringify({
         email,
-        task_title: 'Notificación de Prueba FocusFlow',
+        task_title: 'Notificación de Prueba EdhuFlow',
         task_time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         category: 'Sistema'
       }),
     });
-    return res;
   }
 }
 

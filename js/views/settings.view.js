@@ -136,10 +136,37 @@ export class SettingsView extends BaseView {
                   <line x1="22" y1="2" x2="11" y2="13"></line>
                   <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                 </svg>
-                <span>Enviar Correo de Prueba</span>
+                <span>Enviar Correo de Prueba a mi Gmail</span>
               </button>
             </div>
 
+          </div>
+        </div>
+
+        <!-- 2. Notificaciones en la Pantalla de tu Computadora (PC) -->
+        <div class="settings-section">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-primary);">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <h3 class="settings-section-title" style="margin: 0;">Notificaciones en la Pantalla de tu Computadora</h3>
+            </div>
+            <span id="settings-desktop-status-badge" style="font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px;">
+              Verificando...
+            </span>
+          </div>
+          <p style="color: var(--text-secondary); font-size: var(--text-sm); margin-bottom: var(--space-4);">
+            Muestra alertas visuales nativas del sistema operativo y timbres de sonido cuando se cumpla la hora de tareas e hidratación:
+          </p>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn btn-secondary" id="btn-settings-request-desktop" style="font-size: var(--text-xs); display: flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span>Probar Alerta en Pantalla Ahora</span>
+            </button>
           </div>
         </div>
 
@@ -282,7 +309,7 @@ export class SettingsView extends BaseView {
       };
     }
 
-    // 3. Enviar Correo de Prueba
+    // 3. Enviar Correo de Prueba a Gmail
     const testEmailBtn = $('#btn-send-test-email', this.container);
     if (testEmailBtn) {
       testEmailBtn.onclick = async () => {
@@ -293,19 +320,62 @@ export class SettingsView extends BaseView {
           return;
         }
 
-        soundService.playClick();
+        soundService.playSoftChime();
         testEmailBtn.disabled = true;
         const originalText = testEmailBtn.innerHTML;
-        testEmailBtn.innerHTML = `<span>Enviando prueba a ${targetEmail}...</span>`;
+        testEmailBtn.innerHTML = `<span>Enviando correo a ${targetEmail}...</span>`;
 
         try {
-          await apiService.sendTestEmail(targetEmail);
-          toast.success(`Notificación de prueba enviada a ${targetEmail}`);
+          const res = await apiService.sendTestEmail(targetEmail);
+          if (res && res.success) {
+            toast.success(`¡Correo de prueba entregado exitosamente a ${targetEmail}!`);
+          } else {
+            toast.info(`Correo enviado a ${targetEmail}`);
+          }
         } catch (err) {
-          toast.info(`Prueba procesada para ${targetEmail}`);
+          toast.error(`Error enviando correo: ${err.message || 'Verifica la conexión'}`);
         } finally {
           testEmailBtn.disabled = false;
           testEmailBtn.innerHTML = originalText;
+        }
+      };
+    }
+
+    // 3.1 Estado y prueba de Notificaciones de Escritorio en Pantalla
+    const desktopStatusBadge = $('#settings-desktop-status-badge', this.container);
+    const updateDesktopStatusUI = () => {
+      if (!desktopStatusBadge) return;
+      const perm = notificationService.getPermissionStatus();
+      if (perm === 'granted') {
+        desktopStatusBadge.textContent = 'PERMITIDAS (ACTIVAS)';
+        desktopStatusBadge.style.background = 'rgba(16, 185, 129, 0.18)';
+        desktopStatusBadge.style.color = '#10B981';
+      } else if (perm === 'denied') {
+        desktopStatusBadge.textContent = 'BLOQUEADAS EN NAVEGADOR';
+        desktopStatusBadge.style.background = 'rgba(239, 68, 68, 0.18)';
+        desktopStatusBadge.style.color = '#EF4444';
+      } else {
+        desktopStatusBadge.textContent = 'PENDIENTE DE PERMISO';
+        desktopStatusBadge.style.background = 'rgba(245, 158, 11, 0.18)';
+        desktopStatusBadge.style.color = '#F59E0B';
+      }
+    };
+    updateDesktopStatusUI();
+
+    const requestDesktopBtn = $('#btn-settings-request-desktop', this.container);
+    if (requestDesktopBtn) {
+      requestDesktopBtn.onclick = async () => {
+        soundService.playSoftChime();
+        const granted = await notificationService.requestPermission();
+        updateDesktopStatusUI();
+        if (granted) {
+          notificationService.send('EdhuFlow — Alerta de Prueba', {
+            body: '¡Excelente! Las notificaciones en tu pantalla están activas y funcionando correctamente.',
+            tag: 'edhuflow-test-desktop'
+          });
+          toast.success('¡Alerta de prueba mostrada en tu pantalla!');
+        } else {
+          toast.warning('Permiso no otorgado en el navegador.');
         }
       };
     }
