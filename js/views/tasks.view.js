@@ -176,8 +176,8 @@ export class TasksView extends BaseView {
     this._initPrioritySelector('create-priority-selector', 'task-priority-select');
     this._initPrioritySelector('edit-priority-selector', 'edit-task-priority-select');
 
-    // Inicializar widgets de calendario interactivo
-    this._initVisualCalendar('create-calendar-widget', 'create-task-date-val', selectedDate || getTodayISO());
+    // Inicializar widgets de calendario interactivo (Creación siempre en la fecha actual de la computadora)
+    this._initVisualCalendar('create-calendar-widget', 'create-task-date-val', getTodayISO());
     this._initVisualCalendar('edit-calendar-widget', 'edit-task-date-val', selectedDate || getTodayISO());
 
     this._updateDailyProgressUI();
@@ -422,7 +422,13 @@ export class TasksView extends BaseView {
         const date = card.getAttribute('data-date');
         $$('.day-card', weeklyNav).forEach(c => c.classList.remove('active'));
         card.classList.add('active');
+
+        // Limpiar chips de filtro previos para mostrar todas las tareas de este día específico
+        const filterChips = $$('.filter-chip', this.container);
+        filterChips.forEach(c => c.classList.remove('active'));
+        store.state.activeFilter = 'all';
         store.setSelectedDate(date);
+        
         this._updateGrid();
       };
     }

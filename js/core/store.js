@@ -96,9 +96,12 @@ class Store {
   }
 
   getFilteredTasks() {
-    const selectedDate = this.state.selectedDate || getTodayISO();
+    const selectedDate = (this.state.selectedDate || getTodayISO()).trim().split('T')[0];
+    const todayISO = getTodayISO();
 
     const filtered = this.state.tasks.filter(task => {
+      const taskDate = (task.date || '').trim().split('T')[0];
+
       if (this.state.searchQuery && this.state.searchQuery.trim()) {
         const q = this.state.searchQuery.toLowerCase();
         const matchesTitle = task.title.toLowerCase().includes(q);
@@ -108,26 +111,27 @@ class Store {
       }
 
       if (this.state.activeFilter === 'high') {
-        return task.priorities && task.priorities.includes('high') && task.date === selectedDate;
+        return task.priorities && task.priorities.includes('high') && (taskDate === selectedDate || (!taskDate && selectedDate === todayISO));
       }
       if (this.state.activeFilter === 'medium') {
-        return task.priorities && task.priorities.includes('medium') && task.date === selectedDate;
+        return task.priorities && task.priorities.includes('medium') && (taskDate === selectedDate || (!taskDate && selectedDate === todayISO));
       }
       if (this.state.activeFilter === 'low') {
-        return task.priorities && task.priorities.includes('low') && task.date === selectedDate;
+        return task.priorities && task.priorities.includes('low') && (taskDate === selectedDate || (!taskDate && selectedDate === todayISO));
       }
       if (this.state.activeFilter === 'due-today') {
-        return task.date === getTodayISO();
+        return taskDate === todayISO || (!taskDate && selectedDate === todayISO);
       }
       if (this.state.activeFilter === 'completed') {
-        return task.completed && task.date === selectedDate;
+        return task.completed && (taskDate === selectedDate || (!taskDate && selectedDate === todayISO));
       }
       if (this.state.activeFilter === 'all-days') {
         return true;
       }
 
       // Por defecto: mostrar estrictamente las tareas del día seleccionado
-      return task.date === selectedDate;
+      if (!taskDate) return selectedDate === todayISO;
+      return taskDate === selectedDate;
     });
 
     const pending = filtered.filter(t => !t.completed);
@@ -137,13 +141,21 @@ class Store {
   }
 
   getFilterCounts() {
-    const selectedDate = this.state.selectedDate || getTodayISO();
-    const dayTasks = this.state.tasks.filter(t => t.date === selectedDate);
+    const selectedDate = (this.state.selectedDate || getTodayISO()).trim().split('T')[0];
+    const todayISO = getTodayISO();
+    const dayTasks = this.state.tasks.filter(t => {
+      const tDate = (t.date || '').trim().split('T')[0];
+      return tDate === selectedDate || (!tDate && selectedDate === todayISO);
+    });
+
     const all = dayTasks.length;
     const high = dayTasks.filter(t => t.priorities && t.priorities.includes('high')).length;
     const medium = dayTasks.filter(t => t.priorities && t.priorities.includes('medium')).length;
     const low = dayTasks.filter(t => t.priorities && t.priorities.includes('low')).length;
-    const dueToday = this.state.tasks.filter(t => t.date === getTodayISO()).length;
+    const dueToday = this.state.tasks.filter(t => {
+      const tDate = (t.date || '').trim().split('T')[0];
+      return tDate === todayISO || (!tDate);
+    }).length;
 
     return { all, high, medium, low, dueToday, totalAllDays: this.state.tasks.length };
   }
