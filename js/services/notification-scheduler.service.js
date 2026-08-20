@@ -96,7 +96,10 @@ class NotificationSchedulerService {
 
   checkSchedules() {
     const todayISO = getTodayISO();
-    const tasks = store.getTasks().filter(t => t.date === todayISO && !t.completed);
+    const tasks = store.getTasks().filter(t => {
+      const taskDate = (t.date || '').trim().split('T')[0];
+      return (taskDate === todayISO || !taskDate) && !t.completed;
+    });
 
     const now = new Date();
     const currentHours = now.getHours();
@@ -124,21 +127,34 @@ class NotificationSchedulerService {
             time: task.time
           });
 
-          // Abrir modal destacado en pantalla
+          // 1. Abrir modal destacado en pantalla
           this._showActiveAlarmModal(task, priority);
 
-          // Despacho de Correo Electrónico para Tareas
+          // 2. Disparar Notificación Nativa de Escritorio
+          const perm = notificationService.getPermissionStatus();
+          if (perm === 'granted') {
+            notificationService.send(`EdhuFlow: ${task.title}`, {
+              body: `Hora programada: ${task.time} (${task.category || 'General'})`,
+              tag: `edhuflow-task-${task.id}`,
+              requireInteraction: false
+            });
+          }
+
+          // 3. Despacho Directo de Correo Electrónico para Tareas a Gmail
           const emailPrefs = store.getEmailPreferences() || {};
           const currentUser = store.getUser() || {};
           const targetEmail = (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'dannyeduardoanasi@gmail.com';
 
-          if (targetEmail && (task.emailAlert !== false) && (emailPrefs.emailTaskAlerts !== false)) {
+          if (targetEmail && task.emailAlert !== false) {
+            console.log(`[NotificationScheduler] Despachando correo de tarea "${task.title}" a ${targetEmail}...`);
             apiService.sendTaskEmailReminder(targetEmail, task.title, task.time, task.category || 'General')
-              .then(() => {
-                console.log(`[NotificationScheduler] Correo de tarea enviado exitosamente a ${targetEmail}`);
-                toast.info(`Alarma: Correo enviado a ${targetEmail}`);
+              .then((res) => {
+                console.log(`[NotificationScheduler] Correo de tarea entregado a ${targetEmail}:`, res);
+                toast.success(`Recordatorio de tarea enviado a tu Gmail (${targetEmail})`);
               })
-              .catch(err => console.warn('[NotificationScheduler] Fallo de correo de tarea:', err));
+              .catch((err) => {
+                console.warn('[NotificationScheduler] Error enviando correo de tarea:', err);
+              });
           }
         }
       }
@@ -166,18 +182,31 @@ class NotificationSchedulerService {
           time: 'Ahora'
         });
 
+        // Notificación Nativa de Escritorio
+        const perm = notificationService.getPermissionStatus();
+        if (perm === 'granted') {
+          notificationService.send('EdhuFlow: Hora de Hidratarte', {
+            body: 'Momento de tomar un vaso de agua (+250 ml) para mantener tu concentración.',
+            tag: `edhuflow-water-${Date.now()}`,
+            requireInteraction: false
+          });
+        }
+
         // Despacho de Correo Electrónico para Hidratación
         const emailPrefs = store.getEmailPreferences() || {};
         const currentUser = store.getUser() || {};
         const targetEmail = (hydration.reminder && hydration.reminder.email) || (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'dannyeduardoanasi@gmail.com';
 
-        if (targetEmail && (hydration.reminder.emailNotification !== false) && (emailPrefs.emailWaterAlerts !== false)) {
+        if (targetEmail && hydration.reminder.emailNotification !== false) {
+          console.log(`[NotificationScheduler] Despachando correo de hidratación a ${targetEmail}...`);
           apiService.sendHydrationEmailReminder(targetEmail)
-            .then(() => {
-              console.log(`[NotificationScheduler] Correo de hidratación enviado a ${targetEmail}`);
-              toast.info(`Hidratación: Correo enviado a ${targetEmail}`);
+            .then((res) => {
+              console.log(`[NotificationScheduler] Correo de hidratación entregado a ${targetEmail}:`, res);
+              toast.success(`Recordatorio de hidratación enviado a tu Gmail (${targetEmail})`);
             })
-            .catch(err => console.warn('[NotificationScheduler] Fallo de correo de hidratación:', err));
+            .catch((err) => {
+              console.warn('[NotificationScheduler] Error enviando correo de hidratación:', err);
+            });
         }
       }
     }

@@ -1108,55 +1108,76 @@ function initDesktopPermissionModal() {
   const allowBtn = $('#btn-perm-notif-allow');
   const laterBtn = $('#btn-perm-notif-later');
 
-  if (!modal) return;
+  const floatingBanner = $('#desktop-permission-floating-banner');
+  const allowFloatingBtn = $('#btn-allow-desktop-floating');
+  const closeFloatingBtn = $('#btn-close-desktop-floating');
 
-  const hasAsked = StorageService.get('edhuflow_desktop_perm_prompted', false);
-  const currentStatus = notificationService.getPermissionStatus();
+  const updateFloatingBannerVisibility = () => {
+    const currentStatus = notificationService.getPermissionStatus();
+    if (floatingBanner) {
+      if (currentStatus === 'default') {
+        floatingBanner.style.display = 'flex';
+      } else {
+        floatingBanner.style.display = 'none';
+      }
+    }
+  };
 
-  // Si el permiso aún no se ha pedido ('default') y el usuario ha iniciado sesión
-  if (currentStatus === 'default' && !hasAsked && store.isAuthenticated()) {
-    setTimeout(() => {
-      modal.classList.add('open');
-      modal.setAttribute('aria-hidden', 'false');
-    }, 1500);
-  }
+  updateFloatingBannerVisibility();
 
-  if (allowBtn) {
-    allowBtn.addEventListener('click', async () => {
-      soundService.playClick();
+  const handleAllow = async () => {
+    soundService.playClick();
+    if (modal) {
       modal.classList.remove('open');
       modal.setAttribute('aria-hidden', 'true');
-      StorageService.set('edhuflow_desktop_perm_prompted', true);
+    }
+    if (floatingBanner) {
+      floatingBanner.style.display = 'none';
+    }
+    StorageService.set('edhuflow_desktop_perm_prompted', true);
 
-      const granted = await notificationService.requestPermission();
-      if (granted) {
-        StorageService.set('edhuflow_desktop_notifs_enabled', true);
-        soundService.playSoftChime();
-        toast.success('¡Notificaciones en pantalla activadas!');
-        notificationService.send('EdhuFlow — Alertas de Pantalla Activadas', {
-          body: 'Recibirás avisos visuales de tareas e hidratación en tu computadora.',
-          tag: 'edhuflow-welcome-alert'
-        });
-      } else {
-        toast.info('Puedes activar las notificaciones más tarde desde Ajustes.');
-      }
-    });
-  }
+    const granted = await notificationService.requestPermission();
+    if (granted) {
+      StorageService.set('edhuflow_desktop_notifs_enabled', true);
+      soundService.playSoftChime();
+      toast.success('¡Notificaciones en pantalla activadas exitosamente!');
+      notificationService.send('EdhuFlow — Alertas en Pantalla Activadas', {
+        body: 'Recibirás avisos visuales de tareas e hidratación en tu computadora.',
+        tag: 'edhuflow-welcome-alert'
+      });
+    } else {
+      toast.info('Puedes activar las notificaciones más tarde desde Ajustes.');
+    }
+    updateFloatingBannerVisibility();
+  };
+
+  if (allowBtn) allowBtn.addEventListener('click', handleAllow);
+  if (allowFloatingBtn) allowFloatingBtn.addEventListener('click', handleAllow);
 
   if (laterBtn) {
     laterBtn.addEventListener('click', () => {
       soundService.playClick();
-      modal.classList.remove('open');
-      modal.setAttribute('aria-hidden', 'true');
+      if (modal) {
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+      }
       StorageService.set('edhuflow_desktop_perm_prompted', true);
-      toast.info('Puedes activar las notificaciones más tarde desde Ajustes.');
+    });
+  }
+
+  if (closeFloatingBtn) {
+    closeFloatingBtn.addEventListener('click', () => {
+      soundService.playClick();
+      if (floatingBanner) floatingBanner.style.display = 'none';
     });
   }
 
   // Permitir reapertura desde eventos externos
   eventBus.on('desktopNotif:requestPermission', () => {
-    modal.classList.add('open');
-    modal.setAttribute('aria-hidden', 'false');
+    if (modal) {
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+    }
   });
 }
 
