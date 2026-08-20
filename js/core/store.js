@@ -6,6 +6,7 @@
 
 import { eventBus } from './event-bus.js';
 import { StorageService } from '../services/storage.service.js';
+import { apiService } from '../services/api.service.js';
 import { getTodayISO } from '../utils/date.utils.js';
 
 class Store {
@@ -215,17 +216,42 @@ class Store {
       eventBus.emit('alarm:registered', newTask);
     }
 
+    // Sincronización automática con la base de datos en la nube (Supabase PostgreSQL)
+    if (this.isAuthenticated()) {
+      apiService.createTask(newTask).then((res) => {
+        if (res && res.id && res.id !== newTask.id) {
+          newTask.backendId = res.id;
+          this._persistAndNotify('tasks', this.state.tasks);
+        }
+      }).catch(() => {});
+    }
+
     return newTask;
   }
 
   updateTask(taskId, updates) {
-    const index = this.state.tasks.findIndex(t => t.id === taskId);
+    const index = this.state.tasks.findIndex(t => t.id === taskId || t.backendId === taskId);
     if (index !== -1) {
-      this.state.tasks[index] = { ...this.state.tasks[index], ...updates };
+      const currentTask = this.state.tasks[index];
+      this.state.tasks[index] = { ...currentTask, ...updates };
       this._persistAndNotify('tasks', this.state.tasks, 'tasks:updated');
 
       if (updates.alarm) {
         eventBus.emit('alarm:registered', this.state.tasks[index]);
+      }
+
+      if (this.isAuthenticated()) {
+        const backendTargetId = currentTask.backendId || currentTask.id;
+        apiService.updateTask(backendTargetId, {
+          title: this.state.tasks[index].title,
+          description: this.state.tasks[index].description,
+          date: this.state.tasks[index].date,
+          time: this.state.tasks[index].time,
+          category: this.state.tasks[index].category,
+          priority: this.state.tasks[index].priorities ? (this.state.tasks[index].priorities[0] === 'high' ? 'Alto' : 'Medio') : 'Medio',
+          is_alarm_enabled: !!this.state.tasks[index].alarm,
+          is_completed: !!this.state.tasks[index].completed,
+        }).catch(() => {});
       }
     }
   }
@@ -235,31 +261,47 @@ class Store {
   }
 
   postponeTask(taskId) {
-    const task = this.state.tasks.find(t => t.id === taskId);
+    const task = this.state.tasks.find(t => t.id === taskId || t.backendId === taskId);
     if (task) {
       const baseDate = task.date || getTodayISO();
       const d = new Date(baseDate + 'T12:00:00');
       d.setDate(d.getDate() + 1);
       task.date = d.toISOString().split('T')[0];
       this._persistAndNotify('tasks', this.state.tasks, 'tasks:updated');
+      
+      if (this.isAuthenticated()) {
+        const backendTargetId = task.backendId || task.id;
+        apiService.updateTask(backendTargetId, { date: task.date }).catch(() => {});
+      }
     }
   }
 
   deleteTask(taskId) {
-    this.state.tasks = this.state.tasks.filter(t => t.id !== taskId);
-    if (this.state.activeFocusTask && this.state.activeFocusTask.id === taskId) {
+    const taskToDelete = this.state.tasks.find(t => t.id === taskId || t.backendId === taskId);
+    this.state.tasks = this.state.tasks.filter(t => t.id !== taskId && t.backendId !== taskId);
+    if (this.state.activeFocusTask && (this.state.activeFocusTask.id === taskId || this.state.activeFocusTask.backendId === taskId)) {
       this.clearActiveFocusTask();
     }
     this._persistAndNotify('tasks', this.state.tasks, 'tasks:updated');
     eventBus.emit('alarm:cancelled', taskId);
+
+    if (this.isAuthenticated() && taskToDelete) {
+      const backendTargetId = taskToDelete.backendId || taskToDelete.id;
+      apiService.deleteTask(backendTargetId).catch(() => {});
+    }
   }
 
   toggleTaskCompletion(taskId) {
-    const task = this.state.tasks.find(t => t.id === taskId);
+    const task = this.state.tasks.find(t => t.id === taskId || t.backendId === taskId);
     if (task) {
       task.completed = !task.completed;
       this._persistAndNotify('tasks', this.state.tasks, 'tasks:updated');
       eventBus.emit('task:toggled', task);
+
+      if (this.isAuthenticated()) {
+        const backendTargetId = task.backendId || task.id;
+        apiService.updateTask(backendTargetId, { is_completed: task.completed }).catch(() => {});
+      }
     }
   }
 
@@ -406,6 +448,41 @@ class Store {
     eventBus.emit('hydration:updated', this.state.hydration);
     eventBus.emit('pomodoro:updated', this.state.pomodoro);
     eventBus.emit('emailPreferences:updated', this.state.emailPreferences);
+
+    // Cargar y sincronizar tareas guardadas en la base de datos en la nube (PostgreSQL)
+    this.syncTasksFromCloud().catch(() => {});
+  }
+
+  async syncTasksFromCloud() {
+    if (!this.isAuthenticated()) return;
+    try {
+      const remoteTasks = await apiService.getTasks();
+      if (Array.isArray(remoteTasks)) {
+        const mapped = remoteTasks.map((t) => ({
+          id: t.id,
+          backendId: t.id,
+          title: t.title,
+          description: t.description || '',
+          category: t.category || 'General',
+          priorities: [t.priority === 'Alto' ? 'high' : (t.priority === 'Bajo' ? 'low' : 'medium')],
+          date: t.date,
+          time: t.time,
+          alarm: t.is_alarm_enabled,
+          emailAlert: t.is_alarm_enabled,
+          completed: t.is_completed,
+          createdAt: t.created_at
+        }));
+
+        if (mapped.length > 0) {
+          this.state.tasks = mapped;
+          this._persistAndNotify('tasks', this.state.tasks, 'tasks:updated');
+        } else if (this.state.tasks.length > 0) {
+          for (const localTask of this.state.tasks) {
+            apiService.createTask(localTask).catch(() => {});
+          }
+        }
+      }
+    } catch {}
   }
 
   logout() {
