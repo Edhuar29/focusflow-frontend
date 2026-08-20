@@ -200,10 +200,112 @@ export class TasksView extends BaseView {
     }).join('');
   }
 
+  _formatDayHeader(dateStr) {
+    if (!dateStr || dateStr === 'Sin fecha') return 'Sin fecha programada';
+    const today = getTodayISO();
+    if (dateStr === today) return 'Hoy (Día actual)';
+
+    try {
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        const dayName = DAY_NAMES_FULL_ES[d.getDay()];
+        const monthName = MONTH_NAMES_ES[d.getMonth()];
+        return `${dayName}, ${parseInt(parts[2], 10)} de ${monthName}`;
+      }
+    } catch {}
+    return dateStr;
+  }
+
+  _renderSingleTaskCard(task) {
+    const isChecked = task.completed ? 'checked' : '';
+    const completedClass = task.completed ? 'completed' : '';
+
+    const priorityBadgesHTML = task.priorities.map(p => {
+      return `<span class="badge badge-priority-${p}">${p}</span>`;
+    }).join(' ');
+
+    const categoryBadgeHTML = task.category ? `
+      <span class="badge badge-category">${escapeHTML(task.category)}</span>
+    ` : '';
+
+    const emailBadgeHTML = task.emailAlert ? `
+      <span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818CF8; border: 1px solid rgba(99, 102, 241, 0.3);" title="Recordatorio por correo activo">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 2px;">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+          <polyline points="22,6 12,13 2,6"></polyline>
+        </svg>
+        Gmail
+      </span>
+    ` : '';
+
+    const cleanTime = formatCleanTime(task.time);
+
+    return `
+      <div class="task-card ${completedClass}" data-task-id="${task.id}">
+        <div class="task-quick-actions">
+          <button class="quick-action-btn btn-focus" data-action="focus" data-task-id="${task.id}" title="Iniciar Sesión Pomodoro">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          </button>
+          <button class="quick-action-btn" data-action="postpone" data-task-id="${task.id}" title="Posponer para mañana (+1d)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </button>
+          <button class="quick-action-btn" data-action="edit" data-task-id="${task.id}" title="Editar tarea">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+          </button>
+          <button class="quick-action-btn btn-delete" data-action="delete" data-task-id="${task.id}" title="Eliminar tarea">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="task-card-header">
+          <label class="custom-checkbox" aria-label="Marcar ${escapeHTML(task.title)}">
+            <input type="checkbox" ${isChecked} data-toggle-id="${task.id}" />
+            <span class="checkbox-mark">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>
+          </label>
+          <span class="task-card-title">${escapeHTML(task.title)}</span>
+        </div>
+
+        <div class="task-card-footer">
+          <div class="task-card-badges">
+            ${priorityBadgesHTML}
+            ${categoryBadgeHTML}
+            ${emailBadgeHTML}
+          </div>
+          <span class="task-card-time">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            ${escapeHTML(cleanTime)}
+          </span>
+        </div>
+      </div>
+    `;
+  }
+
   _renderTaskCardsHTML() {
     const tasks = store.getFilteredTasks();
+    const selectedDate = store.getState().selectedDate || getTodayISO();
+    const activeFilter = store.getState().activeFilter;
 
     if (tasks.length === 0) {
+      const formattedDate = this._formatDayHeader(selectedDate);
       return `
         <div style="grid-column: 1 / -1; padding: var(--space-8); text-align: center; color: var(--text-secondary); background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border-subtle); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="color: var(--text-muted);">
@@ -211,8 +313,8 @@ export class TasksView extends BaseView {
             <polyline points="12 6 12 12 14 14"></polyline>
           </svg>
           <div>
-            <strong style="display: block; font-size: var(--text-sm); color: var(--text-primary); margin-bottom: 2px;">No tienes tareas programadas</strong>
-            <span style="font-size: var(--text-xs); color: var(--text-muted);">Comienza organizando tu día o añade una nueva actividad</span>
+            <strong style="display: block; font-size: var(--text-sm); color: var(--text-primary); margin-bottom: 2px;">No tienes tareas para ${formattedDate}</strong>
+            <span style="font-size: var(--text-xs); color: var(--text-muted);">Comienza organizando tus metas o añade una nueva actividad</span>
           </div>
           <button class="btn btn-primary" id="btn-empty-add-task" style="font-size: var(--text-xs); margin-top: 4px;">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 4px;">
@@ -225,76 +327,54 @@ export class TasksView extends BaseView {
       `;
     }
 
-    return tasks.map(task => {
-      const isChecked = task.completed ? 'checked' : '';
-      const completedClass = task.completed ? 'completed' : '';
+    // Si es búsqueda o filtro de todos los días: agrupar por día
+    if (activeFilter === 'all-days' || (store.getState().searchQuery && store.getState().searchQuery.trim())) {
+      const groups = {};
+      tasks.forEach(t => {
+        const d = t.date || 'Sin fecha';
+        if (!groups[d]) groups[d] = [];
+        groups[d].push(t);
+      });
 
-      const priorityBadgesHTML = task.priorities.map(p => {
-        return `<span class="badge badge-priority-${p}">${p}</span>`;
-      }).join(' ');
-
-      const categoryBadgeHTML = task.category ? `
-        <span class="badge badge-category">${escapeHTML(task.category)}</span>
-      ` : '';
-
-      const cleanTime = formatCleanTime(task.time);
-
-      return `
-        <div class="task-card ${completedClass}" data-task-id="${task.id}">
-          <div class="task-quick-actions">
-            <button class="quick-action-btn btn-focus" data-action="focus" data-task-id="${task.id}" title="Iniciar Sesión Pomodoro">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+      let html = '';
+      Object.keys(groups).sort().forEach(dateKey => {
+        const groupTasks = groups[dateKey];
+        const dayFormatted = this._formatDayHeader(dateKey);
+        html += `
+          <div class="task-day-group-header">
+            <span class="task-day-group-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
               </svg>
-            </button>
-            <button class="quick-action-btn" data-action="postpone" data-task-id="${task.id}" title="Posponer para mañana (+1d)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-            </button>
-            <button class="quick-action-btn" data-action="edit" data-task-id="${task.id}" title="Editar tarea">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 20h9"></path>
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-              </svg>
-            </button>
-            <button class="quick-action-btn btn-delete" data-action="delete" data-task-id="${task.id}" title="Eliminar tarea">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              </svg>
-            </button>
-          </div>
-
-          <div class="task-card-header">
-            <label class="custom-checkbox" aria-label="Marcar ${escapeHTML(task.title)}">
-              <input type="checkbox" ${isChecked} data-toggle-id="${task.id}" />
-              <span class="checkbox-mark">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              </span>
-            </label>
-            <span class="task-card-title">${escapeHTML(task.title)}</span>
-          </div>
-
-          <div class="task-card-footer">
-            <div class="task-card-badges">
-              ${priorityBadgesHTML}
-              ${categoryBadgeHTML}
-            </div>
-            <span class="task-card-time">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-              ${escapeHTML(cleanTime)}
+              ${dayFormatted}
             </span>
+            <span class="task-day-group-count">${groupTasks.length} ${groupTasks.length === 1 ? 'tarea' : 'tareas'}</span>
           </div>
-        </div>
-      `;
-    }).join('');
+        `;
+        html += groupTasks.map(task => this._renderSingleTaskCard(task)).join('');
+      });
+      return html;
+    }
+
+    // Modo día seleccionado (Aislamiento visual por fecha)
+    const dayFormatted = this._formatDayHeader(selectedDate);
+    let html = `
+      <div class="task-day-group-header">
+        <span class="task-day-group-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+          </svg>
+          ${dayFormatted}
+        </span>
+        <span class="task-day-group-count">${tasks.length} ${tasks.length === 1 ? 'tarea' : 'tareas'}</span>
+      </div>
+    `;
+    html += tasks.map(task => this._renderSingleTaskCard(task)).join('');
+    return html;
   }
 
   bindEvents() {
@@ -815,12 +895,26 @@ export class TasksView extends BaseView {
 
   _openCreateModal() {
     const form = $('#create-task-form');
-    const activeDate = store.getState().selectedDate || getTodayISO();
+    // Siempre sincronizar con la fecha local de la computadora del usuario
+    const todayDate = getTodayISO();
+
+    // Obtener la hora actual de la computadora + 30 minutos
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 30);
+    let hours = now.getHours();
+    const minutes = now.getMinutes();
+    const isPM = hours >= 12;
+    hours = hours % 12;
+    if (hours === 0) hours = 12;
+    const timeStr = `${hours}:${String(minutes).padStart(2, '0')} ${isPM ? 'PM' : 'AM'}`;
 
     if (form) {
-      this._setMobilePickerTime(form, '12:00 PM');
+      form.reset();
+      this._setMobilePickerTime(form, timeStr);
       this._setPriorityValue('create-priority-selector', 'task-priority-select', 'medium');
-      this._setCalendarWidgetDate('create-calendar-widget', 'create-task-date-val', activeDate);
+      this._setCalendarWidgetDate('create-calendar-widget', 'create-task-date-val', todayDate);
+      const emailToggle = form.querySelector('#task-email-reminder-toggle');
+      if (emailToggle) emailToggle.checked = true;
     }
 
     if (this.createModal) {
@@ -841,6 +935,11 @@ export class TasksView extends BaseView {
       this._setPriorityValue('edit-priority-selector', 'edit-task-priority-select', task.priorities[0] || 'medium');
       this._setCalendarWidgetDate('edit-calendar-widget', 'edit-task-date-val', task.date || getTodayISO());
       this._setMobilePickerTime(form, task.time);
+
+      const emailToggle = form.querySelector('#edit-task-email-reminder-toggle');
+      if (emailToggle) {
+        emailToggle.checked = task.emailAlert !== undefined ? !!task.emailAlert : true;
+      }
     }
 
     if (this.editModal) {
@@ -861,9 +960,9 @@ export class TasksView extends BaseView {
     }
 
     const priority = prioritySelect ? prioritySelect.value : 'medium';
-    const isEmailEnabled = emailReminderToggle ? emailReminderToggle.checked : false;
+    const isEmailEnabled = emailReminderToggle ? emailReminderToggle.checked : true;
     const formattedTime = this._getMobilePickerTime(form);
-    const chosenDate = dateInput ? dateInput.value : (store.getState().selectedDate || getTodayISO());
+    const chosenDate = dateInput ? dateInput.value : getTodayISO();
 
     store.addTask({
       title: titleInput.value.trim(),
@@ -871,7 +970,8 @@ export class TasksView extends BaseView {
       time: formattedTime,
       date: chosenDate,
       category: categorySelect ? categorySelect.value : 'General',
-      alarm: priority === 'high'
+      alarm: priority === 'high' || isEmailEnabled,
+      emailAlert: isEmailEnabled
     });
 
     soundService.playTaskComplete();
@@ -888,10 +988,12 @@ export class TasksView extends BaseView {
     const priorityInput = form.querySelector('#edit-task-priority-select');
     const categorySelect = form.querySelector('#edit-task-category-select');
     const dateInput = form.querySelector('#edit-task-date-val');
+    const emailReminderToggle = form.querySelector('#edit-task-email-reminder-toggle');
 
     const formattedTime = this._getMobilePickerTime(form);
     const chosenDate = dateInput ? dateInput.value : getTodayISO();
     const priority = priorityInput ? priorityInput.value : 'medium';
+    const isEmailEnabled = emailReminderToggle ? emailReminderToggle.checked : true;
 
     store.editTask(this.editingTaskId, {
       title: titleInput.value.trim(),
@@ -899,7 +1001,8 @@ export class TasksView extends BaseView {
       time: formattedTime,
       date: chosenDate,
       category: categorySelect.value,
-      alarm: priority === 'high'
+      alarm: priority === 'high' || isEmailEnabled,
+      emailAlert: isEmailEnabled
     });
 
     toast.success('Tarea actualizada exitosamente');

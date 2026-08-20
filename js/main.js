@@ -281,6 +281,7 @@ function initTopBarTools(router) {
   // Acciones en tarjetas de notificación dinámicas
   if (notifPopover) {
     notifPopover.addEventListener('click', (e) => {
+      e.stopPropagation(); // Evitar que el clic cierre el popover
       const actionBtn = e.target.closest('[data-notif-action]');
       if (!actionBtn) return;
 
@@ -306,13 +307,18 @@ function initTopBarTools(router) {
         toast.success(`+250 ml registrados (Total: ${data.currentMl} ml)`);
         store.removeNotification(notifId);
       }
+
+      // Refrescar inmediatamente la lista de la campana sin cerrarla
+      renderNotificationsList(store.getNotifications());
     });
   }
 
   if (clearNotifsBtn) {
-    clearNotifsBtn.addEventListener('click', () => {
+    clearNotifsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       soundService.playClick();
       store.clearNotifications();
+      renderNotificationsList([]);
       toast.info('Notificaciones limpiadas');
     });
   }

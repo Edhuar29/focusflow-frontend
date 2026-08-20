@@ -301,3 +301,85 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Tarjeta destacada y llamativa para Alerta de Correo Electrónico */
+.task-email-alert-card {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(59, 130, 246, 0.08) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.12);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.task-email-alert-card:hover {
+  border-color: rgba(99, 102, 241, 0.6);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.2);
+}
+
+.email-alert-card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.email-alert-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #6366F1, #3B82F6);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+.email-alert-card-title {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text-primary, #FFFFFF);
+  margin-bottom: 2px;
+}
+
+.email-alert-card-desc {
+  font-size: 0.74rem;
+  color: var(--text-secondary, #94A3B8);
+  line-height: 1.35;
+}
+
+/* Encabezado y separación visual de tareas por día */
+.task-day-group-header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 6px 0;
+  margin-top: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.task-day-group-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-primary, #FFFFFF);
+}
+
+.task-day-group-count {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted, #94A3B8);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
