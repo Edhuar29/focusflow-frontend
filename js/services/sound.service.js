@@ -36,11 +36,12 @@ function generateWavUri(freq1, freq2, duration = 0.45) {
 
 const URGENT_ALARM_WAV = generateWavUri(950, 1400, 0.5);
 const SOFT_CHIME_WAV = generateWavUri(660, 990, 0.4);
+import { StorageService } from './storage.service.js';
 
 class SoundService {
   constructor() {
     this.ctx = null;
-    this.muted = false;
+    this.muted = StorageService.get('dnd_enabled', false);
     this._setupAutoUnlock();
   }
 

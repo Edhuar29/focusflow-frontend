@@ -266,17 +266,23 @@ function initTopBarTools(router) {
   }
 
   if (dndToggle) {
+    const savedDND = StorageService.get('dnd_enabled', false);
+    dndToggle.checked = savedDND;
+    soundService.setMuted(savedDND);
+    if (dndPill) dndPill.style.display = savedDND ? 'inline-flex' : 'none';
+
     dndToggle.addEventListener('change', () => {
       const isDND = dndToggle.checked;
       soundService.setMuted(isDND);
+      StorageService.set('dnd_enabled', isDND);
 
       if (isDND) {
         if (dndPill) dndPill.style.display = 'inline-flex';
-        toast.warning('Modo No Molestar activado: sonidos y alertas silenciados');
+        toast.warning('Modo No Molestar activado: todos los sonidos silenciados');
       } else {
         if (dndPill) dndPill.style.display = 'none';
         soundService.playClick();
-        toast.info('Modo No Molestar desactivado');
+        toast.info('Modo No Molestar desactivado: notificaciones sonoras activadas');
       }
     });
   }

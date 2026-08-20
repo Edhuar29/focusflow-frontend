@@ -255,13 +255,15 @@ class NotificationSchedulerService {
       toast.info(`[Recordatorio] ${notif.title}: ${notif.description}`);
     }
 
-    // 3. PRIORIDAD BAJA (Aviso Silencioso)
+    // 3. PRIORIDAD BAJA
     else {
+      soundService.playSoftChime();
       notificationService.send(`EdhuFlow: ${notif.title}`, {
         body: notif.description,
         tag: uniqueTag,
         requireInteraction: false
       });
+      toast.info(`${notif.title}`);
     }
   }
 
