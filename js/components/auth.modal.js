@@ -124,7 +124,7 @@ export class AuthModal {
       if (window.google && window.google.accounts && window.google.accounts.oauth2) {
         try {
           this.googleTokenClient = window.google.accounts.oauth2.initTokenClient({
-            client_id: window.EDHUFLOW_GOOGLE_CLIENT_ID || '861614742512-edhuflow.apps.googleusercontent.com',
+            client_id: window.EDHUFLOW_GOOGLE_CLIENT_ID || '260931319911-qfpm8hspt344ubplhmudij7480fdseho.apps.googleusercontent.com',
             scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid',
             callback: async (tokenResponse) => {
               if (tokenResponse && tokenResponse.access_token) {
@@ -172,7 +172,7 @@ export class AuthModal {
 
     toast.info('Iniciando ventana de Google OAuth...');
     // Redirección o popup directo a Google Accounts OAuth
-    const clientId = window.EDHUFLOW_GOOGLE_CLIENT_ID || '861614742512-edhuflow.apps.googleusercontent.com';
+    const clientId = window.EDHUFLOW_GOOGLE_CLIENT_ID || '260931319911-qfpm8hspt344ubplhmudij7480fdseho.apps.googleusercontent.com';
     const redirectUri = window.location.origin;
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=email%20profile%20openid&prompt=select_account`;
     
