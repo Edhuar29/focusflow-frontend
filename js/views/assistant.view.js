@@ -313,28 +313,32 @@ export class AssistantView extends BaseView {
     const raw = userText.trim();
     const lower = raw.toLowerCase();
     const now = new Date();
+    const currentHour24 = now.getHours();
     const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
     // 1. Saludos
     if (/^(hola|buenas|buenos d[ií]as|buenas tardes|buenas noches|hey|saludos|que tal|qué tal)\b/i.test(lower) && lower.length < 25) {
       return {
-        text: '¡Hola! ¿En qué te puedo colaborar hoy? Puedes pedirme crear una tarea (ej: "Estudiar física mañana a las 4pm"), programar un recordatorio (ej: "Recordatorio en 5 minutos con el nombre de prueba 1") o solicitar recomendaciones de productividad.',
+        text: '¡Hola! ¿En qué te puedo colaborar hoy? Puedes dictarme o escribirme cualquier recordatorio (ej: "Correr a la 1:25 PM de hoy" o "Estudiar cálculo mañana a las 4:00 PM") o pedirme recomendaciones de productividad.',
         detectedTasks: []
       };
     }
 
-    // 2. Afirmaciones y confirmaciones cortas
+    // 2. Confirmaciones cortas
     if (/^(si|sí|claro|dale|por favor|porfa|ok|vale|yes)\b/i.test(lower) && lower.length < 15) {
       return {
-        text: '¡Excelente! Cuéntame qué tarea o recordatorio deseas agendar (por ejemplo: "Reunión con el equipo el viernes a las 10am" o "Recordatorio en 10 minutos para llamar al cliente").',
+        text: '¡Excelente! Cuéntame qué tarea o recordatorio deseas agendar (por ejemplo: "Correr hoy a la 1:25 PM" o "Reunión de equipo el viernes a las 10:00 AM").',
         detectedTasks: []
       };
     }
 
-    // 3. Petición general sin detalles
-    if (/^(quiero un recordatorio|necesito un recordatorio|hazme un recordatorio|ponme un recordatorio|recordatorio)\b/i.test(lower) && lower.length < 28) {
+    // 3. Petición general o incompleta de recordatorio (incluso con errores tipográficos como "recordaoptrio")
+    if (
+      /^(quiero|necesito|hazme|ponme|dame|crear|agendar)?\s*(un\s+|una\s+)?(recordat[oó]rio|recorda\w+|tarea|aviso|alarma)\s*$/i.test(lower) ||
+      (/recorda\w+/i.test(lower) && lower.length < 28 && !/\d|hora|hoy|mañana|estudiar|correr|llamar|trabajo|reunion/i.test(lower))
+    ) {
       return {
-        text: '¡Perfecto! Dime qué quieres recordar y a qué hora (por ejemplo: "Recordatorio en 5 minutos para prueba 1" o "Revisar tareas mañana a las 9:00 AM") y lo programaré de inmediato.',
+        text: '¡Con gusto! ¿De qué actividad o tema deseas que sea tu recordatorio y para qué hora te gustaría programarlo? (Por ejemplo: "Correr hoy a la 1:25 PM" o "Estudiar para el examen mañana a las 4:00 PM").',
         detectedTasks: []
       };
     }
@@ -350,6 +354,7 @@ export class AssistantView extends BaseView {
     // 5. Extracción inteligente de Tareas / Recordatorios
     let dateVal = todayISO;
     let timeVal = '12:00 PM';
+    let timeFound = false;
 
     // A) Detección de Tiempo Relativo (ej: "en 5 minutos", "dentro de 10 mins", "en 2 horas")
     const relativeMinMatch = lower.match(/(?:dentro de|en)\s+(\d+)\s*(?:minutos?|mins?|m\b)/i);
@@ -364,6 +369,7 @@ export class AssistantView extends BaseView {
       hours = hours % 12 || 12;
       timeVal = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
       dateVal = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+      timeFound = true;
     } else if (relativeHourMatch) {
       const hoursToAdd = parseInt(relativeHourMatch[1], 10);
       const targetDate = new Date(Date.now() + hoursToAdd * 60 * 60 * 1000);
@@ -373,19 +379,38 @@ export class AssistantView extends BaseView {
       hours = hours % 12 || 12;
       timeVal = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
       dateVal = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+      timeFound = true;
     } else {
-      // B) Detección de Hora Absoluta (ej: "a las 4pm", "a las 16:30", "10:00 am")
-      const timeMatch = lower.match(/(?:a las|para las)?\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)/i) ||
-                        lower.match(/a las\s*(\d{1,2})(?::(\d{2}))?/i);
+      // B) Detección de Hora Absoluta en Español (ej: "a la 1:25", "a las 1:25", "a las 4pm", "a las 16:30", "1:25 pm", "13:25")
+      const timeMatch =
+        lower.match(/(?:a\s+las?|para\s+las?|a\s+la)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)?/i) ||
+        lower.match(/\b(\d{1,2}):(\d{2})\s*(am|pm|a\.m\.|p\.m\.)?\b/i) ||
+        lower.match(/\b(\d{1,2})\s*(am|pm|a\.m\.|p\.m\.)\b/i);
+
       if (timeMatch) {
         let hours = parseInt(timeMatch[1], 10);
         let mins = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
-        let ampm = timeMatch[3] ? timeMatch[3].toUpperCase().replace(/\./g, '') : (hours >= 12 ? 'PM' : 'AM');
-        if (hours > 12) {
-          hours -= 12;
-          ampm = 'PM';
+        let ampm = timeMatch[3] ? timeMatch[3].toUpperCase().replace(/\./g, '') : null;
+
+        if (!ampm) {
+          if (hours >= 13 && hours <= 23) {
+            hours -= 12;
+            ampm = 'PM';
+          } else if (hours === 12) {
+            ampm = 'PM';
+          } else if (hours >= 1 && hours <= 7 && currentHour24 >= 11) {
+            ampm = 'PM';
+          } else if (hours >= 8 && hours <= 11) {
+            ampm = currentHour24 >= 12 && (hours < currentHour24 % 12) ? 'PM' : 'AM';
+          } else {
+            ampm = hours >= 12 ? 'PM' : 'AM';
+          }
+        } else {
+          if (hours > 12) hours -= 12;
         }
+
         timeVal = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')} ${ampm}`;
+        timeFound = true;
       }
 
       // C) Detección de Fecha Relativa
@@ -412,12 +437,12 @@ export class AssistantView extends BaseView {
     const priorityVal = isUrgent ? 'Alta' : (isLow ? 'Baja' : 'Media');
 
     // E) Categoría
-    const isStudy = /estudiar|calculo|examen|lectura|estudio|tarea|universidad|colegio/i.test(lower);
-    const isWork = /reunion|cliente|proyecto|trabajo|informe|reporte|correo|email|jefe/i.test(lower);
-    const isHealth = /agua|ejercicio|gimnasio|correr|meditar|caminar|medicina|doctor/i.test(lower);
+    const isStudy = /estudiar|calculo|examen|lectura|estudio|tarea|universidad|colegio|curso|aprender/i.test(lower);
+    const isWork = /reunion|cliente|proyecto|trabajo|informe|reporte|correo|email|jefe|oficina|entrevista/i.test(lower);
+    const isHealth = /agua|ejercicio|gimnasio|gym|correr|caminar|meditar|medicina|doctor|pastilla|entrenar/i.test(lower);
     const categoryVal = isStudy ? 'Estudio' : (isWork ? 'Trabajo' : (isHealth ? 'Salud' : 'General'));
 
-    // F) Extracción del Título de la Tarea
+    // F) Extracción Limpia y Precisa del Título de la Tarea
     let cleanTitle = '';
 
     // Patrón 1: Nombre explícito (ej: "con el nombre de prueba 1", "titulado reporte final")
@@ -426,35 +451,43 @@ export class AssistantView extends BaseView {
       cleanTitle = explicitNameMatch[1].trim();
     }
 
-    // Patrón 2: Acción con 'para' o 'de' (ej: "para estudiar matemáticas", "de llamar a Carlos")
-    if (!cleanTitle) {
-      const actionMatch = raw.match(/(?:para|de)\s+([^,\n\.;]+?)(?:\s+(?:a las|el|mañana|hoy|con prioridad|en categor[ií]a)|$)/i);
-      if (actionMatch && actionMatch[1] && !/(?:dentro de|\d+\s*(?:minutos?|horas?)|mañana|hoy)/i.test(actionMatch[1])) {
-        cleanTitle = actionMatch[1].trim();
-      }
-    }
-
-    // Patrón 3: Limpieza general de prefijos y sufijos de comando
+    // Patrón 2: Limpieza profunda de prefijos conversacionales y sufijos de tiempo
     if (!cleanTitle) {
       cleanTitle = raw
-        .replace(/^(quiero un recordatorio( para)?|necesito un recordatorio( para)?|hazme un recordatorio( para)?|ponme un recordatorio( para)?|recordatorio( para)?|crear tarea( para)?|agendar tarea( para)?|acordarme de|agendar( una)?|recordar|programar)\s*/i, '')
-        .replace(/\b(para|en)\s+(?:dentro de\s+)?\d+\s*(?:minutos?|mins?|horas?|hrs?)\b/gi, '')
-        .replace(/\b(para\s+)?(mañana|hoy|pasado mañana|el (lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo))\b/gi, '')
-        .replace(/\ba las \d{1,2}(:\d{2})?\s*(am|pm|a\.m\.|p\.m\.)?\b/gi, '')
-        .replace(/\bcon prioridad (alta|media|baja)\b/gi, '')
-        .replace(/\ben categor[ií]a \w+\b/gi, '')
-        .replace(/\bcon el (?:nombre|t[ií]tulo)(?: de)?\s*/gi, '')
+        // Prefijos conversacionales en español
+        .replace(/^(pero\s+)?(por\s+favor\s+)?(me\s+gustar[ií]a\s+que\s+)?(quiero\s+que\s+)?(mi\s+recordatorio\s+sea\s+(sobre|de|para)\s+|mi\s+tarea\s+sea\s+(sobre|de|para)\s+|recu[eé]rdame\s+(sobre|de|que\s+tengo\s+que\s+)?|hazme\s+un\s+recordatorio\s+(sobre|de|para)\s+|quiero\s+un\s+recordatorio\s+(sobre|de|para)\s+|poner\s+(un\s+)?recordatorio\s+(sobre|de|para)\s+|crear\s+(una\s+)?tarea\s+(sobre|de|para)\s+|agendar\s+(una\s+)?tarea\s+(sobre|de|para)\s+|acordarme\s+de\s+|recordar\s+|programar\s+|a[ñn]adir\s+(una\s+)?tarea\s+(de|para|sobre)?\s*)/i, '')
+        // Expresiones de tiempo y hora
+        .replace(/(?:a\s+las?|para\s+las?|a\s+la)\s*\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?/gi, '')
+        .replace(/\b\d{1,2}:\d{2}\s*(?:am|pm|a\.m\.|p\.m\.)?\b/gi, '')
+        .replace(/\b(?:dentro de|en)\s+\d+\s*(?:minutos?|mins?|horas?|hrs?)\b/gi, '')
+        // Fechas relativas
+        .replace(/\b(?:de\s+)?(?:hoy|mañana|manana|pasado\s+mañana|pasado\s+manana)\b/gi, '')
+        .replace(/\b(?:el\s+)?(?:lunes|martes|mi[eé]rcoles|miercoles|jueves|viernes|s[aá]bado|sabado|domingo)\b/gi, '')
+        // Prioridades y categorías
+        .replace(/\bcon\s+prioridad\s+(?:alta|media|baja)\b/gi, '')
+        .replace(/\ben\s+categor[ií]a\s+\w+\b/gi, '')
+        .replace(/\bcon\s+el\s+(?:nombre|t[ií]tulo)(?:\s+de)?\s*/gi, '')
+        // Conectores residuales al inicio o final
+        .replace(/^(sobre|de|para|que\s+sea\s+sobre|que\s+sea\s+de|que)\s+/i, '')
+        .replace(/\s+(de\s+hoy|hoy|para\s+hoy|mañana|para\s+mañana)$/i, '')
         .trim();
     }
 
-    if (!cleanTitle || cleanTitle.length < 2) {
+    // Si el título quedó vacío o solo contiene palabras genéricas
+    if (!cleanTitle || /^(recordatorio|recorda\w+|tarea|algo|aviso)$/i.test(cleanTitle) || cleanTitle.length < 2) {
+      if (!timeFound) {
+        return {
+          text: '¡Con gusto! ¿De qué actividad o tema deseas que sea tu recordatorio y para qué hora te gustaría programarlo? (Por ejemplo: "Correr hoy a la 1:25 PM" o "Estudiar para el examen mañana a las 4:00 PM").',
+          detectedTasks: []
+        };
+      }
       cleanTitle = 'Recordatorio';
     } else {
       cleanTitle = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
     }
 
     return {
-      text: `He preparado tu recordatorio "${cleanTitle}" para el ${dateVal} a las ${timeVal}. Pulsa en **Agregar a mis Tareas** para agendarlo:`,
+      text: `He preparado tu recordatorio "${cleanTitle}" para el ${dateVal} a las ${timeVal}. Pulsa en el botón para agregarla a tu agenda:`,
       detectedTasks: [
         {
           title: cleanTitle,
