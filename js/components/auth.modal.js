@@ -226,22 +226,21 @@ export class AuthModal {
 
   initGoogleIdentityServices() {
     const setupGSI = () => {
-      if (window.google && window.google.accounts && window.google.accounts.oauth2) {
+      if (window.google && window.google.accounts && window.google.accounts.id) {
         try {
-          this.googleTokenClient = window.google.accounts.oauth2.initTokenClient({
-            client_id: window.EDHUFLOW_GOOGLE_CLIENT_ID || '260931319911-qfpm8hspt344ubplhmudij7480fdseho.apps.googleusercontent.com',
-            scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid',
-            callback: async (tokenResponse) => {
-              if (tokenResponse && tokenResponse.access_token) {
-                await this.fetchGoogleUserInfoAndLogin(tokenResponse.access_token);
-              } else if (tokenResponse && tokenResponse.error) {
-                console.warn('[AuthModal] Google OAuth response error:', tokenResponse.error);
-                toast.warning('Autorización de Google cancelada o no completada.');
+          const clientId = window.EDHUFLOW_GOOGLE_CLIENT_ID || '260931319911-qfpm8hspt344ubplhmudij7480fdseho.apps.googleusercontent.com';
+          window.google.accounts.id.initialize({
+            client_id: clientId,
+            callback: async (response) => {
+              if (response && response.credential) {
+                await this.loginWithGoogleCredential(response.credential);
               }
             },
+            auto_select: false,
+            cancel_on_tap_outside: true,
           });
         } catch (e) {
-          console.warn('[AuthModal] Google OAuth2 TokenClient init:', e);
+          console.warn('[AuthModal] Google Identity Services init:', e);
         }
       }
     };
@@ -256,61 +255,24 @@ export class AuthModal {
   async triggerGoogleSignIn() {
     this.clearAllErrors();
 
-    // 1. Abrir la ventana emergente oficial de Google OAuth 2.0 (accounts.google.com)
-    if (this.googleTokenClient) {
-      try {
-        this.googleTokenClient.requestAccessToken({ prompt: 'select_account' });
-        return;
-      } catch (e) {
-        console.warn('[AuthModal] Error solicitando token de Google:', e);
-      }
-    }
-
-    // 2. Si aún no inicializó el token client, intentar inicializarlo
-    if (window.google && window.google.accounts && window.google.accounts.oauth2) {
+    if (window.google && window.google.accounts && window.google.accounts.id) {
       this.initGoogleIdentityServices();
-      if (this.googleTokenClient) {
-        this.googleTokenClient.requestAccessToken({ prompt: 'select_account' });
-        return;
-      }
+      window.google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          console.info('[AuthModal] GSI prompt no visible o cerrado:', notification.getNotDisplayedReason?.() || notification.getSkippedReason?.());
+        }
+      });
+      return;
     }
 
-    toast.info('Iniciando ventana de Google OAuth...');
-    const clientId = window.EDHUFLOW_GOOGLE_CLIENT_ID || '260931319911-qfpm8hspt344ubplhmudij7480fdseho.apps.googleusercontent.com';
-    const redirectUri = window.location.origin;
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=email%20profile%20openid&prompt=select_account`;
-    
-    window.open(authUrl, 'GoogleAuthPopup', 'width=500,height=600,menubar=no,toolbar=no');
+    toast.info('Cargando servicios de autenticación de Google...');
   }
 
-  async fetchGoogleUserInfoAndLogin(accessToken) {
+  async loginWithGoogleCredential(credential) {
     try {
-      toast.info('Obteniendo perfil de Google...');
-      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      toast.info('Verificando credenciales criptográficas con Google...');
 
-      if (!res.ok) throw new Error('No se pudo obtener la información de perfil de Google.');
-
-      const profile = await res.json();
-      if (profile && profile.email) {
-        await this.loginWithGoogleAccount(profile.email, profile.name, profile.picture);
-      }
-    } catch (err) {
-      console.error('[AuthModal] Error fetching Google userinfo:', err);
-      toast.error('Error al procesar la cuenta de Google.');
-    }
-  }
-
-  async loginWithGoogleAccount(email, name, avatarUrl = null) {
-    try {
-      toast.info(`Conectando con Google (${email})...`);
-
-      const data = await apiService.googleLogin({
-        email,
-        name: name || email.split('@')[0],
-        avatar_url: avatarUrl,
-      });
+      const data = await apiService.googleLogin({ credential });
 
       if (data && data.user) {
         this.saveSavedProfile(data.user);
@@ -319,7 +281,7 @@ export class AuthModal {
         this.hide();
         toast.success(`¡Bienvenido a EdhuFlow, ${data.user.name.split(' ')[0]}!`);
       } else {
-        this.showBannerError(this.viewLogin, 'No se pudo conectar con Google.');
+        this.showBannerError(this.viewLogin, 'No se pudo verificar la sesión con Google.');
       }
     } catch (err) {
       const msg = err.message || 'Error al autenticar con Google';
