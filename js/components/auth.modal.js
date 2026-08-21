@@ -205,23 +205,7 @@ export class AuthModal {
   }
 
   async loginWithSavedProfile() {
-    const profile = this.getSavedProfile();
-    if (!profile || !profile.email) {
-      this.triggerGoogleSignIn();
-      return;
-    }
-
-    if (this.btnFastContinue) {
-      this.btnFastContinue.disabled = true;
-      this.btnFastContinue.style.opacity = '0.75';
-    }
-
-    await this.loginWithGoogleAccount(profile.email, profile.name, profile.avatarUrl);
-
-    if (this.btnFastContinue) {
-      this.btnFastContinue.disabled = false;
-      this.btnFastContinue.style.opacity = '1';
-    }
+    this.triggerGoogleSignIn();
   }
 
   initGoogleIdentityServices() {
