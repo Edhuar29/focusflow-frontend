@@ -141,11 +141,19 @@
   .hydration-container {
     grid-template-columns: 1fr;
     gap: 16px;
+    margin: var(--space-2) auto;
+    padding-bottom: 2rem;
   }
+  .hydration-bottle-card,
   .bottle-visual-card {
     padding: 20px 16px;
+    min-height: auto;
   }
   .hydration-action-card {
     padding: 18px 16px;
+  }
+  .hydration-bottle-svg {
+    width: 140px;
+    height: 250px;
   }
 }

@@ -157,43 +157,82 @@ export class HydrationView extends BaseView {
               Recibe avisos periódicos en la pantalla de tu computadora y en tu correo electrónico según el tiempo que elijas.
             </p>
 
-            <!-- Selector Flexible de Frecuencia / Minutos Personalizados -->
-            <div style="margin-bottom: var(--space-3); background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 10px 12px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <label for="reminder-interval-select" style="font-size: var(--text-xs); font-weight: 600; color: var(--text-primary);">Frecuencia de Aviso:</label>
+            <!-- Horario Programado y Frecuencia -->
+            <div style="margin-bottom: var(--space-3); background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px;">
+              
+              <!-- 1. Hora de Inicio y Fin -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <div>
+                  <label for="water-start-time" style="font-size: 11px; font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 4px;">
+                    Hora de Inicio:
+                  </label>
+                  <input 
+                    type="time" 
+                    id="water-start-time" 
+                    class="form-control" 
+                    value="${reminder.startTime || '08:00'}" 
+                    style="padding: 6px 8px; font-size: var(--text-xs); cursor: pointer;" 
+                  />
+                </div>
+                <div>
+                  <label for="water-end-time" style="font-size: 11px; font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 4px;">
+                    Hora de Fin:
+                  </label>
+                  <input 
+                    type="time" 
+                    id="water-end-time" 
+                    class="form-control" 
+                    value="${reminder.endTime || '22:00'}" 
+                    style="padding: 6px 8px; font-size: var(--text-xs); cursor: pointer;" 
+                  />
+                </div>
+              </div>
+
+              <!-- 2. Frecuencia / Cada cuánto suena -->
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label for="reminder-interval-select" style="font-size: 11px; font-weight: 600; color: var(--text-primary);">Repetir cada:</label>
                 <span id="water-current-interval-badge" style="font-size: 10px; font-weight: 700; color: #38BDF8; background: rgba(56, 189, 248, 0.12); padding: 2px 7px; border-radius: 999px;">
-                  Cada ${Math.round(parseFloat(reminder.intervalHours || 1) * 60)} min
+                  Cada ${Math.max(1, Math.round(parseFloat(reminder.intervalHours || 0.25) * 60))} min
                 </span>
               </div>
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                 <select id="reminder-interval-select" class="form-control" style="flex: 1; min-width: 160px; padding: 7px 10px; font-size: var(--text-xs); cursor: pointer;">
-                  <option value="0.0833" ${Math.abs(reminder.intervalHours - 0.0833) < 0.01 ? 'selected' : ''}>Cada 5 minutos (Prueba rápida)</option>
-                  <option value="0.1666" ${Math.abs(reminder.intervalHours - 0.1666) < 0.01 ? 'selected' : ''}>Cada 10 minutos</option>
-                  <option value="0.25" ${Math.abs(reminder.intervalHours - 0.25) < 0.01 ? 'selected' : ''}>Cada 15 minutos</option>
-                  <option value="0.3333" ${Math.abs(reminder.intervalHours - 0.3333) < 0.01 ? 'selected' : ''}>Cada 20 minutos</option>
-                  <option value="0.5" ${Math.abs(reminder.intervalHours - 0.5) < 0.01 ? 'selected' : ''}>Cada 30 minutos</option>
-                  <option value="0.75" ${Math.abs(reminder.intervalHours - 0.75) < 0.01 ? 'selected' : ''}>Cada 45 minutos</option>
-                  <option value="1" ${Math.abs(reminder.intervalHours - 1) < 0.01 ? 'selected' : ''}>Cada 1 hora (Recomendado)</option>
-                  <option value="1.5" ${Math.abs(reminder.intervalHours - 1.5) < 0.01 ? 'selected' : ''}>Cada 1 hora y media</option>
-                  <option value="2" ${Math.abs(reminder.intervalHours - 2) < 0.01 ? 'selected' : ''}>Cada 2 horas</option>
-                  <option value="3" ${Math.abs(reminder.intervalHours - 3) < 0.01 ? 'selected' : ''}>Cada 3 horas</option>
-                  <option value="custom">Personalizado en minutos...</option>
+                  <option value="0.0833" ${Math.abs((reminder.intervalHours || 0.25) - 0.0833) < 0.01 ? 'selected' : ''}>Cada 5 minutos (Prueba rápida)</option>
+                  <option value="0.1666" ${Math.abs((reminder.intervalHours || 0.25) - 0.1666) < 0.01 ? 'selected' : ''}>Cada 10 minutos</option>
+                  <option value="0.25" ${Math.abs((reminder.intervalHours || 0.25) - 0.25) < 0.01 ? 'selected' : ''}>Cada 15 minutos</option>
+                  <option value="0.3333" ${Math.abs((reminder.intervalHours || 0.25) - 0.3333) < 0.01 ? 'selected' : ''}>Cada 20 minutos</option>
+                  <option value="0.5" ${Math.abs((reminder.intervalHours || 0.25) - 0.5) < 0.01 ? 'selected' : ''}>Cada 30 minutos</option>
+                  <option value="0.75" ${Math.abs((reminder.intervalHours || 0.25) - 0.75) < 0.01 ? 'selected' : ''}>Cada 45 minutos</option>
+                  <option value="1" ${Math.abs((reminder.intervalHours || 0.25) - 1) < 0.01 ? 'selected' : ''}>Cada 1 hora (Recomendado)</option>
+                  <option value="1.5" ${Math.abs((reminder.intervalHours || 0.25) - 1.5) < 0.01 ? 'selected' : ''}>Cada 1 hora y media</option>
+                  <option value="2" ${Math.abs((reminder.intervalHours || 0.25) - 2) < 0.01 ? 'selected' : ''}>Cada 2 horas</option>
+                  <option value="3" ${Math.abs((reminder.intervalHours || 0.25) - 3) < 0.01 ? 'selected' : ''}>Cada 3 horas</option>
+                  <option value="custom" ${![0.0833, 0.1666, 0.25, 0.3333, 0.5, 0.75, 1, 1.5, 2, 3].some(p => Math.abs((reminder.intervalHours || 0.25) - p) < 0.01) ? 'selected' : ''}>Personalizado en minutos...</option>
                 </select>
-                <div id="custom-minutes-wrap" style="display: none; align-items: center; gap: 6px; width: 100%;">
-                  <input type="number" id="input-custom-water-minutes" class="form-control" placeholder="Minutos (ej. 25)" min="1" max="720" value="${Math.round(parseFloat(reminder.intervalHours || 1) * 60)}" style="flex: 1; padding: 6px 10px; font-size: var(--text-xs);" />
+                <div id="custom-minutes-wrap" style="display: ${![0.0833, 0.1666, 0.25, 0.3333, 0.5, 0.75, 1, 1.5, 2, 3].some(p => Math.abs((reminder.intervalHours || 0.25) - p) < 0.01) ? 'flex' : 'none'}; align-items: center; gap: 6px; width: 100%;">
+                  <input type="number" id="input-custom-water-minutes" class="form-control" placeholder="Minutos (ej. 7, 12, 25)" min="1" max="720" value="${Math.max(1, Math.round(parseFloat(reminder.intervalHours || 0.25) * 60))}" style="flex: 1; padding: 6px 10px; font-size: var(--text-xs);" />
                   <span style="font-size: var(--text-xs); color: var(--text-muted);">minutos</span>
                 </div>
+              </div>
+
+              <!-- Indicador visual de horario -->
+              <div id="water-schedule-preview" style="margin-top: 8px; font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #38BDF8;">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>Programado desde las <strong>${reminder.startTime || '08:00'}</strong> hasta las <strong>${reminder.endTime || '22:00'}</strong></span>
               </div>
             </div>
 
             <!-- Email Notification Section -->
             <div style="background-color: var(--bg-input); padding: var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--border-subtle); margin-bottom: var(--space-3);">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <label for="toggle-water-email" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; cursor: pointer;">
                 <span style="font-size: var(--text-xs); font-weight: var(--fw-semibold); color: var(--text-primary);">
                   Enviar aviso a mi correo electrónico
                 </span>
-                <input type="checkbox" id="toggle-water-email" ${reminder.emailNotification !== false ? 'checked' : ''} style="cursor: pointer;" />
-              </div>
+                <input type="checkbox" id="toggle-water-email" ${reminder.emailNotification !== false ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px; accent-color: #38BDF8;" />
+              </label>
 
               <!-- Selector de Opciones: Correo de Cuenta vs Personalizado -->
               <div class="email-choice-group" style="margin-bottom: 8px;">
@@ -226,12 +265,15 @@ export class HydrationView extends BaseView {
                 value="${escapeHTML(activeEmail)}"
                 ${!isCustomEmail ? 'readonly style="opacity: 0.85; cursor: default; padding: 6px 10px; font-size: var(--text-xs);"' : 'style="padding: 6px 10px; font-size: var(--text-xs);"'}
               />
-            </div>
-
-            <!-- Botón de Acción Principal -->
-            <div>
-              <button class="btn btn-primary" id="btn-save-reminder" style="width: 100%; font-size: var(--text-xs); padding: 9px 12px; font-weight: 600;">
-                Guardar Configuración
+                <!-- Botón de Acción Principal -->
+            <div style="margin-top: var(--space-4);">
+              <button class="btn btn-primary" id="btn-save-reminder" style="width: 100%; font-size: var(--text-sm); padding: 11px 16px; font-weight: 700; border-radius: var(--radius-md); box-shadow: 0 4px 14px rgba(14, 165, 233, 0.3); transition: all 0.2s ease; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                <span>Guardar Configuración</span>
               </button>
             </div>
           </div>
@@ -258,10 +300,9 @@ export class HydrationView extends BaseView {
     if (choiceAccount && choiceCustom && emailInput) {
       choiceAccount.onclick = () => {
         soundService.playClick();
+        isCustomSelected = false;
         choiceAccount.classList.add('active');
         choiceCustom.classList.remove('active');
-        isCustomSelected = false;
-
         emailInput.value = accountEmail;
         emailInput.readOnly = true;
         emailInput.style.opacity = '0.85';
@@ -270,10 +311,9 @@ export class HydrationView extends BaseView {
 
       choiceCustom.onclick = () => {
         soundService.playClick();
+        isCustomSelected = true;
         choiceCustom.classList.add('active');
         choiceAccount.classList.remove('active');
-        isCustomSelected = true;
-
         emailInput.readOnly = false;
         emailInput.style.opacity = '1';
         emailInput.style.cursor = 'text';
@@ -281,11 +321,14 @@ export class HydrationView extends BaseView {
       };
     }
 
-    // 1.1 Manejo de intervalo personalizado de hidratación
+    // 1.1 Manejo visual del intervalo y horario
     const intervalSelect = $('#reminder-interval-select', this.container);
     const customWrap = $('#custom-minutes-wrap', this.container);
     const customInput = $('#input-custom-water-minutes', this.container);
     const intervalBadge = $('#water-current-interval-badge', this.container);
+    const startTimeInput = $('#water-start-time', this.container);
+    const endTimeInput = $('#water-end-time', this.container);
+    const schedulePreview = $('#water-schedule-preview', this.container);
 
     const updateIntervalDisplay = () => {
       if (!intervalSelect) return;
@@ -298,6 +341,15 @@ export class HydrationView extends BaseView {
         const hours = parseFloat(intervalSelect.value) || 1;
         const mins = Math.round(hours * 60);
         if (intervalBadge) intervalBadge.textContent = `Cada ${mins} min`;
+      }
+      if (schedulePreview && startTimeInput && endTimeInput) {
+        schedulePreview.innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #38BDF8;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>Programado desde las <strong>${startTimeInput.value || '08:00'}</strong> hasta las <strong>${endTimeInput.value || '22:00'}</strong></span>
+        `;
       }
     };
 
@@ -314,6 +366,9 @@ export class HydrationView extends BaseView {
         if (intervalBadge) intervalBadge.textContent = `Cada ${mins} min`;
       };
     }
+
+    if (startTimeInput) startTimeInput.onchange = updateIntervalDisplay;
+    if (endTimeInput) endTimeInput.onchange = updateIntervalDisplay;
 
     // 2. Botón de Tomar Agua (+250 ml)
     const drinkBtn = $('#btn-drink-water-single', this.container);
@@ -343,22 +398,36 @@ export class HydrationView extends BaseView {
       };
     }
 
-    // 4. Guardar Recordatorio
+    // 4. Botón de Guardar Configuración (Acción Principal)
     const saveReminderBtn = $('#btn-save-reminder', this.container);
     if (saveReminderBtn) {
-      saveReminderBtn.onclick = () => {
+      saveReminderBtn.onclick = async () => {
         soundService.playClick();
 
+        // 4.1 Pedir permiso de notificación nativa de pantalla al navegador si está en default
+        if ('Notification' in window && Notification.permission === 'default') {
+          try {
+            await notificationService.requestPermission();
+          } catch (e) {}
+        }
+
+        // 4.2 Calcular intervalo en horas y minutos
         let interval = 1;
+        let totalMinutes = 60;
         if (intervalSelect && intervalSelect.value === 'custom') {
-          const mins = parseInt(customInput ? customInput.value : '30', 10) || 30;
-          interval = Math.max(0.016, mins / 60);
+          totalMinutes = parseInt(customInput ? customInput.value : '30', 10) || 30;
+          totalMinutes = Math.max(1, totalMinutes);
+          interval = totalMinutes / 60;
         } else if (intervalSelect) {
           interval = parseFloat(intervalSelect.value) || 1;
+          totalMinutes = Math.max(1, Math.round(interval * 60));
         }
 
         const enabled = $('#toggle-water-reminder', this.container)?.checked || false;
-        const emailNotification = $('#toggle-water-email', this.container)?.checked || false;
+        const startTime = $('#water-start-time', this.container)?.value || '08:00';
+        const endTime = $('#water-end-time', this.container)?.value || '22:00';
+        const emailCheckbox = $('#toggle-water-email', this.container);
+        const emailNotification = emailCheckbox ? emailCheckbox.checked : true;
         const inputEmail = emailInput ? emailInput.value.trim() : accountEmail;
         const targetEmail = isCustomSelected ? inputEmail : accountEmail;
 
@@ -368,31 +437,67 @@ export class HydrationView extends BaseView {
           return;
         }
 
-        const data = store.getState().hydration;
-        data.reminder = {
-          enabled,
-          intervalHours: interval,
-          emailNotification,
-          useCustomEmail: isCustomSelected,
-          email: targetEmail
-        };
+        // Estado visual de guardado en el botón
+        const originalBtnHTML = saveReminderBtn.innerHTML;
+        saveReminderBtn.disabled = true;
+        saveReminderBtn.innerHTML = `<span>⏳ Guardando cambios...</span>`;
 
-        store._persistAndNotify('hydration', data, 'hydration:updated');
-        
-        // Sincronizar con las preferencias globales de correo
-        store.setEmailPreferences({
-          emailWaterAlerts: emailNotification,
-          notificationEmail: targetEmail,
-          useCustomEmail: isCustomSelected
-        });
+        try {
+          // Guardar en el Store reactivo y StorageService
+          const data = store.getState().hydration;
+          data.reminder = {
+            enabled,
+            startTime,
+            endTime,
+            intervalHours: interval,
+            emailNotification,
+            useCustomEmail: isCustomSelected,
+            email: targetEmail
+          };
 
-        const totalMinutes = Math.round(interval * 60);
+          store._persistAndNotify('hydration', data, 'hydration:updated');
+          
+          store.setEmailPreferences({
+            emailWaterAlerts: emailNotification,
+            notificationEmail: targetEmail,
+            useCustomEmail: isCustomSelected
+          });
 
-        if (enabled) {
+          // Sincronizar de forma permanente con el servidor backend / nube
+          await apiService.saveWaterReminderConfig({
+            email: targetEmail,
+            startTime,
+            endTime,
+            intervalMinutes: totalMinutes,
+            enabled: !!emailNotification && !!enabled,
+          });
+
           notificationScheduler.resetWaterTimer();
-          toast.success(`Recordatorio de hidratación programado cada ${totalMinutes} minutos para ${targetEmail}`);
-        } else {
-          toast.info('Recordatorio de hidratación desactivado');
+
+          // Feedback visual exitoso en botón
+          saveReminderBtn.innerHTML = `<span>✓ ¡Configuración Guardada!</span>`;
+          saveReminderBtn.style.background = '#10B981';
+
+          if (enabled) {
+            toast.success(`✓ Alarma de agua configurada de ${startTime} a ${endTime} (cada ${totalMinutes} min)`);
+            if ('Notification' in window && Notification.permission === 'denied') {
+              toast.warning('Notificaciones de escritorio bloqueadas en tu navegador. Actívalas en la barra de direcciones.');
+            }
+          } else {
+            toast.info('Recordatorio de hidratación desactivado');
+          }
+
+          setTimeout(() => {
+            saveReminderBtn.disabled = false;
+            saveReminderBtn.innerHTML = originalBtnHTML;
+            saveReminderBtn.style.background = '';
+          }, 2000);
+
+        } catch (err) {
+          console.warn('[HydrationView] Error guardando configuración:', err);
+          saveReminderBtn.disabled = false;
+          saveReminderBtn.innerHTML = originalBtnHTML;
+          toast.error('Error al sincronizar con el servidor. Intenta de nuevo.');
         }
       };
     }

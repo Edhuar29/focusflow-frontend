@@ -45,7 +45,7 @@ export class PomodoroView extends BaseView {
           ${activeTask ? `
             <div class="active-focus-task-banner">
               <div class="banner-left">
-                <span class="badge badge-priority-${activeTask.priorities[0] || 'medium'}">Enfoque Activo</span>
+                <span class="badge badge-priority-${(activeTask.priorities && activeTask.priorities[0]) || activeTask.priority || 'medium'}">Enfoque Activo</span>
                 <span class="active-task-title">${escapeHTML(activeTask.title)}</span>
               </div>
               <button class="btn btn-ghost" id="btn-clear-active-task" style="font-size: var(--text-xs); color: var(--text-muted);">

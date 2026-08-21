@@ -38,7 +38,11 @@ export class Router {
 
     // 1. Desmontar vista anterior
     if (this.currentViewInstance && typeof this.currentViewInstance.unmount === 'function') {
-      this.currentViewInstance.unmount();
+      try {
+        this.currentViewInstance.unmount();
+      } catch (e) {
+        console.warn('Error desmontando vista:', e);
+      }
     }
 
     // 2. Ocultar todos los contenedores de vista
@@ -57,15 +61,23 @@ export class Router {
     });
 
     // 4. Actualizar título del Topbar
-    this._updateTopbarTitle(routeName);
+    try {
+      this._updateTopbarTitle(routeName);
+    } catch (e) {}
 
     // 5. Montar y mostrar nueva vista
     const targetContainer = $(`#${routeName}-view`);
     if (targetContainer) {
       targetContainer.classList.add('active');
       const ViewClass = this.routes[routeName];
-      this.currentViewInstance = new ViewClass();
-      this.currentViewInstance.mount();
+      if (ViewClass) {
+        try {
+          this.currentViewInstance = new ViewClass();
+          this.currentViewInstance.mount();
+        } catch (err) {
+          console.error(`Error al montar vista ${routeName}:`, err);
+        }
+      }
     }
 
     this.currentRoute = routeName;

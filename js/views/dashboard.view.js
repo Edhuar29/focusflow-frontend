@@ -21,14 +21,19 @@ export class DashboardView extends BaseView {
     if (!this.container) return;
 
     const todayISO = getTodayISO();
-    const tasks = store.getTasks().filter(t => t.date === todayISO);
+    const tasks = store.getTasks().filter(t => {
+      const d = (t.date || '').trim().split('T')[0];
+      return d === todayISO || !d;
+    });
     const completedTasks = tasks.filter(t => t.completed).length;
     const totalTasks = tasks.length;
     const taskPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-    const pomodoro = store.getState().pomodoro;
-    const hydration = store.getState().hydration;
-    const waterPercentage = Math.min(100, Math.round((hydration.currentMl / hydration.goalMl) * 100));
+    const pomodoro = store.getState().pomodoro || {};
+    const hydration = store.getState().hydration || { currentMl: 0, goalMl: 2000 };
+    const goal = hydration.goalMl || 2000;
+    const currentWater = hydration.currentMl || 0;
+    const waterPercentage = Math.min(100, Math.round((currentWater / goal) * 100));
 
     const greeting = getGreetingForNow();
     const currentUser = store.getUser();
@@ -212,7 +217,7 @@ export class DashboardView extends BaseView {
           </div>
         </div>
         <div class="timeline-right">
-          <span class="badge badge-priority-${t.priorities[0] || 'medium'}">${t.priorities[0] || 'medium'}</span>
+          <span class="badge badge-priority-${(t.priorities && t.priorities[0]) || t.priority || 'medium'}">${(t.priorities && t.priorities[0]) || t.priority || 'medium'}</span>
           <span class="timeline-time">${formatCleanTime(t.time)}</span>
           <button class="quick-action-btn btn-focus" data-focus-dash="${t.id}" title="Iniciar Pomodoro">
             <svg viewBox="0 0 24 24" fill="currentColor">
@@ -286,13 +291,18 @@ export class DashboardView extends BaseView {
     if (!this.container) return;
 
     const todayISO = getTodayISO();
-    const tasks = store.getTasks().filter(t => t.date === todayISO);
+    const tasks = store.getTasks().filter(t => {
+      const d = (t.date || '').trim().split('T')[0];
+      return d === todayISO || !d;
+    });
     const completedTasks = tasks.filter(t => t.completed).length;
     const totalTasks = tasks.length;
     const taskPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-    const hydration = store.getState().hydration;
-    const waterPercentage = Math.min(100, Math.round((hydration.currentMl / hydration.goalMl) * 100));
+    const hydration = store.getState().hydration || { currentMl: 0, goalMl: 2000 };
+    const goal = hydration.goalMl || 2000;
+    const currentWater = hydration.currentMl || 0;
+    const waterPercentage = Math.min(100, Math.round((currentWater / goal) * 100));
 
     // Actualizar timeline
     const timeline = $('#dash-timeline-container', this.container);
@@ -306,16 +316,16 @@ export class DashboardView extends BaseView {
     if (taskDesc) taskDesc.textContent = `${taskPercentage}% de cumplimiento diario`;
 
     const waterStat = $('#dash-water-stat', this.container);
-    if (waterStat) waterStat.textContent = `${hydration.currentMl} ml`;
+    if (waterStat) waterStat.textContent = `${currentWater} ml`;
 
     const waterDesc = $('#dash-water-desc', this.container);
-    if (waterDesc) waterDesc.textContent = `${waterPercentage}% de la meta (${hydration.goalMl} ml)`;
+    if (waterDesc) waterDesc.textContent = `${waterPercentage}% de la meta (${goal} ml)`;
 
     const waterFill = $('#dash-water-fill', this.container);
     if (waterFill) waterFill.style.width = `${waterPercentage}%`;
 
     const waterCurr = $('#dash-water-current', this.container);
-    if (waterCurr) waterCurr.textContent = `${hydration.currentMl} ml`;
+    if (waterCurr) waterCurr.textContent = `${currentWater} ml`;
   }
 
   _cleanupSubscriptions() {

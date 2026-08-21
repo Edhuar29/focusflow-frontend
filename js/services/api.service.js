@@ -218,6 +218,17 @@ class ApiService {
     });
   }
 
+  async saveWaterReminderConfig(config) {
+    return this._request('/reminders/water-config', {
+      method: 'POST',
+      body: JSON.stringify(config),
+    });
+  }
+
+  async getWaterReminderConfig(email) {
+    return this._request(`/reminders/water-config?email=${encodeURIComponent(email || '')}`);
+  }
+
   async sendTestEmail(email) {
     return this._request('/reminders/task-email', {
       method: 'POST',

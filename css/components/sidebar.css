@@ -142,7 +142,7 @@
 
   .sidebar-nav {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     width: 100%;
     max-width: 540px;
     margin: 0 auto;

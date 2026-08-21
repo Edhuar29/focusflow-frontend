@@ -10,6 +10,7 @@ import { soundService } from './sound.service.js';
 import { notificationService } from './notification.service.js';
 import { apiService } from './api.service.js';
 import { StorageService } from './storage.service.js';
+import { leaderElectionService } from './leader-election.service.js';
 import { toast } from '../components/toast.component.js';
 import { getTodayISO, formatCleanTime } from '../utils/date.utils.js';
 import { $, escapeHTML } from '../utils/dom.utils.js';
@@ -23,9 +24,20 @@ class NotificationSchedulerService {
       StorageService.set('last_water_check_ts', Date.now());
     }
 
+    // Escuchar notificaciones emitidas por la pestaña Líder
+    leaderElectionService.on('SYNC_NOTIFICATION', (notif) => {
+      if (!leaderElectionService.isLeader()) {
+        store.addNotification(notif);
+      }
+    });
+
     if (this.checkInterval) clearInterval(this.checkInterval);
     // Verificación precisa cada 1 segundo (1000ms)
     this.checkInterval = setInterval(() => this.checkSchedules(), 1000);
+    this.checkSchedules();
+  }
+
+  init() {
     this.checkSchedules();
   }
 
@@ -46,26 +58,75 @@ class NotificationSchedulerService {
     StorageService.set('last_water_check_ts', Date.now());
   }
 
+  _parseTimeToMinutes(timeStr, fallbackMin = 480) {
+    if (!timeStr || typeof timeStr !== 'string') return fallbackMin;
+    const clean = timeStr.trim().toLowerCase();
+    const match = clean.match(/^(\d{1,2}):(\d{1,2})(?:\s*([ap]\.?m\.?))?/i);
+    if (!match) return fallbackMin;
+
+    let h = parseInt(match[1], 10);
+    const m = parseInt(match[2], 10) || 0;
+    const isPM = match[3] && match[3].startsWith('p');
+    const isAM = match[3] && match[3].startsWith('a');
+
+    if (isPM && h < 12) h += 12;
+    if (isAM && h === 12) h = 0;
+
+    return (h * 60) + m;
+  }
+
   getWaterTimeRemaining() {
     const hydration = store.getState().hydration;
-    if (!hydration.reminder || !hydration.reminder.enabled) return null;
+    if (!hydration || !hydration.reminder || !hydration.reminder.enabled) return null;
 
-    const intervalHours = parseFloat(hydration.reminder.intervalHours) || 1;
-    const intervalMs = Math.round(intervalHours * 3600 * 1000);
-    const lastCheck = StorageService.get('last_water_check_ts', Date.now());
-    const elapsed = Date.now() - lastCheck;
-    const remainingMs = Math.max(0, intervalMs - elapsed);
+    const now = new Date();
+    const currentHours = now.getHours();
+    const currentMinutes = now.getMinutes();
+    const currentSeconds = now.getSeconds();
+    const currentTotalSec = (currentHours * 3600) + (currentMinutes * 60) + currentSeconds;
 
-    const totalSeconds = Math.ceil(remainingMs / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
+    const startTotalMin = this._parseTimeToMinutes(hydration.reminder.startTime, 480);
+    const endTotalMin = this._parseTimeToMinutes(hydration.reminder.endTime, 1320);
+
+    const startTotalSec = startTotalMin * 60;
+    const endTotalSec = endTotalMin * 60;
+
+    const intervalMinutes = Math.max(1, Math.round(parseFloat(hydration.reminder.intervalHours || 1) * 60));
+    const intervalSec = intervalMinutes * 60;
+
+    let remainingSec = 0;
+    let nextAlarmTime = '';
+
+    if (currentTotalSec < startTotalSec) {
+      remainingSec = startTotalSec - currentTotalSec;
+      const sh = String(Math.floor(startTotalMin / 60)).padStart(2, '0');
+      const sm = String(startTotalMin % 60).padStart(2, '0');
+      nextAlarmTime = `${sh}:${sm}`;
+    } else if (currentTotalSec >= endTotalSec) {
+      remainingSec = (86400 - currentTotalSec) + startTotalSec;
+      const sh = String(Math.floor(startTotalMin / 60)).padStart(2, '0');
+      const sm = String(startTotalMin % 60).padStart(2, '0');
+      nextAlarmTime = `Mañana ${sh}:${sm}`;
+    } else {
+      const diffFromStartSec = currentTotalSec - startTotalSec;
+      const passedInCycleSec = diffFromStartSec % intervalSec;
+      remainingSec = intervalSec - passedInCycleSec;
+      const nextTotalSec = currentTotalSec + remainingSec;
+      const nextH = String(Math.floor(nextTotalSec / 3600) % 24).padStart(2, '0');
+      const nextM = String(Math.floor((nextTotalSec % 3600) / 60)).padStart(2, '0');
+      nextAlarmTime = `${nextH}:${nextM}`;
+    }
+
+    const minutes = Math.floor(remainingSec / 60);
+    const seconds = remainingSec % 60;
 
     return {
       minutes,
       seconds,
-      totalSeconds,
-      remainingMs,
-      intervalHours
+      totalSeconds: remainingSec,
+      remainingMs: remainingSec * 1000,
+      nextAlarmTime,
+      intervalHours: hydration.reminder.intervalHours
     };
   }
 
@@ -76,6 +137,7 @@ class NotificationSchedulerService {
   addNotification(notif) {
     const saved = store.addNotification(notif);
     this._dispatchAlert(saved);
+    leaderElectionService.broadcast('SYNC_NOTIFICATION', notif);
     return saved;
   }
 
@@ -88,6 +150,9 @@ class NotificationSchedulerService {
   }
 
   checkSchedules() {
+    // Solo la pestaña Líder activa evalúa y despacha alarmas para evitar colisiones
+    if (!leaderElectionService.isLeader()) return;
+
     const todayISO = getTodayISO();
     const tasks = store.getTasks().filter(t => {
       const taskDate = (t.date || '').trim().split('T')[0];
@@ -100,14 +165,15 @@ class NotificationSchedulerService {
 
     // 1. Revisión de alarmas de tareas programadas
     tasks.forEach(task => {
-      // Si ya sonó esta alarma específica en este minuto, omitir
       const alarmKey = `${task.id}-${task.time}-${todayISO}`;
-      if (this.firedAlarms.has(alarmKey)) return;
+      const isTaskDispatched = StorageService.get(`task_alarm_${alarmKey}`, false);
+      if (this.firedAlarms.has(alarmKey) || isTaskDispatched) return;
 
       const parsed = this._parseTimeString(task.time);
       if (parsed) {
         if (parsed.hours === currentHours && parsed.minutes === currentMinutes) {
           this.firedAlarms.add(alarmKey);
+          StorageService.set(`task_alarm_${alarmKey}`, true);
           const priority = (task.priorities && task.priorities[0]) || 'medium';
 
           console.log(`⏰ [NotificationScheduler] ¡Hora cumplida para la tarea "${task.title}"! Ejecutando despacho...`);
@@ -161,66 +227,54 @@ class NotificationSchedulerService {
       }
     });
 
-    // 2. Revisión de recordatorio de hidratación con persistencia de tiempo
+    // 2. Revisión de recordatorio de hidratación anclado a hora exacta del reloj
     const hydration = store.getState().hydration;
-    if (hydration.reminder && hydration.reminder.enabled) {
-      const intervalHours = parseFloat(hydration.reminder.intervalHours) || 1;
-      const intervalMs = intervalHours * 3600 * 1000;
-      
-      const lastCheck = StorageService.get('last_water_check_ts', Date.now());
-      const elapsed = Date.now() - lastCheck;
+    if (hydration && hydration.reminder && hydration.reminder.enabled) {
+      const startTotalMin = this._parseTimeToMinutes(hydration.reminder.startTime, 480);
+      const endTotalMin = this._parseTimeToMinutes(hydration.reminder.endTime, 1320);
+      const currentTotalMin = (currentHours * 60) + currentMinutes;
 
-      if (elapsed >= intervalMs) {
-        // Actualizar marca de tiempo persistente
-        StorageService.set('last_water_check_ts', Date.now());
+      const intervalMinutes = Math.max(1, Math.round(parseFloat(hydration.reminder.intervalHours || 1) * 60));
 
-        console.log('💧 [NotificationScheduler] ¡Intervalo de hidratación cumplido! Despachando sonido, alerta y correo...');
+      if (currentTotalMin >= startTotalMin && currentTotalMin <= endTotalMin) {
+        const diffFromStart = currentTotalMin - startTotalMin;
+        if (diffFromStart % intervalMinutes === 0) {
+          const formattedCurrentTime = `${String(currentHours).padStart(2, '0')}:${String(currentMinutes).padStart(2, '0')}`;
+          const alarmKey = `water_${todayISO}_${formattedCurrentTime}`;
+          const lastWaterDispatched = StorageService.get('last_water_dispatched_key', '');
 
-        // 1. Sonido especial de hidratación
-        try {
-          soundService.playWaterChime();
-        } catch (e) {
-          console.warn('[NotificationScheduler] Error en playWaterChime:', e);
-        }
+          if (lastWaterDispatched !== alarmKey && !this.firedAlarms.has(alarmKey)) {
+            this.firedAlarms.add(alarmKey);
+            StorageService.set('last_water_dispatched_key', alarmKey);
 
-        // 2. Registro en campana
-        try {
-          store.addNotification({
-            id: `notif-water-${Date.now()}`,
-            title: 'Recordatorio de Hidratación',
-            description: 'Momento de beber un vaso de agua (+250 ml) para mantener tu concentración.',
-            priority: 'medium',
-            type: 'hydration',
-            time: 'Ahora'
-          });
-        } catch (e) {}
+            console.log(`💧 [NotificationScheduler] ¡Hora programada de hidratación cumplida (${formattedCurrentTime})!`);
 
-        // 3. Notificación Nativa en Pantalla (PC / Mac)
-        try {
-          const perm = notificationService.getPermissionStatus();
-          if (perm === 'granted') {
-            notificationService.send('EdhuFlow: Hora de Hidratarte', {
-              body: 'Momento de tomar un vaso de agua (+250 ml) para mantener tu concentración.',
-              tag: `edhuflow-water-${Date.now()}`,
-              requireInteraction: false
+            // 1. Sonido especial de hidratación
+            soundService.playWaterChime();
+
+            // 2. Registro en campana y alerta completa en pantalla
+            this.addNotification({
+              id: `notif-water-${Date.now()}`,
+              title: 'Recordatorio de Hidratación',
+              description: `Son las ${formattedCurrentTime}. Momento de beber un vaso de agua (+250 ml) para mantener tu concentración.`,
+              priority: 'medium',
+              type: 'hydration',
+              time: formattedCurrentTime
             });
+
+            // 3. Notificación Nativa en Pantalla (PC / Mac)
+            if (notificationService.getPermissionStatus() === 'granted') {
+              notificationService.send('EdhuFlow: Hora de Hidratarte', {
+                body: `Momento de tomar un vaso de agua (+250 ml) para mantener tu concentración (${formattedCurrentTime}).`,
+                tag: `edhuflow-water-${formattedCurrentTime}`,
+                requireInteraction: false
+              });
+            }
+
+            // Nota: El despacho de correo a Gmail es gestionado de forma centralizada por el servicio en la nube (Backend)
+            // para garantizar exactamente 1 solo correo puntual sin duplicados incluso con varias pestañas abiertas o sesión cerrada.
           }
-        } catch (e) {}
-
-        // 4. Despacho Directo e Incondicional de Correo Electrónico a Gmail
-        const emailPrefs = store.getEmailPreferences() || {};
-        const currentUser = store.getUser() || {};
-        const targetEmail = (hydration.reminder && hydration.reminder.email) || (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'dannyeduardoanasi@gmail.com';
-
-        console.log(`[NotificationScheduler] Despachando correo de hidratación a ${targetEmail}...`);
-        apiService.sendHydrationEmailReminder(targetEmail)
-          .then((res) => {
-            console.log(`[NotificationScheduler] Correo de hidratación entregado a ${targetEmail}:`, res);
-            toast.success(`Recordatorio de hidratación enviado a tu Gmail (${targetEmail})`);
-          })
-          .catch((err) => {
-            console.warn('[NotificationScheduler] Error enviando correo de hidratación:', err);
-          });
+        }
       }
     }
   }
@@ -229,41 +283,23 @@ class NotificationSchedulerService {
    * Despacho sensorial diferenciado según prioridad
    */
   _dispatchAlert(notif) {
-    const isMuted = soundService.isMuted();
+    if (!notif) return;
+    if (notif.type === 'hydration') {
+      toast.info(`[Hidratación] ${notif.title}: ${notif.description}`);
+      return;
+    }
+
     const priority = notif.priority || 'medium';
-    const uniqueTag = `edhuflow-${Date.now()}`;
 
     // 1. PRIORIDAD ALTA (Modo Alarma Crítica)
     if (priority === 'high') {
       soundService.playUrgentAlarm();
-      notificationService.send(`EdhuFlow [URGENTE]: ${notif.title}`, {
-        body: notif.description,
-        tag: uniqueTag,
-        requireInteraction: false
-      });
       toast.warning(`[Alarma Urgente] ${notif.title}: ${notif.description}`);
     }
-
     // 2. PRIORIDAD MEDIA / ESTÁNDAR
-    else if (priority === 'medium') {
-      soundService.playSoftChime();
-      notificationService.send(`EdhuFlow: ${notif.title}`, {
-        body: notif.description,
-        tag: uniqueTag,
-        requireInteraction: false
-      });
-      toast.info(`[Recordatorio] ${notif.title}: ${notif.description}`);
-    }
-
-    // 3. PRIORIDAD BAJA
     else {
       soundService.playSoftChime();
-      notificationService.send(`EdhuFlow: ${notif.title}`, {
-        body: notif.description,
-        tag: uniqueTag,
-        requireInteraction: false
-      });
-      toast.info(`${notif.title}`);
+      toast.info(`[Recordatorio] ${notif.title}: ${notif.description}`);
     }
   }
 

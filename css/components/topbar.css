@@ -567,4 +567,14 @@
   .topbar-title {
     font-size: var(--text-base);
   }
+
+  .topbar-popover {
+    position: fixed;
+    top: 56px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: 380px;
+    margin: 0 auto;
+  }
 }

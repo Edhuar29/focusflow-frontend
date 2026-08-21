@@ -223,7 +223,8 @@ export class TasksView extends BaseView {
     const isChecked = task.completed ? 'checked' : '';
     const completedClass = task.completed ? 'completed' : '';
 
-    const priorityBadgesHTML = task.priorities.map(p => {
+    const priorities = Array.isArray(task.priorities) ? task.priorities : [(task.priority || 'medium')];
+    const priorityBadgesHTML = priorities.map(p => {
       return `<span class="badge badge-priority-${p}">${p}</span>`;
     }).join(' ');
 
@@ -985,7 +986,7 @@ export class TasksView extends BaseView {
       form.querySelector('#edit-task-title-input').value = task.title;
       form.querySelector('#edit-task-category-select').value = task.category || 'General';
 
-      this._setPriorityValue('edit-priority-selector', 'edit-task-priority-select', task.priorities[0] || 'medium');
+      this._setPriorityValue('edit-priority-selector', 'edit-task-priority-select', (task.priorities && task.priorities[0]) || task.priority || 'medium');
       this._setCalendarWidgetDate('edit-calendar-widget', 'edit-task-date-val', task.date || getTodayISO());
       this._setMobilePickerTime(form, task.time);
 

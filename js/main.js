@@ -23,6 +23,15 @@ import { SettingsView } from './views/settings.view.js';
 import { AuthModal } from './components/auth.modal.js';
 import { $, $$, escapeHTML } from './utils/dom.utils.js';
 
+// 0. Global Error Shield: Evita que excepciones no controladas congelen la SPA
+window.addEventListener('error', (event) => {
+  console.warn('[GlobalErrorShield] Excepción prevenida:', event.message);
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  console.warn('[GlobalErrorShield] Promesa asíncrona capturada:', event.reason);
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Aplicar tema de acento inicial
   const currentAccent = store.getState().accent || 'cobalt';

@@ -9,10 +9,85 @@ import { StorageService } from '../services/storage.service.js';
 import { apiService } from '../services/api.service.js';
 import { getTodayISO } from '../utils/date.utils.js';
 
+/**
+ * DTO / Normalizador defensivo para objetos de Tarea
+ */
+export function normalizeTask(task) {
+  if (!task || typeof task !== 'object') {
+    return {
+      id: `task_${Date.now()}`,
+      title: 'Nueva Tarea',
+      description: '',
+      category: 'General',
+      priorities: ['medium'],
+      priority: 'Medio',
+      date: getTodayISO(),
+      time: '12:00 PM',
+      alarm: false,
+      emailAlert: false,
+      completed: false
+    };
+  }
+
+  const priorities = Array.isArray(task.priorities) && task.priorities.length > 0
+    ? task.priorities
+    : [task.priority === 'Alto' ? 'high' : (task.priority === 'Bajo' ? 'low' : (task.priority || 'medium'))];
+
+  const priorityLabel = task.priority || (priorities[0] === 'high' ? 'Alto' : (priorities[0] === 'low' ? 'Bajo' : 'Medio'));
+  const rawDate = typeof task.date === 'string' ? task.date.trim().split('T')[0] : getTodayISO();
+
+  return {
+    ...task,
+    id: task.id || `task_${Date.now()}`,
+    title: task.title || 'Sin Título',
+    description: task.description || '',
+    category: task.category || 'General',
+    priorities,
+    priority: priorityLabel,
+    date: rawDate,
+    time: task.time || '12:00 PM',
+    alarm: task.alarm !== undefined ? !!task.alarm : true,
+    emailAlert: task.emailAlert !== undefined ? !!task.emailAlert : true,
+    completed: !!task.completed
+  };
+}
+
+/**
+ * DTO / Normalizador defensivo para el estado de Hidratación
+ */
+export function normalizeHydration(hydration, defaultEmail = 'dannyeduardoanasi@gmail.com') {
+  const h = hydration || {};
+  const reminder = h.reminder || {};
+
+  return {
+    currentMl: typeof h.currentMl === 'number' && !isNaN(h.currentMl) ? Math.max(0, h.currentMl) : 0,
+    goalMl: typeof h.goalMl === 'number' && h.goalMl > 0 ? h.goalMl : 2000,
+    logsToday: typeof h.logsToday === 'number' ? h.logsToday : 0,
+    reminder: {
+      enabled: reminder.enabled !== undefined ? !!reminder.enabled : true,
+      startTime: reminder.startTime || '08:00',
+      endTime: reminder.endTime || '22:00',
+      intervalHours: typeof reminder.intervalHours === 'number' && reminder.intervalHours > 0 ? reminder.intervalHours : 1,
+      emailNotification: reminder.emailNotification !== undefined ? !!reminder.emailNotification : true,
+      useCustomEmail: !!reminder.useCustomEmail,
+      email: reminder.email || defaultEmail
+    }
+  };
+}
+
 class Store {
   constructor() {
     const today = getTodayISO();
     const currentUser = StorageService.get('user', null);
+    const defaultEmail = (currentUser && currentUser.email) || 'dannyeduardoanasi@gmail.com';
+
+    const rawTasks = currentUser && currentUser.id 
+      ? StorageService.get(`user_${currentUser.id}_tasks`, [])
+      : StorageService.get('tasks', []);
+
+    const rawHydration = currentUser && currentUser.id
+      ? StorageService.get(`user_${currentUser.id}_hydration`, null)
+      : StorageService.get('hydration', null);
 
     this.state = {
       theme: StorageService.get('theme', 'dark'),
@@ -25,9 +100,7 @@ class Store {
       activeFocusTask: null,
       notifications: StorageService.get('notifications', []),
       user: currentUser,
-      tasks: currentUser && currentUser.id 
-        ? StorageService.get(`user_${currentUser.id}_tasks`, [])
-        : StorageService.get('tasks', []),
+      tasks: Array.isArray(rawTasks) ? rawTasks.map(normalizeTask) : [],
       pomodoro: currentUser && currentUser.id
         ? StorageService.get(`user_${currentUser.id}_pomodoro`, {
             mode: 'focus',
@@ -41,38 +114,14 @@ class Store {
             cyclesCompletedToday: 0,
             totalFocusMinutes: 0
           }),
-      hydration: currentUser && currentUser.id
-        ? StorageService.get(`user_${currentUser.id}_hydration`, {
-            currentMl: 0,
-            goalMl: 2000,
-            logsToday: 0,
-            reminder: {
-              enabled: true,
-              intervalHours: 1,
-              emailNotification: true,
-              useCustomEmail: false,
-              email: currentUser.email || 'dannyeduardoanasi@gmail.com'
-            }
-          })
-        : StorageService.get('hydration', {
-            currentMl: 0,
-            goalMl: 2000,
-            logsToday: 0,
-            reminder: {
-              enabled: true,
-              intervalHours: 1,
-              emailNotification: true,
-              useCustomEmail: false,
-              email: 'dannyeduardoanasi@gmail.com'
-            }
-          }),
+      hydration: normalizeHydration(rawHydration, defaultEmail),
       settings: StorageService.get('settings', {
         soundEnabled: true,
         notificationsEnabled: true
       }),
       emailPreferences: currentUser && currentUser.id
         ? StorageService.get(`user_${currentUser.id}_email_pref`, {
-            notificationEmail: currentUser.email || 'dannyeduardoanasi@gmail.com',
+            notificationEmail: defaultEmail,
             emailTaskAlerts: true,
             emailWaterAlerts: true,
             useCustomEmail: false
@@ -92,7 +141,8 @@ class Store {
   }
 
   getTasks() {
-    return [...this.state.tasks];
+    const raw = this.state.tasks || [];
+    return raw.map(normalizeTask);
   }
 
   getActiveFocusTask() {
@@ -418,27 +468,27 @@ class Store {
     StorageService.set('user', user);
 
     if (user && user.id) {
+      const defaultEmail = user.email || 'dannyeduardoanasi@gmail.com';
       // Carga aislada para el usuario (los nuevos usuarios inician en cero absoluto)
       const savedAvatar = StorageService.get(`user_${user.id}_avatar`, null);
       if (savedAvatar) {
         this.state.user.avatarUrl = savedAvatar;
       }
-      this.state.tasks = StorageService.get(`user_${user.id}_tasks`, []);
+      const rawTasks = StorageService.get(`user_${user.id}_tasks`, []);
+      this.state.tasks = Array.isArray(rawTasks) ? rawTasks.map(normalizeTask) : [];
       this.state.pomodoro = StorageService.get(`user_${user.id}_pomodoro`, {
         mode: 'focus',
         duration: 25 * 60,
         cyclesCompletedToday: 0,
         totalFocusMinutes: 0
       });
-      this.state.hydration = StorageService.get(`user_${user.id}_hydration`, {
-        currentMl: 0,
-        goalMl: 2000,
-        logsToday: 0
-      });
+      const rawHydration = StorageService.get(`user_${user.id}_hydration`, null);
+      this.state.hydration = normalizeHydration(rawHydration, defaultEmail);
       this.state.emailPreferences = StorageService.get(`user_${user.id}_email_pref`, {
-        notificationEmail: user.email || '',
+        notificationEmail: defaultEmail,
         emailTaskAlerts: true,
-        emailWaterAlerts: true
+        emailWaterAlerts: true,
+        useCustomEmail: false
       });
     }
 
@@ -458,7 +508,7 @@ class Store {
     try {
       const remoteTasks = await apiService.getTasks();
       if (Array.isArray(remoteTasks)) {
-        const mapped = remoteTasks.map((t) => ({
+        const mapped = remoteTasks.map((t) => normalizeTask({
           id: t.id,
           backendId: t.id,
           title: t.title,
