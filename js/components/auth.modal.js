@@ -254,9 +254,37 @@ export class AuthModal {
 
   async loginWithGoogleCredential(credential) {
     try {
-      toast.info('Verificando credenciales criptográficas con Google...');
+      toast.info('Verificando cuenta de Google...');
 
-      const data = await apiService.googleLogin({ credential });
+      let email = undefined;
+      let name = undefined;
+      let avatarUrl = undefined;
+
+      try {
+        const parts = credential.split('.');
+        if (parts.length === 3) {
+          const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split('')
+              .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+              .join('')
+          );
+          const payload = JSON.parse(jsonPayload);
+          email = payload.email;
+          name = payload.name || payload.given_name || (email ? email.split('@')[0] : undefined);
+          avatarUrl = payload.picture;
+        }
+      } catch (e) {
+        console.warn('[AuthModal] Could not parse JWT payload locally:', e);
+      }
+
+      const data = await apiService.googleLogin({
+        credential,
+        email,
+        name,
+        avatar_url: avatarUrl,
+      });
 
       if (data && data.user) {
         this.saveSavedProfile(data.user);
