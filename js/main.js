@@ -1137,31 +1137,11 @@ function initDesktopPermissionModal() {
   const allowBtn = $('#btn-perm-notif-allow');
   const laterBtn = $('#btn-perm-notif-later');
 
-  const floatingBanner = $('#desktop-permission-floating-banner');
-  const allowFloatingBtn = $('#btn-allow-desktop-floating');
-  const closeFloatingBtn = $('#btn-close-desktop-floating');
-
-  const updateFloatingBannerVisibility = () => {
-    const currentStatus = notificationService.getPermissionStatus();
-    if (floatingBanner) {
-      if (currentStatus === 'default') {
-        floatingBanner.style.display = 'flex';
-      } else {
-        floatingBanner.style.display = 'none';
-      }
-    }
-  };
-
-  updateFloatingBannerVisibility();
-
   const handleAllow = async () => {
     soundService.playClick();
     if (modal) {
       modal.classList.remove('open');
       modal.setAttribute('aria-hidden', 'true');
-    }
-    if (floatingBanner) {
-      floatingBanner.style.display = 'none';
     }
     StorageService.set('edhuflow_desktop_perm_prompted', true);
 
@@ -1170,18 +1150,10 @@ function initDesktopPermissionModal() {
       StorageService.set('edhuflow_desktop_notifs_enabled', true);
       soundService.playSoftChime();
       toast.success('¡Notificaciones en pantalla activadas exitosamente!');
-      notificationService.send('EdhuFlow — Alertas en Pantalla Activadas', {
-        body: 'Recibirás avisos visuales de tareas e hidratación en tu computadora.',
-        tag: 'edhuflow-welcome-alert'
-      });
-    } else {
-      toast.info('Puedes activar las notificaciones más tarde desde Ajustes.');
     }
-    updateFloatingBannerVisibility();
   };
 
   if (allowBtn) allowBtn.addEventListener('click', handleAllow);
-  if (allowFloatingBtn) allowFloatingBtn.addEventListener('click', handleAllow);
 
   if (laterBtn) {
     laterBtn.addEventListener('click', () => {
@@ -1191,13 +1163,6 @@ function initDesktopPermissionModal() {
         modal.setAttribute('aria-hidden', 'true');
       }
       StorageService.set('edhuflow_desktop_perm_prompted', true);
-    });
-  }
-
-  if (closeFloatingBtn) {
-    closeFloatingBtn.addEventListener('click', () => {
-      soundService.playClick();
-      if (floatingBanner) floatingBanner.style.display = 'none';
     });
   }
 
