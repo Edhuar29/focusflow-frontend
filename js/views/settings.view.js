@@ -23,7 +23,7 @@ export class SettingsView extends BaseView {
     const currentAccent = store.getState().accent || 'cobalt';
     const emailPrefs = store.getEmailPreferences();
     const currentUser = store.getUser();
-    const accountEmail = (currentUser && currentUser.email) ? currentUser.email : 'dannyeduardoanasi@gmail.com';
+    const accountEmail = (currentUser && currentUser.email) ? currentUser.email : 'edhuflow.official@gmail.com';
     
     // Determinar si usa el correo de su cuenta o uno personalizado
     const isCustomEmail = emailPrefs.useCustomEmail === true && emailPrefs.notificationEmail && emailPrefs.notificationEmail !== accountEmail;
@@ -156,7 +156,7 @@ export class SettingsView extends BaseView {
     if (!this.container) return;
 
     const currentUser = store.getUser();
-    const accountEmail = (currentUser && currentUser.email) ? currentUser.email : 'dannyeduardoanasi@gmail.com';
+    const accountEmail = (currentUser && currentUser.email) ? currentUser.email : 'edhuflow.official@gmail.com';
 
     const choiceAccount = $('#choice-account-email', this.container);
     const choiceCustom = $('#choice-custom-email', this.container);

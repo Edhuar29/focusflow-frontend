@@ -520,7 +520,7 @@ export class TasksView extends BaseView {
             soundService.playSoftChime();
             const emailPrefs = store.getEmailPreferences() || {};
             const currentUser = store.getUser() || {};
-            const targetEmail = (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'dannyeduardoanasi@gmail.com';
+            const targetEmail = (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'edhuflow.official@gmail.com';
 
             // 1. Notificación en la pantalla de la computadora
             const perm = notificationService.getPermissionStatus();

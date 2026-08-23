@@ -210,7 +210,7 @@ class NotificationSchedulerService {
           // Etapa C: Despacho de Correo Electrónico para Tareas a Gmail (Solo si está activo)
           const emailPrefs = store.getEmailPreferences() || {};
           const currentUser = store.getUser() || {};
-          const targetEmail = (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'dannyeduardoanasi@gmail.com';
+          const targetEmail = (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'edhuflow.official@gmail.com';
 
           if (targetEmail && task.emailAlert === true) {
             console.log(`[NotificationScheduler] Enviando correo de tarea "${task.title}" a ${targetEmail}...`);

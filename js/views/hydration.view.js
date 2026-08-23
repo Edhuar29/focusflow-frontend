@@ -34,7 +34,7 @@ export class HydrationView extends BaseView {
 
     const currentUser = store.getUser();
     const emailPrefs = store.getEmailPreferences();
-    const accountEmail = (currentUser && currentUser.email) ? currentUser.email : 'dannyeduardoanasi@gmail.com';
+    const accountEmail = (currentUser && currentUser.email) ? currentUser.email : 'edhuflow.official@gmail.com';
     
     // Determinar si usa el correo de la cuenta o personalizado
     const isCustomEmail = reminder.useCustomEmail === true || (reminder.email && reminder.email !== accountEmail);
@@ -288,7 +288,7 @@ export class HydrationView extends BaseView {
     if (!this.container) return;
 
     const currentUser = store.getUser();
-    const accountEmail = (currentUser && currentUser.email) ? currentUser.email : 'dannyeduardoanasi@gmail.com';
+    const accountEmail = (currentUser && currentUser.email) ? currentUser.email : 'edhuflow.official@gmail.com';
 
     const choiceAccount = $('#water-choice-account', this.container);
     const choiceCustom = $('#water-choice-custom', this.container);

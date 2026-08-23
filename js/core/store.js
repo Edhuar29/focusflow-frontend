@@ -55,7 +55,7 @@ export function normalizeTask(task) {
 /**
  * DTO / Normalizador defensivo para el estado de Hidratación
  */
-export function normalizeHydration(hydration, defaultEmail = 'dannyeduardoanasi@gmail.com') {
+export function normalizeHydration(hydration, defaultEmail = 'edhuflow.official@gmail.com') {
   const h = hydration || {};
   const reminder = h.reminder || {};
 
@@ -79,7 +79,7 @@ class Store {
   constructor() {
     const today = getTodayISO();
     const currentUser = StorageService.get('user', null);
-    const defaultEmail = (currentUser && currentUser.email) || 'dannyeduardoanasi@gmail.com';
+    const defaultEmail = (currentUser && currentUser.email) || 'edhuflow.official@gmail.com';
 
     const rawTasks = currentUser && currentUser.id 
       ? StorageService.get(`user_${currentUser.id}_tasks`, [])
@@ -127,7 +127,7 @@ class Store {
             useCustomEmail: false
           })
         : StorageService.get('email_preferences', {
-            notificationEmail: 'dannyeduardoanasi@gmail.com',
+            notificationEmail: 'edhuflow.official@gmail.com',
             emailTaskAlerts: true,
             emailWaterAlerts: true,
             useCustomEmail: false
@@ -468,7 +468,7 @@ class Store {
     StorageService.set('user', user);
 
     if (user && user.id) {
-      const defaultEmail = user.email || 'dannyeduardoanasi@gmail.com';
+      const defaultEmail = user.email || 'edhuflow.official@gmail.com';
       // Carga aislada para el usuario (los nuevos usuarios inician en cero absoluto)
       const savedAvatar = StorageService.get(`user_${user.id}_avatar`, null);
       if (savedAvatar) {

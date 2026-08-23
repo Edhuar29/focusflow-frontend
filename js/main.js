@@ -866,7 +866,7 @@ function initEditProfileModal() {
 
     if (firstNameInput) firstNameInput.value = fName;
     if (lastNameInput) lastNameInput.value = lName;
-    if (currentEmailInput) currentEmailInput.value = user.email || 'dannyeduardoanasi@gmail.com';
+    if (currentEmailInput) currentEmailInput.value = user.email || 'edhuflow.official@gmail.com';
     if (newEmailInput) newEmailInput.value = '';
     if (avatarPreview && avatar) avatarPreview.src = avatar;
 
