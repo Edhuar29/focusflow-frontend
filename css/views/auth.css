@@ -826,25 +826,55 @@
   margin-bottom: 6px;
 }
 
-/* Responsividad para móviles y tablets */
-@media (max-width: 860px) {
-  .auth-container-grid {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-
-  .auth-hero-col {
+/* ==========================================================================
+   Responsividad Dinámica (Comportamiento Estilo Facebook / Linear / Stripe)
+   En computadoras se muestra la pantalla completa con branding + hero.
+   En móviles o al encoger la ventana, se oculta el hero y queda solo el login centrado.
+   ========================================================================== */
+@media (max-width: 920px) {
+  .auth-screen-overlay {
+    padding: 16px;
     align-items: center;
-    text-align: center;
-    padding: 0;
   }
 
-  .auth-tagline {
-    font-size: 1.65rem;
-    max-width: 100%;
-  }
-
-  .auth-feature-chips {
+  .auth-container-grid {
+    display: flex;
     justify-content: center;
+    align-items: center;
+    max-width: 440px;
+    width: 100%;
+    margin: auto;
+    gap: 0;
+  }
+
+  /* Ocultar por completo la columna hero (orbe, tagline y palabras) en móvil / pantallas estrechas */
+  .auth-hero-col {
+    display: none !important;
+  }
+
+  .auth-card-col {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .auth-card {
+    padding: 28px 22px;
+    border-radius: 18px;
+    box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+
+  .auth-card-title {
+    font-size: 1.4rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .auth-screen-overlay {
+    padding: 12px;
+  }
+
+  .auth-card {
+    padding: 24px 18px;
   }
 }
