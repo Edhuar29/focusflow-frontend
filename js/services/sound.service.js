@@ -178,23 +178,52 @@ class SoundService {
 
     try {
       const notes = [523.25, 659.25, 783.99, 1046.50];
-      notes.forEach((freq, i) => {
-        const now = ctx.currentTime + (i * 0.08);
+      const now = ctx.currentTime + 0.01;
+
+      notes.forEach((freq, index) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
 
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + index * 0.08);
 
-        gain.gain.setValueAtTime(0.12, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        gain.gain.setValueAtTime(0.18, now + index * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.08 + 0.5);
 
         osc.connect(gain);
         gain.connect(ctx.destination);
 
-        osc.start(now);
-        osc.stop(now + 0.4);
+        osc.start(now + index * 0.08);
+        osc.stop(now + index * 0.08 + 0.5);
       });
+    } catch (e) {}
+  }
+
+  /**
+   * 💧 Gota / Burbuja de Agua
+   */
+  playWaterDrop() {
+    if (this.muted) return;
+    const ctx = this._getCtx();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime + 0.01;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(450, now);
+      osc.frequency.exponentialRampToValueAtTime(900, now + 0.08);
+
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.18);
     } catch (e) {}
   }
 

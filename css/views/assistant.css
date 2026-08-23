@@ -249,6 +249,176 @@
   100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
 
+/* Botón de Síntesis de Voz (Text-to-Speech) */
+.btn-tts-speak {
+  background: none;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  padding: 3px 6px;
+  font-size: 11px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.btn-tts-speak:hover {
+  background: rgba(124, 58, 237, 0.15);
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.btn-tts-speak.speaking {
+  background: rgba(124, 58, 237, 0.25);
+  color: #A78BFA;
+  border-color: #A78BFA;
+  animation: pulseAudio 1.2s infinite;
+}
+
+@keyframes pulseAudio {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+/* Sugerencias de Inicio Rápido (Prompt Starters) */
+.prompt-starters-container {
+  margin-top: 14px;
+  padding: 14px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.prompt-starters-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.prompt-starters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.prompt-starter-chip {
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.prompt-starter-chip:hover {
+  background: rgba(56, 189, 248, 0.1);
+  border-color: #38BDF8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15);
+}
+
+.prompt-starter-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* Tarjetas de Estado en Tiempo Real (Agua / Pomodoro / Tareas) */
+.chat-status-card {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin: 10px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.chat-status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.chat-status-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.status-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Matriz de Eisenhower */
+.eisenhower-container {
+  margin: 10px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.eisenhower-quadrant {
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  border-left: 3px solid #38BDF8;
+}
+
+.eisenhower-quadrant.q1 { border-left-color: #EF4444; }
+.eisenhower-quadrant.q2 { border-left-color: #38BDF8; }
+.eisenhower-quadrant.q3 { border-left-color: #F59E0B; }
+.eisenhower-quadrant.q4 { border-left-color: #6B7280; }
+
+.quadrant-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.quadrant-tasks-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 @media (max-width: 768px) {
   .assistant-container {
     height: calc(100dvh - 130px - env(safe-area-inset-bottom, 0px));
@@ -259,10 +429,16 @@
     gap: 10px;
   }
   .chat-message {
-    max-width: 92%;
+    max-width: 95%;
   }
   .chat-input-area {
     padding: 10px 12px;
     gap: 8px;
+  }
+  .prompt-starters-grid {
+    grid-template-columns: 1fr;
+  }
+  .eisenhower-container {
+    grid-template-columns: 1fr;
   }
 }

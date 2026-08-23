@@ -442,6 +442,15 @@ class Store {
     eventBus.emit('theme:accentChanged', accentName);
   }
 
+  /* Métodos de Sinergia e Integración para Asistente */
+  logWater(amountMl = 250) {
+    const data = this.state.hydration;
+    data.currentMl = (data.currentMl || 0) + amountMl;
+    data.logsToday = (data.logsToday || 0) + 1;
+    this._persistAndNotify('hydration', data, 'hydration:updated');
+    return data;
+  }
+
   /* Gestión de Autenticación y Aislamiento de Usuario */
   getUser() {
     return this.state.user;

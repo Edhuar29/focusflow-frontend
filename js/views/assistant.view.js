@@ -5,6 +5,7 @@
 
 import { BaseView } from './base.view.js';
 import { soundService } from '../services/sound.service.js';
+import { speechService } from '../services/speech.service.js';
 import { toast } from '../components/toast.component.js';
 import { store } from '../core/store.js';
 import { apiService } from '../services/api.service.js';
@@ -277,8 +278,57 @@ export class AssistantView extends BaseView {
       }
     }
 
+    // Comprobar si es una Matriz de Eisenhower
+    if (text.includes('🔴') && text.includes('🟡')) {
+      const qRegex = /(🔴|🟡|🔵|⚪)\s*\*\*([^*]+)\*\*:?([\s\S]*?)(?=(?:🔴|🟡|🔵|⚪)|$)/g;
+      let match;
+      const quadrants = [];
+      while ((match = qRegex.exec(text)) !== null) {
+        quadrants.push({
+          icon: match[1],
+          title: match[2].trim(),
+          content: match[3].trim()
+        });
+      }
+
+      if (quadrants.length >= 2) {
+        const qCards = quadrants.map(q => {
+          let qClass = 'q1';
+          if (q.icon === '🟡') qClass = 'q2';
+          if (q.icon === '🔵') qClass = 'q3';
+          if (q.icon === '⚪') qClass = 'q4';
+
+          const items = q.content.split('\n')
+            .map(l => l.trim().replace(/^[•\-*]\s*/, ''))
+            .filter(Boolean);
+
+          return `
+            <div class="eisenhower-quadrant ${qClass}">
+              <div class="quadrant-title">${q.icon} <span>${escapeHTML(q.title)}</span></div>
+              <ul class="quadrant-tasks-list">
+                ${items.map(item => `<li>• ${escapeHTML(item)}</li>`).join('')}
+              </ul>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div style="font-weight: 700; font-size: 13px; color: var(--text-primary); margin-bottom: 6px;">🧠 Matriz de Priorización de Eisenhower</div>
+          <div class="eisenhower-container">${qCards}</div>
+          <p style="font-size: 11.5px; color: var(--text-secondary); margin-top: 8px;">¿Deseas que agende las tareas del cuadrante Urgente e Importante primero?</p>
+        `;
+      }
+    }
+
     const paragraphs = text.split(/\n\n+/);
-    return paragraphs.map(p => `<p style="margin: 0 0 8px 0; line-height: 1.55; white-space: pre-wrap;">${escapeHTML(p)}</p>`).join('');
+    return paragraphs.map(p => {
+      let formatted = escapeHTML(p);
+      // Negrita **texto**
+      formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      // Cursiva *texto*
+      formatted = formatted.replace(/\*(.+?)\*/g, '<em>$1</em>');
+      return `<p style="margin: 0 0 8px 0; line-height: 1.55; white-space: pre-wrap;">${formatted}</p>`;
+    }).join('');
   }
 
   render() {
@@ -318,7 +368,51 @@ export class AssistantView extends BaseView {
           ${this.messages.map((m, idx) => `
             <div class="chat-message ${m.sender}">
               <div class="chat-bubble">
+                ${m.sender === 'assistant' ? `
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+                    <span style="font-size: 11px; font-weight: 600; color: #A78BFA; display: inline-flex; align-items: center; gap: 4px;">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                      <span>Asistente EdhuFlow</span>
+                    </span>
+                    <button type="button" class="btn-tts-speak" data-msg-idx="${idx}" title="Escuchar respuesta por voz">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+                      <span>Escuchar</span>
+                    </button>
+                  </div>
+                ` : ''}
+
                 ${this._formatMessageContent(m.text, m.sender === 'assistant')}
+                
+                ${idx === 0 && this.messages.length <= 1 ? `
+                  <div class="prompt-starters-container">
+                    <div class="prompt-starters-title">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                      <span>Sugerencias de Inicio Rápido</span>
+                    </div>
+                    <div class="prompt-starters-grid">
+                      <button type="button" class="prompt-starter-chip" data-quick-text="planificar mi semana con 5 actividades">
+                        <span class="prompt-starter-icon">📅</span>
+                        <span>Organizar semana (5 tareas)</span>
+                      </button>
+                      <button type="button" class="prompt-starter-chip" data-quick-text="¿qué tareas tengo para hoy?">
+                        <span class="prompt-starter-icon">📋</span>
+                        <span>¿Qué tareas tengo para hoy?</span>
+                      </button>
+                      <button type="button" class="prompt-starter-chip" data-quick-text="¿cuánta agua he tomado hoy?">
+                        <span class="prompt-starter-icon">💧</span>
+                        <span>¿Cómo va mi meta de agua?</span>
+                      </button>
+                      <button type="button" class="prompt-starter-chip" data-quick-text="iniciar un pomodoro de 25 minutos">
+                        <span class="prompt-starter-icon">⏱️</span>
+                        <span>Iniciar enfoque (25 min)</span>
+                      </button>
+                      <button type="button" class="prompt-starter-chip" data-quick-text="priorizar mis pendientes con la matriz de eisenhower">
+                        <span class="prompt-starter-icon">🧠</span>
+                        <span>Matriz de Eisenhower</span>
+                      </button>
+                    </div>
+                  </div>
+                ` : ''}
                 
                 ${m.detectedTasks && m.detectedTasks.length > 0 ? `
                   <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
@@ -531,6 +625,27 @@ export class AssistantView extends BaseView {
     const history = $('#chat-history', this.container);
     if (history) {
       history.onclick = (e) => {
+        // 0.0 Escuchar respuesta por voz (Text-to-Speech)
+        const ttsBtn = e.target.closest('.btn-tts-speak');
+        if (ttsBtn) {
+          const msgIdx = parseInt(ttsBtn.getAttribute('data-msg-idx'), 10);
+          const msg = this.messages[msgIdx];
+          if (msg && msg.text) {
+            speechService.toggleSpeech(msg.text, ttsBtn);
+          }
+          return;
+        }
+
+        // 0.01 Clic en Sugerencias de Inicio Rápido (Prompt Starters)
+        const chip = e.target.closest('.prompt-starter-chip');
+        if (chip) {
+          const quickText = chip.getAttribute('data-quick-text');
+          if (quickText && !this.isThinking) {
+            this._sendMessage(quickText, false);
+          }
+          return;
+        }
+
         // 0. Confirmar y agendar directamente todas las tareas de la propuesta
         const confirmAllBtn = e.target.closest('.btn-confirm-and-schedule-all');
         if (confirmAllBtn) {
@@ -891,13 +1006,151 @@ export class AssistantView extends BaseView {
     }
   }
 
-  async _sendMessage(userText) {
+  async _sendMessage(userText, isVoice = false) {
     soundService.playClick();
     this.messages.push({ sender: 'user', text: userText });
     this._saveHistory();
     this.isThinking = true;
     this.render();
     this.bindEvents();
+
+    const lower = userText.toLowerCase().trim();
+
+    // 1. CONSULTA DE ESTADO: Tareas de Hoy
+    if (/(?:tareas?|pendientes?|actividades?)\s*(?:de\s+)?(?:hoy|para hoy)|qu[eé]\s+tengo\s+(?:hoy|para hoy|pendiente)|agenda\s+de\s+hoy/i.test(lower)) {
+      const todayISO = getTodayISO();
+      const todayTasks = (store.state.tasks || []).filter(t => (t.date || '').startsWith(todayISO));
+      
+      let replyMsg = '';
+      if (todayTasks.length === 0) {
+        replyMsg = `¡No tienes tareas programadas para hoy (${todayISO})! 🎉\n\nPuedes pedirme: *"Planificar mi semana con 5 actividades"* o *"Estudiar física a las 4:00 PM"* para agendar tu jornada.`;
+      } else {
+        const completed = todayTasks.filter(t => t.completed).length;
+        const pending = todayTasks.length - completed;
+        const bullets = todayTasks.map(t => {
+          const statusIcon = t.completed ? '✅' : '⏳';
+          const p = t.priorities && t.priorities[0] ? t.priorities[0] : 'medium';
+          const pLabel = p === 'high' ? 'Alta' : (p === 'low' ? 'Baja' : 'Media');
+          return `• ${statusIcon} **${t.time || '12:00 PM'}** — ${t.title} [Prioridad ${pLabel}] ${t.completed ? '*(Completada)*' : ''}`;
+        }).join('\n');
+
+        replyMsg = `📋 **Tus Tareas para Hoy (${todayISO}):**\nLlevas **${completed} completadas** y **${pending} pendientes** de un total de ${todayTasks.length}:\n\n${bullets}\n\n¿Deseas iniciar una sesión de enfoque o agregar alguna tarea adicional?`;
+      }
+
+      this.isThinking = false;
+      soundService.playSoftChime();
+      this.messages.push({ sender: 'assistant', text: replyMsg });
+      this._saveHistory();
+      this.render();
+      this.bindEvents();
+      if (isVoice) speechService.speak(replyMsg);
+      return;
+    }
+
+    // 2. CONSULTA DE ESTADO: Progreso de Hidratación
+    if (/cu[aá]nta\s+agua|meta\s+de\s+agua|mi\s+hidrataci[oó]n|agua\s+tomad[oa]|registro\s+de\s+agua|c[oó]mo\s+va\s+mi\s+agua/i.test(lower)) {
+      const hData = store.getState().hydration || { currentMl: 0, goalMl: 2000 };
+      const current = hData.currentMl || 0;
+      const goal = hData.goalMl || 2000;
+      const percent = Math.min(100, Math.round((current / goal) * 100));
+      const remaining = Math.max(0, goal - current);
+
+      const msg = `💧 **Tu Progreso de Hidratación:**\nHas tomado **${current} ml** de tu meta diaria de **${goal} ml** (**${percent}%**).\n${remaining > 0 ? `Te faltan **${remaining} ml** para completar tu meta del día.` : '🎉 ¡Felicidades! Has alcanzado tu meta diaria de agua.'}\n\nPuedes decirme: *"Tomé un vaso de 250ml de agua"* cuando bebas agua para registrarlo al instante.`;
+      
+      this.isThinking = false;
+      soundService.playWaterDrop();
+      this.messages.push({ sender: 'assistant', text: msg });
+      this._saveHistory();
+      this.render();
+      this.bindEvents();
+      if (isVoice) speechService.speak(msg);
+      return;
+    }
+
+    // 3. CONSULTA DE ESTADO: Tiempo de Enfoque / Pomodoro
+    if (/cu[aá]nto\s+tiempo\s+llevo|cu[aá]ntos\s+pomodoros|tiempo\s+de\s+enfoque|sesiones\s+de\s+estudio|mi\s+productividad\s+de\s+hoy/i.test(lower)) {
+      const pomo = store.getState().pomodoro || { cyclesCompletedToday: 0, totalFocusMinutes: 0 };
+      const cycles = pomo.cyclesCompletedToday || 0;
+      const minutes = pomo.totalFocusMinutes || 0;
+
+      const msg = `⏱️ **Tu Enfoque Hoy:**\nHas completado **${cycles} ciclos Pomodoro** con un total de **${minutes} minutos de trabajo profundo**.\n\n¿Listo para otra sesión? Puedes decirme: *"Iniciar pomodoro de 25 minutos"* para comenzar.`;
+
+      this.isThinking = false;
+      soundService.playSoftChime();
+      this.messages.push({ sender: 'assistant', text: msg });
+      this._saveHistory();
+      this.render();
+      this.bindEvents();
+      if (isVoice) speechService.speak(msg);
+      return;
+    }
+
+    // 4. ACCIÓN DIRECTA: Iniciar Pomodoro
+    const pomoStartMatch = lower.match(/(?:inicia|iniciar|arranca|arrancar|comenzar|pon|ponme)\s+(?:un\s+)?(?:pomodoro|temporizador|sesi[oó]n\s+de\s+enfoque)(?:\s+de\s+(\d+)\s*(?:minutos?|mins?))?/i);
+    if (pomoStartMatch) {
+      const minutes = parseInt(pomoStartMatch[1], 10) || 25;
+      const replyMsg = `🚀 ¡Excelente! Preparando tu sesión Pomodoro de **${minutes} minutos**. Navegando al temporizador...`;
+      
+      this.isThinking = false;
+      soundService.playTaskComplete();
+      this.messages.push({ sender: 'assistant', text: replyMsg });
+      this._saveHistory();
+      this.render();
+      this.bindEvents();
+      if (isVoice) speechService.speak(replyMsg);
+
+      setTimeout(() => {
+        window.location.hash = '#/pomodoro';
+      }, 1200);
+      return;
+    }
+
+    // 5. ACCIÓN DIRECTA: Registrar Agua
+    const waterLogMatch = lower.match(/(?:tom[eé]|bebi|beber|tomar|registrar|a[ñn]adir|sumar)\s+(?:un\s+vaso\s+de\s+)?(\d+)?\s*(?:ml|vaso|vasos)?\s*(?:de\s+)?agua/i) ||
+                          lower.match(/(?:acabo\s+de\s+tomar|me\s+tom[eé])\s+(?:un\s+vaso|agua)/i);
+    if (waterLogMatch) {
+      let amount = 250;
+      if (waterLogMatch[1] && /\d+/.test(waterLogMatch[1])) {
+        amount = parseInt(waterLogMatch[1], 10);
+      }
+      const updated = store.logWater(amount);
+      soundService.playWaterDrop();
+      toast.success(`💧 Registrados +${amount}ml de agua`);
+
+      const replyMsg = `💧 ¡Registrado con éxito! Agregué **+${amount}ml** a tu progreso. Vas en total con **${updated.currentMl}ml** de tu meta de **${updated.goalMl}ml** (${Math.min(100, Math.round((updated.currentMl / updated.goalMl) * 100))}%).`;
+
+      this.isThinking = false;
+      this.messages.push({ sender: 'assistant', text: replyMsg });
+      this._saveHistory();
+      this.render();
+      this.bindEvents();
+      if (isVoice) speechService.speak(replyMsg);
+      return;
+    }
+
+    // 6. ACCIÓN DIRECTA: Completar Tarea
+    const completeTaskMatch = lower.match(/(?:marca|marcar|completar|complet[eé]|termin[eé]|lista)\s+(?:la\s+)?(?:tarea|actividad|pendiente)?\s*(?:de\s+|con\s+)?(.+)/i);
+    if (completeTaskMatch && completeTaskMatch[1]) {
+      const searchTitle = completeTaskMatch[1].trim().toLowerCase();
+      const matchedTask = (store.state.tasks || []).find(t => 
+        !t.completed && t.title.toLowerCase().includes(searchTitle)
+      );
+
+      if (matchedTask) {
+        store.toggleTaskCompletion(matchedTask.id);
+        soundService.playCelebration();
+        toast.success(`🎉 Tarea "${matchedTask.title}" marcada como completada`);
+
+        const replyMsg = `🎉 ¡Fantástico! He marcado como completada tu tarea **"${matchedTask.title}"**. ¡Sigue así!`;
+        this.isThinking = false;
+        this.messages.push({ sender: 'assistant', text: replyMsg });
+        this._saveHistory();
+        this.render();
+        this.bindEvents();
+        if (isVoice) speechService.speak(replyMsg);
+        return;
+      }
+    }
 
     try {
       const response = await apiService.sendChatMessage(userText);
@@ -912,6 +1165,7 @@ export class AssistantView extends BaseView {
           text: response.data.message,
           detectedTasks: detected
         });
+        if (isVoice) speechService.speak(response.data.message);
       } else {
         // Motor conversacional y de extracción inteligente local
         const localReply = this._processLocalAssistant(userText);
@@ -920,6 +1174,7 @@ export class AssistantView extends BaseView {
           text: localReply.text,
           detectedTasks: localReply.detectedTasks || []
         });
+        if (isVoice) speechService.speak(localReply.text);
       }
     } catch (e) {
       this.isThinking = false;
@@ -929,6 +1184,7 @@ export class AssistantView extends BaseView {
         text: localReply.text,
         detectedTasks: localReply.detectedTasks || []
       });
+      if (isVoice) speechService.speak(localReply.text);
     }
 
     this._saveHistory();
@@ -1159,7 +1415,7 @@ export class AssistantView extends BaseView {
         const transcript = event.results[0][0].transcript;
         const input = $('#chat-input', this.container);
         if (input) input.value = transcript;
-        this._sendMessage(transcript);
+        this._sendMessage(transcript, true);
       };
 
       this.recognition.onend = () => {
