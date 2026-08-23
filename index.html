@@ -794,15 +794,17 @@
         </div>
       </div>
 
-      <!-- Columna Derecha: Tarjeta de Autenticación -->
+      <!-- Columna Derecha: Tarjeta de Autenticación con Formato Facebook -->
       <div class="auth-card-col">
-        <div class="auth-card" id="auth-card-box">
+        <div class="auth-card auth-fb-card" id="auth-card-box">
           
-          <!-- Vista de Iniciar Sesión (Login) -->
+          <!-- Vista de Iniciar Sesión (Login - Estructura Facebook) -->
           <div id="auth-view-login">
-            <div class="auth-card-header">
-              <h2 class="auth-card-title">Bienvenido de nuevo</h2>
-              <p class="auth-card-subtitle">Ingresa tus credenciales</p>
+            <div class="auth-fb-header">
+              <div class="auth-fb-logo-circle">
+                <span class="auth-fb-logo-glyph">✦</span>
+              </div>
+              <h2 class="auth-fb-title">Iniciar sesión en EdhuFlow</h2>
             </div>
 
             <!-- Tarjeta de Acceso Rápido para Cuenta Guardada / Frecuente -->
@@ -825,8 +827,30 @@
               </div>
             </div>
 
-            <div id="auth-standard-google-section">
-              <button type="button" class="btn-google-auth" id="btn-login-google">
+            <form id="form-auth-login" class="auth-fb-form">
+              <div class="auth-input-group">
+                <input type="email" id="login-email-input" class="auth-input-control auth-fb-input" placeholder="Correo electrónico o usuario" required autocomplete="email" />
+              </div>
+
+              <div class="auth-input-group">
+                <div class="auth-input-wrapper">
+                  <input type="password" id="login-password-input" class="auth-input-control auth-fb-input" placeholder="Contraseña" required autocomplete="current-password" />
+                  <button type="button" class="auth-password-toggle" id="toggle-login-pass" aria-label="Mostrar/ocultar contraseña">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <button type="submit" class="btn-auth-submit btn-fb-primary" id="btn-submit-login">
+                Iniciar sesión
+              </button>
+            </form>
+
+            <div id="auth-standard-google-section" style="margin-top: 12px;">
+              <button type="button" class="btn-google-auth btn-fb-google" id="btn-login-google">
                 <svg width="18" height="18" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -837,55 +861,37 @@
               </button>
             </div>
 
-            <div class="auth-divider">
-              <span>o con tu correo</span>
+            <div class="auth-fb-forgot-wrap">
+              <a href="javascript:void(0)" class="auth-forgot-link" id="btn-forgot-password">¿Olvidaste tu contraseña?</a>
             </div>
 
-            <form id="form-auth-login" class="auth-form">
-              <div class="auth-input-group">
-                <div class="auth-input-wrapper">
-                  <input type="email" id="login-email-input" class="auth-input-control" placeholder="Correo electrónico" required autocomplete="email" />
-                </div>
-              </div>
-
-              <div class="auth-input-group">
-                <div class="auth-input-wrapper">
-                  <input type="password" id="login-password-input" class="auth-input-control" placeholder="Contraseña" required autocomplete="current-password" />
-                  <button type="button" class="auth-password-toggle" id="toggle-login-pass" aria-label="Mostrar/ocultar contraseña">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <div class="auth-options-row">
-                <label class="auth-remember-label">
-                  <input type="checkbox" id="login-remember-me" checked />
-                  <span>Recordar sesión</span>
-                </label>
-                <a href="javascript:void(0)" class="auth-forgot-link" id="btn-forgot-password">¿Olvidaste tu clave?</a>
-              </div>
-
-              <button type="submit" class="btn-auth-submit" id="btn-submit-login">
-                Iniciar sesión
+            <div class="auth-fb-register-wrap">
+              <button type="button" class="btn-fb-secondary-outline" id="btn-switch-to-register">
+                Crear cuenta nueva
               </button>
-            </form>
+            </div>
 
-            <div class="auth-switch-footer">
-              ¿No tienes cuenta? <a href="javascript:void(0)" class="auth-switch-link" id="btn-switch-to-register">Registrarse gratis</a>
+            <div class="auth-fb-meta-signature">
+              <span>✦ EdhuFlow</span>
             </div>
           </div>
 
-          <!-- Vista de Crear Cuenta (Registro) -->
+          <!-- Vista de Crear Cuenta (Registro - Estructura Facebook) -->
           <div id="auth-view-register" style="display: none;">
-            <div class="auth-card-header">
-              <h2 class="auth-card-title">Crea tu cuenta</h2>
-              <p class="auth-card-subtitle">Comienza a gestionar tu productividad</p>
+            <div class="auth-fb-reg-header">
+              <button type="button" class="auth-fb-back-btn" id="btn-register-back-to-login" aria-label="Volver a iniciar sesión">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+              <div class="auth-fb-meta-signature" style="margin-bottom: 6px;">
+                <span>✦ EdhuFlow</span>
+              </div>
+              <h2 class="auth-fb-title" style="text-align: left; margin-bottom: 4px;">Empieza a usar EdhuFlow</h2>
+              <p class="auth-fb-subtitle" style="text-align: left;">Crea tu cuenta para acceder a tu panel de enfoque, hábitos y recordatorios de forma fácil y segura.</p>
             </div>
 
-            <button type="button" class="btn-google-auth" id="btn-register-google">
+            <button type="button" class="btn-google-auth btn-fb-google" id="btn-register-google" style="margin-bottom: 14px;">
               <svg width="18" height="18" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -895,26 +901,18 @@
               <span>Continuar con Google</span>
             </button>
 
-            <div class="auth-divider">
-              <span>o con tus datos</span>
-            </div>
-
-            <form id="form-auth-register" class="auth-form">
+            <form id="form-auth-register" class="auth-fb-form">
               <div class="auth-input-group">
-                <div class="auth-input-wrapper">
-                  <input type="text" id="register-name-input" class="auth-input-control" placeholder="Nombre completo" required autocomplete="name" />
-                </div>
+                <input type="text" id="register-name-input" class="auth-input-control auth-fb-input" placeholder="Nombre completo" required autocomplete="name" />
+              </div>
+
+              <div class="auth-input-group">
+                <input type="email" id="register-email-input" class="auth-input-control auth-fb-input" placeholder="Correo electrónico" required autocomplete="email" />
               </div>
 
               <div class="auth-input-group">
                 <div class="auth-input-wrapper">
-                  <input type="email" id="register-email-input" class="auth-input-control" placeholder="Correo electrónico" required autocomplete="email" />
-                </div>
-              </div>
-
-              <div class="auth-input-group">
-                <div class="auth-input-wrapper">
-                  <input type="password" id="register-password-input" class="auth-input-control" placeholder="Contraseña (mínimo 6 caracteres)" required autocomplete="new-password" minlength="6" />
+                  <input type="password" id="register-password-input" class="auth-input-control auth-fb-input" placeholder="Contraseña (mínimo 6 caracteres)" required autocomplete="new-password" minlength="6" />
                   <button type="button" class="auth-password-toggle" id="toggle-register-pass" aria-label="Mostrar/ocultar contraseña">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -925,31 +923,38 @@
               </div>
 
               <div class="auth-input-group">
-                <div class="auth-input-wrapper">
-                  <input type="password" id="register-confirm-password-input" class="auth-input-control" placeholder="Confirmar contraseña" required autocomplete="new-password" minlength="6" />
-                </div>
+                <input type="password" id="register-confirm-password-input" class="auth-input-control auth-fb-input" placeholder="Confirmar contraseña" required autocomplete="new-password" minlength="6" />
               </div>
 
-              <button type="submit" class="btn-auth-submit" id="btn-submit-register">
-                Crear cuenta gratis
+              <div class="auth-fb-legal-box">
+                <p class="auth-fb-legal-notice">
+                  Al tocar "Crear cuenta", aceptas nuestros 
+                  <a href="javascript:void(0)" class="auth-legal-link" id="btn-open-terms">Condiciones del Servicio</a> 
+                  y la 
+                  <a href="javascript:void(0)" class="auth-legal-link" id="btn-open-privacy">Política de Privacidad</a>.
+                </p>
+              </div>
+
+              <button type="submit" class="btn-auth-submit btn-fb-primary" id="btn-submit-register">
+                Crear cuenta
+              </button>
+
+              <button type="button" class="btn-fb-secondary-soft" id="btn-switch-to-login">
+                Ya tengo una cuenta
               </button>
             </form>
-
-            <div class="auth-switch-footer">
-              ¿Ya tienes cuenta? <a href="javascript:void(0)" class="auth-switch-link" id="btn-switch-to-login">Iniciar sesión</a>
-            </div>
-          </div>
-
-          <!-- Aviso Legal y Términos de Cumplimiento -->
-          <div class="auth-legal-footer">
-            Al continuar con Google o registrarte, aceptas nuestros 
-            <a href="javascript:void(0)" class="auth-legal-link" id="btn-open-terms">Términos de Servicio</a> 
-            y 
-            <a href="javascript:void(0)" class="auth-legal-link" id="btn-open-privacy">Política de Privacidad</a>.
           </div>
 
         </div>
       </div>
+    </div>
+
+    <!-- Barra Inferior de Idiomas y Marca al estilo Facebook -->
+    <div class="auth-bottom-lang-bar">
+      <span>Español</span>
+      <span>English (US)</span>
+      <span>Português</span>
+      <span>EdhuFlow © 2026</span>
     </div>
   </div>
 

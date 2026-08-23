@@ -61,6 +61,15 @@ export class AuthModal {
       });
     }
 
+    const btnRegisterBack = document.getElementById('btn-register-back-to-login');
+    if (btnRegisterBack) {
+      btnRegisterBack.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.clearAllErrors();
+        this.showLoginView();
+      });
+    }
+
     // 2. Mostrar / Ocultar Contraseña
     if (this.toggleLoginPass) {
       this.toggleLoginPass.addEventListener('click', () => {
