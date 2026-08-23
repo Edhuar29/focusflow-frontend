@@ -238,7 +238,7 @@ export class AuthModal {
     const setupGSI = () => {
       if (window.google && window.google.accounts && window.google.accounts.id) {
         try {
-          const clientId = window.EDHUFLOW_GOOGLE_CLIENT_ID || '260931319911-qfpm8hspt344ubplhmudij7480fdseho.apps.googleusercontent.com';
+          const clientId = window.EDHUFLOW_GOOGLE_CLIENT_ID || '71935301075-58jenh2gfnk43ng0n3rqhip81hq088kc.apps.googleusercontent.com';
           window.google.accounts.id.initialize({
             client_id: clientId,
             callback: async (response) => {
@@ -265,7 +265,7 @@ export class AuthModal {
   async triggerGoogleSignIn() {
     this.clearAllErrors();
 
-    const clientId = window.EDHUFLOW_GOOGLE_CLIENT_ID || '260931319911-qfpm8hspt344ubplhmudij7480fdseho.apps.googleusercontent.com';
+    const clientId = window.EDHUFLOW_GOOGLE_CLIENT_ID || '71935301075-58jenh2gfnk43ng0n3rqhip81hq088kc.apps.googleusercontent.com';
 
     // 1. Google OAuth2 Token Client (Ventana emergente estándar de selección de cuenta, inmune a bloqueos móviles)
     if (window.google && window.google.accounts && window.google.accounts.oauth2) {
