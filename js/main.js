@@ -433,6 +433,7 @@ function initTopBarTools(router) {
       e.stopPropagation();
       soundService.playClick();
       if (notifPopover) notifPopover.classList.remove('open');
+      syncUserProfileUI();
       profilePopover.classList.toggle('open');
     });
   }

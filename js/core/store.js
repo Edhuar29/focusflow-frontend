@@ -552,9 +552,11 @@ class Store {
   }
 
   isAuthenticated() {
-    const user = this.state.user;
-    const hasUser = !!user && !!user.email && user.email !== 'invitado@focusflow.app';
-    const hasToken = !!localStorage.getItem('focusflow_auth_token') || !!this.state.token;
+    const user = this.state?.user || StorageService.get('user', null);
+    const savedProfile = StorageService.get('focusflow_saved_profile', null);
+    const hasUser = (!!user && !!user.email && user.email !== 'invitado@focusflow.app') ||
+                    (!!savedProfile && !!savedProfile.email && savedProfile.email !== 'invitado@focusflow.app');
+    const hasToken = !!localStorage.getItem('focusflow_auth_token') || !!this.state?.token;
     return hasUser || hasToken;
   }
 
