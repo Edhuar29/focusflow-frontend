@@ -802,9 +802,9 @@
           <div id="auth-view-login">
             <div class="auth-fb-header">
               <div class="auth-fb-logo-circle">
-                <span class="auth-fb-logo-glyph">✦</span>
+                <img src="./assets/images/logo.png" alt="EdhuFlow" class="auth-fb-logo-img" />
               </div>
-              <h2 class="auth-fb-title">Iniciar sesión en EdhuFlow</h2>
+              <h2 class="auth-fb-title" id="auth-main-login-title">Iniciar sesión en EdhuFlow</h2>
             </div>
 
             <!-- Tarjeta de Acceso Rápido para Cuenta Guardada / Frecuente -->
@@ -949,12 +949,13 @@
       </div>
     </div>
 
-    <!-- Barra Inferior de Idiomas y Marca al estilo Facebook -->
-    <div class="auth-bottom-lang-bar">
-      <span>Español</span>
-      <span>English (US)</span>
-      <span>Português</span>
-      <span>EdhuFlow © 2026</span>
+    <!-- Barra Inferior de Idiomas Funcionales y Marca al estilo Facebook -->
+    <div class="auth-bottom-lang-bar" id="auth-lang-bar">
+      <button type="button" class="auth-lang-btn active" data-lang="es">Español</button>
+      <button type="button" class="auth-lang-btn" data-lang="en">English (US)</button>
+      <button type="button" class="auth-lang-btn" data-lang="pt">Português</button>
+      <button type="button" class="auth-lang-btn" data-lang="fr">Français</button>
+      <span class="auth-copyright-text">EdhuFlow © 2026</span>
     </div>
   </div>
 

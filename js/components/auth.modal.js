@@ -151,6 +151,7 @@ export class AuthModal {
 
     this.initRealtimeValidation();
     this.initGoogleIdentityServices();
+    this.initLanguageSwitcher();
     this.checkInitialAuthState();
   }
 
@@ -628,6 +629,161 @@ export class AuthModal {
       submitBtn.disabled = false;
       submitBtn.textContent = 'CREAR CUENTA GRATIS';
     }
+  }
+
+  initLanguageSwitcher() {
+    const langBtns = document.querySelectorAll('.auth-lang-btn');
+    const savedLang = localStorage.getItem('edhuflow_lang') || 'es';
+
+    const translations = {
+      es: {
+        loginTitle: 'Iniciar sesión en EdhuFlow',
+        emailPlaceholder: 'Correo electrónico o usuario',
+        passPlaceholder: 'Contraseña',
+        loginBtn: 'Iniciar sesión',
+        googleBtn: 'Continuar con Google',
+        forgotPass: '¿Olvidaste tu contraseña?',
+        createAccountBtn: 'Crear cuenta nueva',
+        heroTagline: 'Encuentra tu ritmo, domina tu enfoque.',
+        regTitle: 'Empieza a usar EdhuFlow',
+        regSubtitle: 'Crea tu cuenta para acceder a tu panel de enfoque, hábitos y recordatorios de forma fácil y segura.',
+        namePlaceholder: 'Nombre completo',
+        regEmailPlaceholder: 'Correo electrónico',
+        regPassPlaceholder: 'Contraseña (mínimo 6 caracteres)',
+        confirmPassPlaceholder: 'Confirmar contraseña',
+        regBtn: 'Crear cuenta',
+        haveAccountBtn: 'Ya tengo una cuenta',
+        toastSwitch: 'Idioma cambiado a Español',
+      },
+      en: {
+        loginTitle: 'Log in to EdhuFlow',
+        emailPlaceholder: 'Email or username',
+        passPlaceholder: 'Password',
+        loginBtn: 'Log In',
+        googleBtn: 'Continue with Google',
+        forgotPass: 'Forgot password?',
+        createAccountBtn: 'Create new account',
+        heroTagline: 'Find your flow, master your focus.',
+        regTitle: 'Get started with EdhuFlow',
+        regSubtitle: 'Create an account to access your focus dashboard, habits, and smart reminders.',
+        namePlaceholder: 'Full name',
+        regEmailPlaceholder: 'Email address',
+        regPassPlaceholder: 'Password (min. 6 characters)',
+        confirmPassPlaceholder: 'Confirm password',
+        regBtn: 'Create account',
+        haveAccountBtn: 'Already have an account',
+        toastSwitch: 'Language switched to English',
+      },
+      pt: {
+        loginTitle: 'Entrar no EdhuFlow',
+        emailPlaceholder: 'E-mail ou nome de usuário',
+        passPlaceholder: 'Senha',
+        loginBtn: 'Entrar',
+        googleBtn: 'Continuar com o Google',
+        forgotPass: 'Esqueceu a senha?',
+        createAccountBtn: 'Criar nova conta',
+        heroTagline: 'Encontre seu ritmo, domine seu foco.',
+        regTitle: 'Comece a usar o EdhuFlow',
+        regSubtitle: 'Crie sua conta para acessar seu painel de foco, hábitos e lembretes.',
+        namePlaceholder: 'Nome completo',
+        regEmailPlaceholder: 'E-mail',
+        regPassPlaceholder: 'Senha (mínimo 6 caracteres)',
+        confirmPassPlaceholder: 'Confirmar senha',
+        regBtn: 'Criar conta',
+        haveAccountBtn: 'Já tenho uma conta',
+        toastSwitch: 'Idioma alterado para Português',
+      },
+      fr: {
+        loginTitle: 'Se connecter à EdhuFlow',
+        emailPlaceholder: "E-mail ou nom d'utilisateur",
+        passPlaceholder: 'Mot de passe',
+        loginBtn: 'Se connecter',
+        googleBtn: 'Continuer avec Google',
+        forgotPass: 'Mot de passe oublié ?',
+        createAccountBtn: 'Créer un nouveau compte',
+        heroTagline: 'Trouvez votre rythme, maîtrisez votre concentration.',
+        regTitle: 'Commencez à utiliser EdhuFlow',
+        regSubtitle: 'Créez votre compte pour accéder à votre tableau de bord et rappels.',
+        namePlaceholder: 'Nom complet',
+        regEmailPlaceholder: 'Adresse e-mail',
+        regPassPlaceholder: 'Mot de passe (min. 6 caractères)',
+        confirmPassPlaceholder: 'Confirmer le mot de passe',
+        regBtn: 'Créer un compte',
+        haveAccountBtn: "J'ai déjà un compte",
+        toastSwitch: 'Langue changée en Français',
+      }
+    };
+
+    const applyLanguage = (lang) => {
+      const t = translations[lang] || translations.es;
+      localStorage.setItem('edhuflow_lang', lang);
+
+      langBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+      });
+
+      const loginTitle = document.getElementById('auth-main-login-title');
+      if (loginTitle) loginTitle.textContent = t.loginTitle;
+
+      const emailInput = document.getElementById('login-email-input');
+      if (emailInput) emailInput.placeholder = t.emailPlaceholder;
+
+      const passInput = document.getElementById('login-password-input');
+      if (passInput) passInput.placeholder = t.passPlaceholder;
+
+      const submitLogin = document.getElementById('btn-submit-login');
+      if (submitLogin) submitLogin.textContent = t.loginBtn;
+
+      const btnGoogleLoginText = document.querySelector('#btn-login-google span');
+      if (btnGoogleLoginText) btnGoogleLoginText.textContent = t.googleBtn;
+
+      const btnGoogleRegText = document.querySelector('#btn-register-google span');
+      if (btnGoogleRegText) btnGoogleRegText.textContent = t.googleBtn;
+
+      const forgotLink = document.getElementById('btn-forgot-password');
+      if (forgotLink) forgotLink.textContent = t.forgotPass;
+
+      const switchRegBtn = document.getElementById('btn-switch-to-register');
+      if (switchRegBtn) switchRegBtn.textContent = t.createAccountBtn;
+
+      const heroTagline = document.querySelector('.auth-tagline');
+      if (heroTagline) heroTagline.textContent = t.heroTagline;
+
+      const regTitle = document.querySelector('#auth-view-register .auth-fb-title');
+      if (regTitle) regTitle.textContent = t.regTitle;
+
+      const regSubtitle = document.querySelector('#auth-view-register .auth-fb-subtitle');
+      if (regSubtitle) regSubtitle.textContent = t.regSubtitle;
+
+      const regName = document.getElementById('register-name-input');
+      if (regName) regName.placeholder = t.namePlaceholder;
+
+      const regEmail = document.getElementById('register-email-input');
+      if (regEmail) regEmail.placeholder = t.regEmailPlaceholder;
+
+      const regPass = document.getElementById('register-password-input');
+      if (regPass) regPass.placeholder = t.regPassPlaceholder;
+
+      const regConfirm = document.getElementById('register-confirm-password-input');
+      if (regConfirm) regConfirm.placeholder = t.confirmPassPlaceholder;
+
+      const submitReg = document.getElementById('btn-submit-register');
+      if (submitReg) submitReg.textContent = t.regBtn;
+
+      const switchLoginBtn = document.getElementById('btn-switch-to-login');
+      if (switchLoginBtn) switchLoginBtn.textContent = t.haveAccountBtn;
+    };
+
+    langBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const lang = btn.getAttribute('data-lang');
+        applyLanguage(lang);
+        const t = translations[lang] || translations.es;
+        if (window.toast) toast.info(t.toastSwitch);
+      });
+    });
+
+    applyLanguage(savedLang);
   }
 
   updateTopbarUser(user) {

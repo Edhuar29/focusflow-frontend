@@ -840,23 +840,30 @@
 }
 
 .auth-fb-logo-circle {
-  width: 58px;
-  height: 58px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #38BDF8 0%, #1E40AF 100%);
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
   margin: 0 auto 16px;
-  box-shadow: 0 0 20px rgba(56, 189, 248, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.3);
-  border: 2px solid rgba(56, 189, 248, 0.8);
+  box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(139, 92, 246, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  background: #0F172A;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.auth-fb-logo-glyph {
-  color: #FFFFFF;
-  font-size: 24px;
-  font-weight: 800;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+.auth-fb-logo-circle:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 30px rgba(124, 58, 237, 0.55);
+}
+
+.auth-fb-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .auth-fb-title {
@@ -1035,31 +1042,66 @@
   margin: 0;
 }
 
+/* Barra Inferior de Idiomas Funcionales y Copyright */
 .auth-bottom-lang-bar {
   display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 12px;
   padding: 16px 12px;
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   color: #64748B;
   width: 100%;
-  max-width: 600px;
+  max-width: 700px;
   margin: 20px auto 0;
   text-align: center;
   flex-wrap: wrap;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.auth-lang-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94A3B8;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-lang-btn:hover {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.auth-lang-btn.active {
+  color: #38BDF8;
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.35);
+  font-weight: 600;
+}
+
+.auth-copyright-text {
+  color: #64748B;
+  font-size: 0.76rem;
+  padding: 4px 8px;
+  user-select: none;
 }
 
 /* ==========================================================================
-   Responsividad Dinámica (Comportamiento Estilo Facebook / Linear / Stripe)
-   En computadoras se muestra la pantalla completa con branding + hero.
-   En móviles o al encoger la ventana, se oculta el hero y queda solo el login centrado.
+   Responsividad Dinámica y Adaptación Elástica (Pantallas Anchas, Móviles y Alturas)
    ========================================================================== */
 @media (max-width: 920px) {
   .auth-screen-overlay {
     padding: 16px 12px;
     align-items: center;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;
+    min-height: 100vh;
+    min-height: 100dvh;
   }
 
   .auth-container-grid {
@@ -1072,7 +1114,7 @@
     gap: 0;
   }
 
-  /* Ocultar por completo la columna hero (orbe, tagline y palabras) en móvil / pantallas estrechas */
+  /* Ocultar por completo la columna hero en móvil / pantallas estrechas */
   .auth-hero-col {
     display: none !important;
   }
@@ -1091,6 +1133,28 @@
 
   .auth-fb-title {
     font-size: 1.25rem;
+  }
+}
+
+@media (max-height: 700px) {
+  .auth-screen-overlay {
+    padding: 14px 10px;
+    justify-content: flex-start;
+  }
+
+  .auth-fb-header {
+    margin-bottom: 14px;
+  }
+
+  .auth-fb-logo-circle {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 10px;
+  }
+
+  .auth-bottom-lang-bar {
+    margin-top: 10px;
+    padding: 10px;
   }
 }
 
