@@ -55,6 +55,8 @@ class NotificationSchedulerService {
   }
 
   resetWaterTimer() {
+    this.firedAlarms.clear();
+    StorageService.remove('last_water_dispatched_key');
     StorageService.set('last_water_check_ts', Date.now());
   }
 
