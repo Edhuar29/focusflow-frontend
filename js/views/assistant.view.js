@@ -81,6 +81,100 @@ export class AssistantView extends BaseView {
     return clean.trim();
   }
 
+  _formatMessageContent(text, isAssistant) {
+    if (!text) return '';
+    if (!isAssistant) {
+      return `<p style="margin: 0; line-height: 1.55; white-space: pre-wrap;">${escapeHTML(text)}</p>`;
+    }
+
+    // Comprobar si el texto contiene una propuesta estructurada con viñetas (• Día ...)
+    if (text.includes('•') || (text.includes('(') && (text.includes('AM') || text.includes('PM')))) {
+      const lines = text.split('\n');
+      const introLines = [];
+      const bulletItems = [];
+      const questionLines = [];
+      let state = 'intro';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        if (trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*')) {
+          state = 'bullets';
+          bulletItems.push(trimmed.replace(/^[•\-*]\s*/, ''));
+        } else if (state === 'bullets' || trimmed.includes('¿') || trimmed.includes('Te parece') || trimmed.includes('agregarlas')) {
+          state = 'question';
+          questionLines.push(trimmed);
+        } else {
+          introLines.push(trimmed);
+        }
+      }
+
+      if (bulletItems.length > 0) {
+        const parsedItems = bulletItems.map(item => {
+          const match = item.match(/^([A-Za-záéíóúÁÉÍÓÚñÑ]+)\s*(?:\(([^)]+)\))?\s*(?:—|-|:)\s*(.+?)(?:\s*\[Prioridad\s*(\w+)\])?$/i);
+          if (match) {
+            return {
+              day: match[1] || 'Día',
+              time: match[2] || '',
+              title: match[3] || item,
+              priority: match[4] || 'Medio'
+            };
+          }
+          return {
+            day: 'Actividad',
+            time: '',
+            title: item,
+            priority: 'Medio'
+          };
+        });
+
+        const introHTML = introLines.length > 0 
+          ? `<div class="proposal-intro-box">${introLines.map(l => `<p style="margin: 0 0 6px 0;">${escapeHTML(l)}</p>`).join('')}</div>` 
+          : '';
+
+        const cardsHTML = `
+          <div class="proposal-grid-container">
+            ${parsedItems.map(it => `
+              <div class="proposal-card-item">
+                <div class="proposal-card-top">
+                  <span class="proposal-day-badge">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
+                    ${escapeHTML(it.day)}${it.time ? ` · ${escapeHTML(it.time)}` : ''}
+                  </span>
+                  <span class="badge badge-priority-${it.priority.toLowerCase()}">${escapeHTML(it.priority)}</span>
+                </div>
+                <div class="proposal-card-title">${escapeHTML(it.title)}</div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+
+        const questionText = questionLines.join(' ');
+        const questionHTML = questionText 
+          ? `<div class="proposal-question-box"><p style="margin: 0;">${escapeHTML(questionText)}</p></div>` 
+          : '';
+
+        const quickActionsHTML = `
+          <div class="proposal-quick-actions">
+            <button type="button" class="btn btn-primary btn-quick-reply" data-quick-text="sí, me parece bien" style="font-size: 11.5px; padding: 6px 14px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>Sí, agendar estas tareas</span>
+            </button>
+            <button type="button" class="btn btn-secondary btn-quick-reply" data-quick-text="deseo ajustar los horarios" style="font-size: 11.5px; padding: 6px 12px; border-radius: 999px;">
+              <span>✏️ Ajustar horario</span>
+            </button>
+          </div>
+        `;
+
+        return `${introHTML}${cardsHTML}${questionHTML}${quickActionsHTML}`;
+      }
+    }
+
+    const paragraphs = text.split(/\n\n+/);
+    return paragraphs.map(p => `<p style="margin: 0 0 8px 0; line-height: 1.55; white-space: pre-wrap;">${escapeHTML(p)}</p>`).join('');
+  }
+
   render() {
     if (!this.container) return;
 
@@ -118,7 +212,7 @@ export class AssistantView extends BaseView {
           ${this.messages.map((m, idx) => `
             <div class="chat-message ${m.sender}">
               <div class="chat-bubble">
-                <p style="margin: 0; line-height: 1.5;">${escapeHTML(m.text)}</p>
+                ${this._formatMessageContent(m.text, m.sender === 'assistant')}
                 
                 ${m.detectedTasks && m.detectedTasks.length > 0 ? `
                   <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
@@ -238,6 +332,15 @@ export class AssistantView extends BaseView {
     const history = $('#chat-history', this.container);
     if (history) {
       history.onclick = (e) => {
+        const quickReplyBtn = e.target.closest('.btn-quick-reply');
+        if (quickReplyBtn) {
+          const quickText = quickReplyBtn.getAttribute('data-quick-text');
+          if (quickText && !this.isThinking) {
+            this._sendMessage(quickText);
+          }
+          return;
+        }
+
         const approveAllBtn = e.target.closest('.btn-approve-all-tasks');
         if (approveAllBtn) {
           const msgIdx = parseInt(approveAllBtn.getAttribute('data-msg-idx'), 10);
