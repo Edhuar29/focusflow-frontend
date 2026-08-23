@@ -33,24 +33,25 @@
   align-items: center;
   gap: 12px;
   box-shadow: 
-    0 12px 36px -4px rgba(0, 0, 0, 0.65),
-    0 4px 12px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    0 16px 40px -6px rgba(0, 0, 0, 0.7),
+    0 4px 14px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
   pointer-events: auto;
   cursor: pointer;
   user-select: none;
-  animation: slideDownDynamicIsland 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: dynamicIslandFluidEntry 0.48s cubic-bezier(0.19, 1, 0.22, 1) forwards;
   max-width: 480px;
   min-width: 200px;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease, box-shadow 0.2s ease;
+  will-change: transform, opacity, filter;
+  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.24s ease, box-shadow 0.24s ease;
 }
 
 .toast:hover {
-  transform: scale(1.02);
+  transform: translateY(2px) scale(1.02);
   box-shadow: 
-    0 16px 40px -4px rgba(0, 0, 0, 0.75),
-    0 6px 16px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 20px 48px -6px rgba(0, 0, 0, 0.8),
+    0 6px 18px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .toast-icon {
@@ -72,55 +73,55 @@
 
 /* Variantes por tipo con brillo neón */
 .toast.toast-success {
-  border-color: rgba(16, 185, 129, 0.4);
+  border-color: rgba(16, 185, 129, 0.45);
   box-shadow: 
-    0 12px 36px -4px rgba(0, 0, 0, 0.65),
-    0 0 20px rgba(16, 185, 129, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    0 16px 40px -6px rgba(0, 0, 0, 0.7),
+    0 0 24px rgba(16, 185, 129, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 .toast.toast-success .toast-icon {
   background: linear-gradient(135deg, #10B981 0%, #059669 100%);
   color: #FFFFFF;
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.6);
 }
 
 .toast.toast-info {
-  border-color: rgba(56, 189, 248, 0.4);
+  border-color: rgba(56, 189, 248, 0.45);
   box-shadow: 
-    0 12px 36px -4px rgba(0, 0, 0, 0.65),
-    0 0 20px rgba(56, 189, 248, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    0 16px 40px -6px rgba(0, 0, 0, 0.7),
+    0 0 24px rgba(56, 189, 248, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 .toast.toast-info .toast-icon {
   background: linear-gradient(135deg, #38BDF8 0%, #0284C7 100%);
   color: #FFFFFF;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.6);
 }
 
 .toast.toast-warning {
-  border-color: rgba(245, 158, 11, 0.4);
+  border-color: rgba(245, 158, 11, 0.45);
   box-shadow: 
-    0 12px 36px -4px rgba(0, 0, 0, 0.65),
-    0 0 20px rgba(245, 158, 11, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    0 16px 40px -6px rgba(0, 0, 0, 0.7),
+    0 0 24px rgba(245, 158, 11, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 .toast.toast-warning .toast-icon {
   background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
   color: #FFFFFF;
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.6);
 }
 
 .toast.toast-danger {
-  border-color: rgba(239, 68, 68, 0.4);
+  border-color: rgba(239, 68, 68, 0.45);
   box-shadow: 
-    0 12px 36px -4px rgba(0, 0, 0, 0.65),
-    0 0 20px rgba(239, 68, 68, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    0 16px 40px -6px rgba(0, 0, 0, 0.7),
+    0 0 24px rgba(239, 68, 68, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 .toast.toast-danger .toast-icon {
   background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
   color: #FFFFFF;
-  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.6);
 }
 
 .toast.toast-updating {
@@ -128,23 +129,28 @@
 }
 
 .toast.toast-hiding {
-  opacity: 0;
-  transform: translateY(-18px) scale(0.92);
-  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease;
+  opacity: 0 !important;
+  transform: translateY(-24px) scale(0.9) !important;
+  filter: blur(8px) !important;
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.28s ease, filter 0.28s ease !important;
+  pointer-events: none;
 }
 
-@keyframes slideDownDynamicIsland {
+@keyframes dynamicIslandFluidEntry {
   0% {
     opacity: 0;
-    transform: translateY(-24px) scale(0.88);
+    transform: translateY(-36px) scale(0.84);
+    filter: blur(8px);
   }
   60% {
     opacity: 1;
-    transform: translateY(3px) scale(1.02);
+    filter: blur(0px);
+    transform: translateY(3px) scale(1.015);
   }
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
+    filter: blur(0px);
   }
 }
 

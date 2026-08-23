@@ -76,7 +76,7 @@ class ToastComponent {
           this.currentToast.remove();
           this.currentToast = null;
         }
-      }, 250);
+      }, 320);
     }
   }
 
