@@ -122,6 +122,13 @@ export class AssistantView extends BaseView {
                 
                 ${m.detectedTasks && m.detectedTasks.length > 0 ? `
                   <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                    ${m.detectedTasks.length > 1 ? `
+                      <div style="margin-bottom: 4px;">
+                        <button class="btn btn-primary btn-approve-all-tasks" data-msg-idx="${idx}" style="font-size: 12px; font-weight: 600; padding: 8px 14px; width: 100%; border-radius: 8px;">
+                          <span>✓ Aprobar y Agregar las ${m.detectedTasks.length} Tareas a la Agenda</span>
+                        </button>
+                      </div>
+                    ` : ''}
                     ${m.detectedTasks.map((t, tIdx) => `
                       <div style="background: var(--bg-card); padding: 10px 12px; border-radius: var(--radius-md); border: 1px solid var(--border-medium);">
                         <div style="font-weight: var(--fw-bold); font-size: var(--text-sm); color: var(--text-primary); margin-bottom: 2px;">
@@ -231,6 +238,44 @@ export class AssistantView extends BaseView {
     const history = $('#chat-history', this.container);
     if (history) {
       history.onclick = (e) => {
+        const approveAllBtn = e.target.closest('.btn-approve-all-tasks');
+        if (approveAllBtn) {
+          const msgIdx = parseInt(approveAllBtn.getAttribute('data-msg-idx'), 10);
+          const tasks = this.messages[msgIdx]?.detectedTasks;
+          if (Array.isArray(tasks) && tasks.length > 0) {
+            tasks.forEach(taskData => {
+              let priorityVal = 'medium';
+              if (taskData.priority && /alto|alta|high/i.test(taskData.priority)) priorityVal = 'high';
+              if (taskData.priority && /bajo|baja|low/i.test(taskData.priority)) priorityVal = 'low';
+
+              store.addTask({
+                title: taskData.title,
+                priorities: [priorityVal],
+                time: taskData.time || '12:00 PM',
+                date: taskData.date || getTodayISO(),
+                category: taskData.category || 'General',
+                alarm: true,
+                emailAlert: true
+              });
+            });
+
+            soundService.playTaskComplete();
+            toast.success(`Se agregaron ${tasks.length} tareas a tu agenda con éxito.`);
+
+            approveAllBtn.disabled = true;
+            approveAllBtn.innerHTML = `<span>✓ ${tasks.length} Tareas Agregadas a la Agenda</span>`;
+            approveAllBtn.style.opacity = '0.6';
+
+            const individualBtns = history.querySelectorAll(`[data-msg-idx="${msgIdx}"].btn-approve-task`);
+            individualBtns.forEach(btn => {
+              btn.disabled = true;
+              btn.innerHTML = `<span>✓ Agregada a la Agenda</span>`;
+              btn.style.opacity = '0.6';
+            });
+          }
+          return;
+        }
+
         const approveBtn = e.target.closest('.btn-approve-task');
         if (approveBtn) {
           const msgIdx = parseInt(approveBtn.getAttribute('data-msg-idx'), 10);
