@@ -263,11 +263,11 @@ export class AssistantView extends BaseView {
 
         const quickActionsHTML = `
           <div class="proposal-quick-actions">
-            <button type="button" class="btn btn-primary btn-quick-reply" data-quick-text="sí, me parece bien" style="font-size: 11.5px; padding: 6px 14px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;">
+            <button type="button" class="btn btn-primary btn-confirm-and-schedule-all" style="font-size: 11.5px; padding: 6px 14px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
               <span>Sí, agendar estas tareas</span>
             </button>
-            <button type="button" class="btn btn-secondary btn-quick-reply" data-quick-text="deseo ajustar los horarios" style="font-size: 11.5px; padding: 6px 12px; border-radius: 999px;">
+            <button type="button" class="btn btn-secondary btn-toggle-all-edits" style="font-size: 11.5px; padding: 6px 12px; border-radius: 999px;">
               <span>✏️ Ajustar horario</span>
             </button>
           </div>
@@ -531,6 +531,87 @@ export class AssistantView extends BaseView {
     const history = $('#chat-history', this.container);
     if (history) {
       history.onclick = (e) => {
+        // 0. Confirmar y agendar directamente todas las tareas de la propuesta
+        const confirmAllBtn = e.target.closest('.btn-confirm-and-schedule-all');
+        if (confirmAllBtn) {
+          const bubble = confirmAllBtn.closest('.chat-bubble');
+          if (bubble) {
+            const cards = bubble.querySelectorAll('.proposal-card-item');
+            if (cards.length > 0) {
+              cards.forEach(card => {
+                const dayName = card.getAttribute('data-day') || 'Lunes';
+                const taskTitle = card.getAttribute('data-title') || 'Actividad';
+                const taskTime = card.getAttribute('data-time') || '09:00 AM';
+                const taskPriority = card.getAttribute('data-priority') || 'Medio';
+                const targetDate = this._getDateFromDayName(dayName);
+
+                let priorityCode = 'medium';
+                if (/alto|alta|high/i.test(taskPriority)) priorityCode = 'high';
+                if (/bajo|baja|low/i.test(taskPriority)) priorityCode = 'low';
+
+                store.addTask({
+                  title: taskTitle,
+                  priorities: [priorityCode],
+                  time: taskTime,
+                  date: targetDate,
+                  category: 'General',
+                  alarm: true,
+                  emailAlert: true
+                });
+
+                card.innerHTML = `
+                  <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 0;">
+                    <div>
+                      <span style="font-weight: 600; font-size: 12px; color: var(--text-primary); opacity: 0.9;">${escapeHTML(taskTitle)}</span>
+                      <div style="font-size: 11px; color: var(--text-muted);">${escapeHTML(dayName)} (${escapeHTML(targetDate)}) · ${escapeHTML(taskTime)}</div>
+                    </div>
+                    <span style="font-size: 11px; font-weight: 600; color: #10B981; background: rgba(16, 185, 129, 0.15); padding: 3px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      <span>Agendada</span>
+                    </span>
+                  </div>
+                `;
+              });
+
+              soundService.playTaskComplete();
+              toast.success(`✓ Se agregaron las ${cards.length} tareas a tu agenda con éxito`);
+
+              const actionsBox = confirmAllBtn.closest('.proposal-quick-actions');
+              if (actionsBox) {
+                actionsBox.innerHTML = `
+                  <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); width: 100%;">
+                    <div style="display: flex; align-items: center; gap: 8px; color: #10B981; font-weight: 600; font-size: 12px;">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      <span>¡Todas las tareas fueron agendadas con éxito en tu pestaña de Tareas!</span>
+                    </div>
+                    <a href="#/tasks" style="color: #38BDF8; font-size: 12px; font-weight: 600; text-decoration: underline; cursor: pointer;">Ver Tareas →</a>
+                  </div>
+                `;
+              }
+            }
+          }
+          return;
+        }
+
+        // 0.1 Alternar modo de edición para todas las tarjetas de la propuesta
+        const toggleAllEditsBtn = e.target.closest('.btn-toggle-all-edits');
+        if (toggleAllEditsBtn) {
+          const bubble = toggleAllEditsBtn.closest('.chat-bubble');
+          if (bubble) {
+            const cards = bubble.querySelectorAll('.proposal-card-item');
+            cards.forEach(card => {
+              const viewMode = card.querySelector('.proposal-card-view-mode');
+              const editMode = card.querySelector('.proposal-card-edit-mode');
+              if (viewMode && editMode) {
+                viewMode.style.display = 'none';
+                editMode.style.display = 'block';
+              }
+            });
+            toast.info('Modifica las fechas u horas que desees y pulsa "Guardar en Tareas"');
+          }
+          return;
+        }
+
         const quickReplyBtn = e.target.closest('.btn-quick-reply');
         if (quickReplyBtn) {
           const quickText = quickReplyBtn.getAttribute('data-quick-text');
