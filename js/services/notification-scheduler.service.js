@@ -266,13 +266,11 @@ class NotificationSchedulerService {
             });
 
             // 3. Notificación Nativa en Pantalla (PC / Mac)
-            if (notificationService.getPermissionStatus() === 'granted') {
-              notificationService.send('EdhuFlow: Hora de Hidratarte', {
-                body: `Momento de tomar un vaso de agua (+250 ml) para mantener tu concentración (${formattedCurrentTime}).`,
-                tag: `edhuflow-water-${formattedCurrentTime}`,
-                requireInteraction: false
-              });
-            }
+            notificationService.send('💧 EdhuFlow: Hora de Hidratarte', {
+              body: `Momento de tomar un vaso de agua (+250 ml) para mantener tu concentración (${formattedCurrentTime}).`,
+              tag: `edhuflow-water-${formattedCurrentTime}`,
+              requireInteraction: false
+            });
 
             // Nota: El despacho de correo a Gmail es gestionado de forma centralizada por el servicio en la nube (Backend)
             // para garantizar exactamente 1 solo correo puntual sin duplicados incluso con varias pestañas abiertas o sesión cerrada.
