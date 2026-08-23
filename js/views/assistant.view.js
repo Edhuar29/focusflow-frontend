@@ -81,6 +81,27 @@ export class AssistantView extends BaseView {
     return clean.trim();
   }
 
+  _getDateFromDayName(dayName) {
+    const d = new Date();
+    const currentDay = d.getDay();
+    const map = {
+      'domingo': 0, 'dom': 0,
+      'lunes': 1, 'lun': 1,
+      'martes': 2, 'mar': 2,
+      'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3,
+      'jueves': 4, 'jue': 4,
+      'viernes': 5, 'vie': 5,
+      'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6
+    };
+    const targetDay = map[(dayName || '').toLowerCase().trim()];
+    if (targetDay !== undefined) {
+      let diff = targetDay - currentDay;
+      if (diff < 0) diff += 7;
+      d.setDate(d.getDate() + diff);
+    }
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
   _formatMessageContent(text, isAssistant) {
     if (!text) return '';
     if (!isAssistant) {
@@ -136,15 +157,55 @@ export class AssistantView extends BaseView {
         const cardsHTML = `
           <div class="proposal-grid-container">
             ${parsedItems.map(it => `
-              <div class="proposal-card-item">
-                <div class="proposal-card-top">
-                  <span class="proposal-day-badge">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
-                    ${escapeHTML(it.day)}${it.time ? ` · ${escapeHTML(it.time)}` : ''}
-                  </span>
-                  <span class="badge badge-priority-${it.priority.toLowerCase()}">${escapeHTML(it.priority)}</span>
+              <div class="proposal-card-item" data-day="${escapeHTML(it.day)}" data-time="${escapeHTML(it.time || '09:00 AM')}" data-title="${escapeHTML(it.title)}" data-priority="${escapeHTML(it.priority)}">
+                <div class="proposal-card-view-mode">
+                  <div class="proposal-card-top">
+                    <span class="proposal-day-badge">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
+                      ${escapeHTML(it.day)}${it.time ? ` · ${escapeHTML(it.time)}` : ''}
+                    </span>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span class="badge badge-priority-${it.priority.toLowerCase()}">${escapeHTML(it.priority)}</span>
+                      <button type="button" class="btn-edit-proposal" title="Editar detalles de esta actividad">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        <span>Editar</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="proposal-card-title">${escapeHTML(it.title)}</div>
                 </div>
-                <div class="proposal-card-title">${escapeHTML(it.title)}</div>
+
+                <!-- Modo de Edición Rápida (Oculto por defecto) -->
+                <div class="proposal-card-edit-mode" style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-subtle);">
+                  <div style="margin-bottom: 6px;">
+                    <label style="font-size: 10.5px; color: var(--text-muted); display: block; margin-bottom: 2px;">Título de la tarea:</label>
+                    <input type="text" class="form-control edit-prop-title" value="${escapeHTML(it.title)}" style="padding: 5px 8px; font-size: 12px; width: 100%;" />
+                  </div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
+                    <div>
+                      <label style="font-size: 10.5px; color: var(--text-muted); display: block; margin-bottom: 2px;">Hora:</label>
+                      <input type="text" class="form-control edit-prop-time" value="${escapeHTML(it.time || '09:00 AM')}" placeholder="09:00 AM" style="padding: 5px 8px; font-size: 11.5px; width: 100%;" />
+                    </div>
+                    <div>
+                      <label style="font-size: 10.5px; color: var(--text-muted); display: block; margin-bottom: 2px;">Prioridad:</label>
+                      <select class="form-control edit-prop-priority" style="padding: 5px 8px; font-size: 11.5px; width: 100%; cursor: pointer;">
+                        <option value="Alto" ${it.priority.toLowerCase() === 'alto' ? 'selected' : ''}>Alto</option>
+                        <option value="Medio" ${it.priority.toLowerCase() === 'medio' ? 'selected' : ''}>Medio</option>
+                        <option value="Bajo" ${it.priority.toLowerCase() === 'bajo' ? 'selected' : ''}>Bajo</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div style="display: flex; justify-content: flex-end; gap: 6px;">
+                    <button type="button" class="btn btn-ghost btn-cancel-edit-prop" style="font-size: 11px; padding: 4px 10px;">Cancelar</button>
+                    <button type="button" class="btn btn-primary btn-save-edit-prop" style="font-size: 11px; padding: 4px 12px; font-weight: 600;">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      <span>Guardar y Agendar</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             `).join('')}
           </div>
@@ -407,6 +468,87 @@ export class AssistantView extends BaseView {
             approveBtn.innerHTML = `<span>✓ Agregada a la Agenda</span>`;
             approveBtn.style.opacity = '0.6';
           }
+          return;
+        }
+
+        // 1. Abrir modo de edición en la tarjeta de propuesta
+        const editPropBtn = e.target.closest('.btn-edit-proposal');
+        if (editPropBtn) {
+          const card = editPropBtn.closest('.proposal-card-item');
+          if (card) {
+            const viewMode = card.querySelector('.proposal-card-view-mode');
+            const editMode = card.querySelector('.proposal-card-edit-mode');
+            if (viewMode && editMode) {
+              viewMode.style.display = 'none';
+              editMode.style.display = 'block';
+              const titleInput = editMode.querySelector('.edit-prop-title');
+              if (titleInput) titleInput.focus();
+            }
+          }
+          return;
+        }
+
+        // 2. Cancelar modo de edición
+        const cancelEditBtn = e.target.closest('.btn-cancel-edit-prop');
+        if (cancelEditBtn) {
+          const card = cancelEditBtn.closest('.proposal-card-item');
+          if (card) {
+            const viewMode = card.querySelector('.proposal-card-view-mode');
+            const editMode = card.querySelector('.proposal-card-edit-mode');
+            if (viewMode && editMode) {
+              editMode.style.display = 'none';
+              viewMode.style.display = 'block';
+            }
+          }
+          return;
+        }
+
+        // 3. Guardar y agendar la tarjeta editada
+        const saveEditBtn = e.target.closest('.btn-save-edit-prop');
+        if (saveEditBtn) {
+          const card = saveEditBtn.closest('.proposal-card-item');
+          if (card) {
+            const titleInput = card.querySelector('.edit-prop-title');
+            const timeInput = card.querySelector('.edit-prop-time');
+            const prioritySelect = card.querySelector('.edit-prop-priority');
+
+            const dayName = card.getAttribute('data-day') || 'Lunes';
+            const updatedTitle = titleInput ? titleInput.value.trim() : 'Nueva Tarea';
+            const updatedTime = timeInput ? timeInput.value.trim() : '09:00 AM';
+            const updatedPriority = prioritySelect ? prioritySelect.value : 'Medio';
+            const targetDate = this._getDateFromDayName(dayName);
+
+            let priorityCode = 'medium';
+            if (/alto|alta|high/i.test(updatedPriority)) priorityCode = 'high';
+            if (/bajo|baja|low/i.test(updatedPriority)) priorityCode = 'low';
+
+            store.addTask({
+              title: updatedTitle,
+              priorities: [priorityCode],
+              time: updatedTime,
+              date: targetDate,
+              category: 'General',
+              alarm: true,
+              emailAlert: true
+            });
+
+            soundService.playTaskComplete();
+            toast.success(`✓ "${updatedTitle}" agregada para el ${dayName} (${targetDate}) a las ${updatedTime}`);
+
+            card.innerHTML = `
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 0;">
+                <div>
+                  <span style="font-weight: 600; font-size: 12px; color: var(--text-primary); text-decoration: line-through; opacity: 0.8;">${escapeHTML(updatedTitle)}</span>
+                  <div style="font-size: 11px; color: var(--text-muted);">${escapeHTML(dayName)} · ${escapeHTML(updatedTime)}</div>
+                </div>
+                <span style="font-size: 11px; font-weight: 600; color: #10B981; background: rgba(16, 185, 129, 0.15); padding: 3px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>Agendada</span>
+                </span>
+              </div>
+            `;
+          }
+          return;
         }
       };
     }
