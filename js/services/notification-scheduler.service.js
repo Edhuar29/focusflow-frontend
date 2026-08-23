@@ -207,17 +207,18 @@ class NotificationSchedulerService {
             console.warn('[NotificationScheduler] Error en notificación de escritorio:', e);
           }
 
-          // Etapa C: Despacho de Correo Electrónico para Tareas a Gmail (Solo si está activo)
+          // Etapa C: Despacho de Correo Electrónico para Tareas a Gmail
           const emailPrefs = store.getEmailPreferences() || {};
           const currentUser = store.getUser() || {};
-          const targetEmail = (emailPrefs && emailPrefs.notificationEmail) || (currentUser && currentUser.email) || 'edhuflow.official@gmail.com';
+          const targetEmail = (currentUser && currentUser.email) || (emailPrefs && emailPrefs.notificationEmail) || 'edhuflow.official@gmail.com';
+          const isAlarmOn = task.is_alarm_enabled !== false && task.alarm !== false;
 
-          if (targetEmail && task.emailAlert === true) {
+          if (targetEmail && isAlarmOn) {
             console.log(`[NotificationScheduler] Enviando correo de tarea "${task.title}" a ${targetEmail}...`);
             apiService.sendTaskEmailReminder(targetEmail, task.title, task.time, task.category || 'General')
               .then((res) => {
                 console.log(`[NotificationScheduler] Correo de tarea entregado a ${targetEmail}:`, res);
-                toast.success(`Recordatorio de tarea enviado a tu Gmail (${targetEmail})`);
+                toast.success(`Recordatorio de tarea enviado a tu correo (${targetEmail})`);
               })
               .catch((err) => {
                 console.warn('[NotificationScheduler] Error enviando correo de tarea:', err);
