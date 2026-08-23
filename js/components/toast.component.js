@@ -57,6 +57,8 @@ class ToastComponent {
       `
     });
 
+    this.currentToast.addEventListener('click', () => this._dismissCurrent());
+
     this.container.innerHTML = '';
     this.container.appendChild(this.currentToast);
 
