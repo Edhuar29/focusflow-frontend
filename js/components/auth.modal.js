@@ -6,6 +6,7 @@
 import { store } from '../core/store.js';
 import { eventBus } from '../core/event-bus.js';
 import { apiService } from '../services/api.service.js';
+import { StorageService } from '../services/storage.service.js';
 import { toast } from './toast.component.js';
 import { escapeHTML } from '../utils/dom.utils.js';
 
@@ -205,7 +206,32 @@ export class AuthModal {
   }
 
   async loginWithSavedProfile() {
-    this.triggerGoogleSignIn();
+    const profile = this.getSavedProfile() || StorageService.get('user', null);
+    if (profile && profile.email) {
+      try {
+        const firstName = (profile.name || profile.email).split(' ')[0];
+        toast.info(`Iniciando sesión como ${firstName}...`);
+
+        const data = await apiService.googleLogin({
+          email: profile.email,
+          name: profile.name,
+          avatar_url: profile.avatarUrl || profile.avatar_url,
+        });
+
+        if (data && data.user) {
+          this.saveSavedProfile(data.user);
+          store.setUser(data.user);
+          this.updateTopbarUser(data.user);
+          this.hide();
+          toast.success(`¡Bienvenido de nuevo, ${(data.user.name || profile.name).split(' ')[0]}!`);
+          return;
+        }
+      } catch (err) {
+        console.warn('[AuthModal] Fast continue error, fallback to prompt:', err);
+      }
+    }
+
+    await this.triggerGoogleSignIn();
   }
 
   initGoogleIdentityServices() {
@@ -239,17 +265,75 @@ export class AuthModal {
   async triggerGoogleSignIn() {
     this.clearAllErrors();
 
+    const clientId = window.EDHUFLOW_GOOGLE_CLIENT_ID || '260931319911-qfpm8hspt344ubplhmudij7480fdseho.apps.googleusercontent.com';
+
+    // 1. Google OAuth2 Token Client (Ventana emergente estándar de selección de cuenta, inmune a bloqueos móviles)
+    if (window.google && window.google.accounts && window.google.accounts.oauth2) {
+      try {
+        const tokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: 'email profile openid',
+          callback: async (tokenResponse) => {
+            if (tokenResponse && tokenResponse.access_token) {
+              toast.info('Obteniendo perfil de Google...');
+              try {
+                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                  headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                });
+                const googleUser = await res.json();
+                if (googleUser && googleUser.email) {
+                  const data = await apiService.googleLogin({
+                    email: googleUser.email,
+                    name: googleUser.name || googleUser.given_name,
+                    avatar_url: googleUser.picture,
+                  });
+
+                  if (data && data.user) {
+                    this.saveSavedProfile(data.user);
+                    store.setUser(data.user);
+                    this.updateTopbarUser(data.user);
+                    this.hide();
+                    toast.success(`¡Bienvenido a EdhuFlow, ${data.user.name.split(' ')[0]}!`);
+                    return;
+                  }
+                }
+              } catch (fetchErr) {
+                console.error('[AuthModal] Google userinfo fetch error:', fetchErr);
+              }
+            }
+          }
+        });
+
+        tokenClient.requestAccessToken({ prompt: 'select_account' });
+        return;
+      } catch (oauthErr) {
+        console.warn('[AuthModal] oauth2 tokenClient error, fallback to One Tap:', oauthErr);
+      }
+    }
+
+    // 2. Google One Tap prompt
     if (window.google && window.google.accounts && window.google.accounts.id) {
       this.initGoogleIdentityServices();
       window.google.accounts.id.prompt((notification) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          console.info('[AuthModal] GSI prompt no visible o cerrado:', notification.getNotDisplayedReason?.() || notification.getSkippedReason?.());
+          console.info('[AuthModal] GSI prompt suppressed:', notification.getNotDisplayedReason?.());
+          const saved = this.getSavedProfile() || StorageService.get('user', null);
+          if (saved && saved.email) {
+            this.loginWithSavedProfile();
+          }
         }
       });
       return;
     }
 
-    toast.info('Cargando servicios de autenticación de Google...');
+    // 3. Fallback de inicio con perfil guardado
+    const saved = this.getSavedProfile() || StorageService.get('user', null);
+    if (saved && saved.email) {
+      await this.loginWithSavedProfile();
+      return;
+    }
+
+    toast.info('Cargando servicios de Google... Por favor espera un momento.');
   }
 
   async loginWithGoogleCredential(credential) {
