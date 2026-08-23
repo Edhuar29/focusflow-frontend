@@ -450,7 +450,7 @@ class Store {
   getUserAvatar() {
     const user = this.state.user;
     if (!user) return null;
-    return user.avatarUrl || StorageService.get(`user_${user.id}_avatar`, null);
+    return user.avatarUrl || user.avatar_url || StorageService.get(`user_${user.id}_avatar`, null);
   }
 
   setUserAvatar(avatarUrl) {

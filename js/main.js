@@ -498,13 +498,14 @@ function initTopBarTools(router) {
       if (headerAvatarInitial) headerAvatarInitial.textContent = initial;
       if (popoverAvatarInitial) popoverAvatarInitial.textContent = initial;
 
-      if (user.avatar_url) {
+      const effectiveAvatar = (user && (user.avatar_url || user.avatarUrl)) || store.getUserAvatar();
+      if (effectiveAvatar) {
         if (headerAvatarImg) {
-          headerAvatarImg.src = user.avatar_url;
+          headerAvatarImg.src = effectiveAvatar;
           headerAvatarImg.style.display = 'block';
         }
         if (popoverAvatarImg) {
-          popoverAvatarImg.src = user.avatar_url;
+          popoverAvatarImg.src = effectiveAvatar;
           popoverAvatarImg.style.display = 'block';
         }
       }
@@ -654,10 +655,18 @@ function initAvatarCustomization() {
 
   const renderAvatars = () => {
     const user = store.getUser();
-    const currentAvatar = store.getUserAvatar() || (user ? getGoogleLetterAvatar(user.name, user.email) : defaultAvatar);
+    const avatarFromStore = store.getUserAvatar();
+    const avatarFromUser = (user && (user.avatar_url || user.avatarUrl));
+    const currentAvatar = avatarFromStore || avatarFromUser || (user ? getGoogleLetterAvatar(user.name, user.email) : defaultAvatar);
 
-    if (headerAvatarImg) headerAvatarImg.src = currentAvatar;
-    if (popoverAvatarImg) popoverAvatarImg.src = currentAvatar;
+    if (headerAvatarImg) {
+      headerAvatarImg.src = currentAvatar;
+      headerAvatarImg.style.display = 'block';
+    }
+    if (popoverAvatarImg) {
+      popoverAvatarImg.src = currentAvatar;
+      popoverAvatarImg.style.display = 'block';
+    }
     if (previewImg) previewImg.src = currentAvatar;
 
     if (user) {
