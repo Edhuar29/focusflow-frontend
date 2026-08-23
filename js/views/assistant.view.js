@@ -8,7 +8,7 @@ import { soundService } from '../services/sound.service.js';
 import { toast } from '../components/toast.component.js';
 import { store } from '../core/store.js';
 import { apiService } from '../services/api.service.js';
-import { getTodayISO } from '../utils/date.utils.js';
+import { getTodayISO, timeTo24, timeTo12, formatCleanTime } from '../utils/date.utils.js';
 import { $, escapeHTML } from '../utils/dom.utils.js';
 
 export class AssistantView extends BaseView {
@@ -29,13 +29,10 @@ export class AssistantView extends BaseView {
     try {
       const saved = localStorage.getItem(this._getStorageKey());
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
+        return JSON.parse(saved);
       }
-    } catch (e) {
-      console.warn('[AssistantView] Error loading chat history:', e);
+    } catch {
+      // Fallback
     }
     const user = store.getUser();
     const userName = (user && user.name) ? user.name.split(' ')[0] : 'Usuario';
@@ -49,10 +46,9 @@ export class AssistantView extends BaseView {
 
   _saveHistory() {
     try {
-      const toSave = this.messages.slice(-50);
-      localStorage.setItem(this._getStorageKey(), JSON.stringify(toSave));
-    } catch (e) {
-      console.warn('[AssistantView] Error saving chat history:', e);
+      localStorage.setItem(this._getStorageKey(), JSON.stringify(this.messages));
+    } catch {
+      // Fallback
     }
   }
 
@@ -72,10 +68,10 @@ export class AssistantView extends BaseView {
     this.bindEvents();
   }
 
-  _sanitizeInput(raw) {
-    if (!raw || typeof raw !== 'string') return '';
-    let clean = raw.slice(0, 500);
-    clean = clean.replace(/<[^>]*>?/gm, '');
+  _sanitizeInput(input) {
+    if (!input) return '';
+    let clean = input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    clean = clean.replace(/<[^>]+>/g, '');
     clean = clean.replace(/javascript:/gi, '');
     clean = clean.replace(/on\w+=/gi, '');
     return clean.trim();
@@ -156,12 +152,15 @@ export class AssistantView extends BaseView {
 
         const cardsHTML = `
           <div class="proposal-grid-container">
-            ${parsedItems.map(it => `
+            ${parsedItems.map(it => {
+              const defaultDate = this._getDateFromDayName(it.day);
+              const defaultTime24 = timeTo24(it.time || '09:00 AM');
+              return `
               <div class="proposal-card-item" data-day="${escapeHTML(it.day)}" data-time="${escapeHTML(it.time || '09:00 AM')}" data-title="${escapeHTML(it.title)}" data-priority="${escapeHTML(it.priority)}">
                 <div class="proposal-card-view-mode">
                   <div class="proposal-card-top">
                     <span class="proposal-day-badge">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                       ${escapeHTML(it.day)}${it.time ? ` · ${escapeHTML(it.time)}` : ''}
                     </span>
                     <div style="display: flex; align-items: center; gap: 6px;">
@@ -178,36 +177,82 @@ export class AssistantView extends BaseView {
                   <div class="proposal-card-title">${escapeHTML(it.title)}</div>
                 </div>
 
-                <!-- Modo de Edición Rápida (Oculto por defecto) -->
-                <div class="proposal-card-edit-mode" style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-subtle);">
-                  <div style="margin-bottom: 6px;">
-                    <label style="font-size: 10.5px; color: var(--text-muted); display: block; margin-bottom: 2px;">Título de la tarea:</label>
-                    <input type="text" class="form-control edit-prop-title" value="${escapeHTML(it.title)}" style="padding: 5px 8px; font-size: 12px; width: 100%;" />
+                <!-- Modo de Edición Completa Inline -->
+                <div class="proposal-card-edit-mode" style="display: none;">
+                  <div class="edit-prop-field" style="margin-bottom: 8px;">
+                    <label class="edit-prop-label">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                      <span>Título de la tarea</span>
+                    </label>
+                    <input type="text" class="edit-prop-input edit-prop-title" value="${escapeHTML(it.title)}" placeholder="Nombre de la actividad" />
                   </div>
-                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
-                    <div>
-                      <label style="font-size: 10.5px; color: var(--text-muted); display: block; margin-bottom: 2px;">Hora:</label>
-                      <input type="text" class="form-control edit-prop-time" value="${escapeHTML(it.time || '09:00 AM')}" placeholder="09:00 AM" style="padding: 5px 8px; font-size: 11.5px; width: 100%;" />
+
+                  <div class="edit-prop-grid">
+                    <div class="edit-prop-field">
+                      <label class="edit-prop-label">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        <span>Fecha</span>
+                      </label>
+                      <input type="date" class="edit-prop-input edit-prop-date" value="${defaultDate}" min="${getTodayISO()}" />
                     </div>
-                    <div>
-                      <label style="font-size: 10.5px; color: var(--text-muted); display: block; margin-bottom: 2px;">Prioridad:</label>
-                      <select class="form-control edit-prop-priority" style="padding: 5px 8px; font-size: 11.5px; width: 100%; cursor: pointer;">
-                        <option value="Alto" ${it.priority.toLowerCase() === 'alto' ? 'selected' : ''}>Alto</option>
-                        <option value="Medio" ${it.priority.toLowerCase() === 'medio' ? 'selected' : ''}>Medio</option>
-                        <option value="Bajo" ${it.priority.toLowerCase() === 'bajo' ? 'selected' : ''}>Bajo</option>
+
+                    <div class="edit-prop-field">
+                      <label class="edit-prop-label">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        <span>Hora</span>
+                      </label>
+                      <input type="time" class="edit-prop-input edit-prop-time" value="${defaultTime24}" />
+                    </div>
+
+                    <div class="edit-prop-field">
+                      <label class="edit-prop-label">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line></svg>
+                        <span>Categoría</span>
+                      </label>
+                      <select class="edit-prop-input edit-prop-category" style="cursor: pointer;">
+                        <option value="General" selected>General</option>
+                        <option value="Estudio">Estudio</option>
+                        <option value="Trabajo">Trabajo</option>
+                        <option value="Salud">Salud</option>
+                        <option value="Personal">Personal</option>
+                      </select>
+                    </div>
+
+                    <div class="edit-prop-field">
+                      <label class="edit-prop-label">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <span>Prioridad</span>
+                      </label>
+                      <select class="edit-prop-input edit-prop-priority" style="cursor: pointer;">
+                        <option value="Alto" ${it.priority.toLowerCase() === 'alto' ? 'selected' : ''}>Alta</option>
+                        <option value="Medio" ${it.priority.toLowerCase() === 'medio' ? 'selected' : ''}>Media</option>
+                        <option value="Bajo" ${it.priority.toLowerCase() === 'bajo' ? 'selected' : ''}>Baja</option>
                       </select>
                     </div>
                   </div>
-                  <div style="display: flex; justify-content: flex-end; gap: 6px;">
-                    <button type="button" class="btn btn-ghost btn-cancel-edit-prop" style="font-size: 11px; padding: 4px 10px;">Cancelar</button>
-                    <button type="button" class="btn btn-primary btn-save-edit-prop" style="font-size: 11px; padding: 4px 12px; font-weight: 600;">
+
+                  <div class="edit-prop-toggles">
+                    <label class="edit-prop-checkbox-label">
+                      <input type="checkbox" class="edit-prop-alarm" checked />
+                      <span>🔔 Alarma sonora</span>
+                    </label>
+                    <label class="edit-prop-checkbox-label">
+                      <input type="checkbox" class="edit-prop-email" checked />
+                      <span>✉️ Correo electrónico</span>
+                    </label>
+                  </div>
+
+                  <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" class="btn btn-secondary btn-cancel-edit-prop" style="font-size: 11px; padding: 5px 12px; border-radius: 8px;">Cancelar</button>
+                    <button type="button" class="btn btn-primary btn-save-edit-prop" style="font-size: 11px; padding: 5px 14px; font-weight: 600; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px;">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                      <span>Guardar y Agendar</span>
+                      <span>Guardar en Tareas</span>
                     </button>
                   </div>
                 </div>
               </div>
-            `).join('')}
+            `;
+            }).join('')}
           </div>
         `;
 
@@ -284,32 +329,125 @@ export class AssistantView extends BaseView {
                         </button>
                       </div>
                     ` : ''}
-                    ${m.detectedTasks.map((t, tIdx) => `
-                      <div style="background: var(--bg-card); padding: 10px 12px; border-radius: var(--radius-md); border: 1px solid var(--border-medium);">
-                        <div style="font-weight: var(--fw-bold); font-size: var(--text-sm); color: var(--text-primary); margin-bottom: 2px;">
-                          ${escapeHTML(t.title)}
+                    ${m.detectedTasks.map((t, tIdx) => {
+                      const tDate = t.date || getTodayISO();
+                      const tTime24 = timeTo24(t.time || '12:00 PM');
+                      const tCategory = t.category || 'General';
+                      const tPriority = t.priority || 'Medio';
+                      return `
+                      <div class="detected-task-card" style="background: var(--bg-card); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border-medium);" data-msg-idx="${idx}" data-task-idx="${tIdx}">
+                        <div class="detected-task-view-mode">
+                          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
+                            <div style="font-weight: var(--fw-bold); font-size: var(--text-sm); color: var(--text-primary);">
+                              ${escapeHTML(t.title)}
+                            </div>
+                            <button type="button" class="btn-edit-detected-task" title="Editar tarea antes de agendar" style="background: none; border: 1px solid var(--border-subtle); color: var(--text-secondary); border-radius: 6px; padding: 2px 7px; font-size: 10.5px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; flex-shrink: 0;">
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                              </svg>
+                              <span>Editar</span>
+                            </button>
+                          </div>
+                          <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <span style="display: inline-flex; align-items: center; gap: 3px;">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                              ${escapeHTML(t.time || '12:00 PM')}
+                            </span>
+                            <span>•</span>
+                            <span style="display: inline-flex; align-items: center; gap: 3px;">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                              ${escapeHTML(tDate)}
+                            </span>
+                            <span>•</span>
+                            <span class="badge badge-priority-${tPriority.toLowerCase()}">${escapeHTML(tPriority)}</span>
+                            <span>•</span>
+                            <span style="color: #38BDF8;">📁 ${escapeHTML(tCategory)}</span>
+                          </div>
+                          <button class="btn btn-primary btn-approve-task" data-msg-idx="${idx}" data-task-idx="${tIdx}" style="font-size: 11px; padding: 6px 12px; width: 100%; border-radius: 8px;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 4px;">
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Aprobar y Agregar a la Agenda</span>
+                          </button>
                         </div>
-                        <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                          <span style="display: inline-flex; align-items: center; gap: 3px;">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                            ${escapeHTML(t.time || '12:00 PM')}
-                          </span>
-                          <span>•</span>
-                          <span style="display: inline-flex; align-items: center; gap: 3px;">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                            ${escapeHTML(t.date || getTodayISO())}
-                          </span>
-                          <span>•</span>
-                          <span class="badge badge-priority-${(t.priority || 'medium').toLowerCase()}">${t.priority || 'Medio'}</span>
+
+                        <!-- Modo de Edición Completa para Detected Task -->
+                        <div class="detected-task-edit-mode" style="display: none;">
+                          <div class="edit-prop-field" style="margin-bottom: 8px;">
+                            <label class="edit-prop-label">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                              <span>Título de la tarea</span>
+                            </label>
+                            <input type="text" class="edit-prop-input edit-det-title" value="${escapeHTML(t.title)}" placeholder="Nombre de la actividad" />
+                          </div>
+
+                          <div class="edit-prop-grid">
+                            <div class="edit-prop-field">
+                              <label class="edit-prop-label">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                <span>Fecha</span>
+                              </label>
+                              <input type="date" class="edit-prop-input edit-det-date" value="${tDate}" min="${getTodayISO()}" />
+                            </div>
+
+                            <div class="edit-prop-field">
+                              <label class="edit-prop-label">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                <span>Hora</span>
+                              </label>
+                              <input type="time" class="edit-prop-input edit-det-time" value="${tTime24}" />
+                            </div>
+
+                            <div class="edit-prop-field">
+                              <label class="edit-prop-label">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line></svg>
+                                <span>Categoría</span>
+                              </label>
+                              <select class="edit-prop-input edit-det-category" style="cursor: pointer;">
+                                <option value="General" ${tCategory === 'General' ? 'selected' : ''}>General</option>
+                                <option value="Estudio" ${tCategory === 'Estudio' ? 'selected' : ''}>Estudio</option>
+                                <option value="Trabajo" ${tCategory === 'Trabajo' ? 'selected' : ''}>Trabajo</option>
+                                <option value="Salud" ${tCategory === 'Salud' ? 'selected' : ''}>Salud</option>
+                                <option value="Personal" ${tCategory === 'Personal' ? 'selected' : ''}>Personal</option>
+                              </select>
+                            </div>
+
+                            <div class="edit-prop-field">
+                              <label class="edit-prop-label">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                <span>Prioridad</span>
+                              </label>
+                              <select class="edit-prop-input edit-det-priority" style="cursor: pointer;">
+                                <option value="Alto" ${tPriority.toLowerCase() === 'alto' || tPriority.toLowerCase() === 'high' ? 'selected' : ''}>Alta</option>
+                                <option value="Medio" ${tPriority.toLowerCase() === 'medio' || tPriority.toLowerCase() === 'medium' || !tPriority ? 'selected' : ''}>Media</option>
+                                <option value="Bajo" ${tPriority.toLowerCase() === 'bajo' || tPriority.toLowerCase() === 'low' ? 'selected' : ''}>Baja</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div class="edit-prop-toggles">
+                            <label class="edit-prop-checkbox-label">
+                              <input type="checkbox" class="edit-det-alarm" checked />
+                              <span>🔔 Alarma sonora</span>
+                            </label>
+                            <label class="edit-prop-checkbox-label">
+                              <input type="checkbox" class="edit-det-email" checked />
+                              <span>✉️ Correo electrónico</span>
+                            </label>
+                          </div>
+
+                          <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                            <button type="button" class="btn btn-secondary btn-cancel-edit-det" style="font-size: 11px; padding: 5px 12px; border-radius: 8px;">Cancelar</button>
+                            <button type="button" class="btn btn-primary btn-save-edit-det" style="font-size: 11px; padding: 5px 14px; font-weight: 600; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px;">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                              <span>Guardar en Tareas</span>
+                            </button>
+                          </div>
                         </div>
-                        <button class="btn btn-primary btn-approve-task" data-msg-idx="${idx}" data-task-idx="${tIdx}" style="font-size: 11px; padding: 4px 10px; width: 100%;">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 4px;">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                          </svg>
-                          <span>Aprobar y Agregar a la Agenda</span>
-                        </button>
                       </div>
-                    `).join('')}
+                    `;
+                    }).join('')}
                   </div>
                 ` : ''}
               </div>
@@ -488,7 +626,7 @@ export class AssistantView extends BaseView {
           return;
         }
 
-        // 2. Cancelar modo de edición
+        // 2. Cancelar modo de edición de propuesta
         const cancelEditBtn = e.target.closest('.btn-cancel-edit-prop');
         if (cancelEditBtn) {
           const card = cancelEditBtn.closest('.proposal-card-item');
@@ -503,20 +641,29 @@ export class AssistantView extends BaseView {
           return;
         }
 
-        // 3. Guardar y agendar la tarjeta editada
+        // 3. Guardar y agendar la tarjeta de propuesta editada
         const saveEditBtn = e.target.closest('.btn-save-edit-prop');
         if (saveEditBtn) {
           const card = saveEditBtn.closest('.proposal-card-item');
           if (card) {
             const titleInput = card.querySelector('.edit-prop-title');
+            const dateInput = card.querySelector('.edit-prop-date');
             const timeInput = card.querySelector('.edit-prop-time');
+            const categorySelect = card.querySelector('.edit-prop-category');
             const prioritySelect = card.querySelector('.edit-prop-priority');
+            const alarmCheck = card.querySelector('.edit-prop-alarm');
+            const emailCheck = card.querySelector('.edit-prop-email');
 
             const dayName = card.getAttribute('data-day') || 'Lunes';
-            const updatedTitle = titleInput ? titleInput.value.trim() : 'Nueva Tarea';
-            const updatedTime = timeInput ? timeInput.value.trim() : '09:00 AM';
-            const updatedPriority = prioritySelect ? prioritySelect.value : 'Medio';
             const targetDate = this._getDateFromDayName(dayName);
+            const updatedTitle = (titleInput && titleInput.value.trim()) ? titleInput.value.trim() : 'Nueva Tarea';
+            const updatedDate = (dateInput && dateInput.value) ? dateInput.value : targetDate;
+            const rawTimeVal = (timeInput && timeInput.value) ? timeInput.value : '09:00';
+            const updatedTime = timeTo12(rawTimeVal);
+            const updatedCategory = categorySelect ? categorySelect.value : 'General';
+            const updatedPriority = prioritySelect ? prioritySelect.value : 'Medio';
+            const hasAlarm = alarmCheck ? alarmCheck.checked : true;
+            const hasEmail = emailCheck ? emailCheck.checked : true;
 
             let priorityCode = 'medium';
             if (/alto|alta|high/i.test(updatedPriority)) priorityCode = 'high';
@@ -526,25 +673,134 @@ export class AssistantView extends BaseView {
               title: updatedTitle,
               priorities: [priorityCode],
               time: updatedTime,
-              date: targetDate,
-              category: 'General',
-              alarm: true,
-              emailAlert: true
+              date: updatedDate,
+              category: updatedCategory,
+              alarm: hasAlarm,
+              emailAlert: hasEmail
             });
 
             soundService.playTaskComplete();
-            toast.success(`✓ "${updatedTitle}" agregada para el ${dayName} (${targetDate}) a las ${updatedTime}`);
+            toast.success(`✓ "${updatedTitle}" guardada para el ${updatedDate} a las ${updatedTime} (visible en Tareas)`);
 
             card.innerHTML = `
-              <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 0;">
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0;">
                 <div>
-                  <span style="font-weight: 600; font-size: 12px; color: var(--text-primary); text-decoration: line-through; opacity: 0.8;">${escapeHTML(updatedTitle)}</span>
-                  <div style="font-size: 11px; color: var(--text-muted);">${escapeHTML(dayName)} · ${escapeHTML(updatedTime)}</div>
+                  <div style="font-weight: 600; font-size: 12.5px; color: var(--text-primary); margin-bottom: 2px;">${escapeHTML(updatedTitle)}</div>
+                  <div style="font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                    <span>📅 ${escapeHTML(updatedDate)}</span>
+                    <span>•</span>
+                    <span>⏰ ${escapeHTML(updatedTime)}</span>
+                    <span>•</span>
+                    <span class="badge badge-priority-${priorityCode}">${escapeHTML(updatedPriority)}</span>
+                    <span>•</span>
+                    <span style="color: #38BDF8;">📁 ${escapeHTML(updatedCategory)}</span>
+                  </div>
                 </div>
-                <span style="font-size: 11px; font-weight: 600; color: #10B981; background: rgba(16, 185, 129, 0.15); padding: 3px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  <span>Agendada</span>
-                </span>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                  <span style="font-size: 10.5px; font-weight: 600; color: #10B981; background: rgba(16, 185, 129, 0.15); padding: 3px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Guardada en Tareas</span>
+                  </span>
+                  <a href="#/tasks" style="font-size: 10.5px; color: #38BDF8; text-decoration: underline; cursor: pointer;">Ver en Tareas →</a>
+                </div>
+              </div>
+            `;
+          }
+          return;
+        }
+
+        // 4. Abrir modo de edición en Detected Task Card
+        const editDetBtn = e.target.closest('.btn-edit-detected-task');
+        if (editDetBtn) {
+          const card = editDetBtn.closest('.detected-task-card');
+          if (card) {
+            const viewMode = card.querySelector('.detected-task-view-mode');
+            const editMode = card.querySelector('.detected-task-edit-mode');
+            if (viewMode && editMode) {
+              viewMode.style.display = 'none';
+              editMode.style.display = 'block';
+              const titleInput = editMode.querySelector('.edit-det-title');
+              if (titleInput) titleInput.focus();
+            }
+          }
+          return;
+        }
+
+        // 5. Cancelar modo de edición de Detected Task
+        const cancelDetBtn = e.target.closest('.btn-cancel-edit-det');
+        if (cancelDetBtn) {
+          const card = cancelDetBtn.closest('.detected-task-card');
+          if (card) {
+            const viewMode = card.querySelector('.detected-task-view-mode');
+            const editMode = card.querySelector('.detected-task-edit-mode');
+            if (viewMode && editMode) {
+              editMode.style.display = 'none';
+              viewMode.style.display = 'block';
+            }
+          }
+          return;
+        }
+
+        // 6. Guardar y agendar la Detected Task editada
+        const saveDetBtn = e.target.closest('.btn-save-edit-det');
+        if (saveDetBtn) {
+          const card = saveDetBtn.closest('.detected-task-card');
+          if (card) {
+            const titleInput = card.querySelector('.edit-det-title');
+            const dateInput = card.querySelector('.edit-det-date');
+            const timeInput = card.querySelector('.edit-det-time');
+            const categorySelect = card.querySelector('.edit-det-category');
+            const prioritySelect = card.querySelector('.edit-det-priority');
+            const alarmCheck = card.querySelector('.edit-det-alarm');
+            const emailCheck = card.querySelector('.edit-det-email');
+
+            const updatedTitle = (titleInput && titleInput.value.trim()) ? titleInput.value.trim() : 'Nueva Tarea';
+            const updatedDate = (dateInput && dateInput.value) ? dateInput.value : getTodayISO();
+            const rawTimeVal = (timeInput && timeInput.value) ? timeInput.value : '12:00';
+            const updatedTime = timeTo12(rawTimeVal);
+            const updatedCategory = categorySelect ? categorySelect.value : 'General';
+            const updatedPriority = prioritySelect ? prioritySelect.value : 'Medio';
+            const hasAlarm = alarmCheck ? alarmCheck.checked : true;
+            const hasEmail = emailCheck ? emailCheck.checked : true;
+
+            let priorityCode = 'medium';
+            if (/alto|alta|high/i.test(updatedPriority)) priorityCode = 'high';
+            if (/bajo|baja|low/i.test(updatedPriority)) priorityCode = 'low';
+
+            store.addTask({
+              title: updatedTitle,
+              priorities: [priorityCode],
+              time: updatedTime,
+              date: updatedDate,
+              category: updatedCategory,
+              alarm: hasAlarm,
+              emailAlert: hasEmail
+            });
+
+            soundService.playTaskComplete();
+            toast.success(`✓ "${updatedTitle}" guardada para el ${updatedDate} a las ${updatedTime} (visible en Tareas)`);
+
+            card.innerHTML = `
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0;">
+                <div>
+                  <div style="font-weight: 600; font-size: 12.5px; color: var(--text-primary); margin-bottom: 2px;">${escapeHTML(updatedTitle)}</div>
+                  <div style="font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                    <span>📅 ${escapeHTML(updatedDate)}</span>
+                    <span>•</span>
+                    <span>⏰ ${escapeHTML(updatedTime)}</span>
+                    <span>•</span>
+                    <span class="badge badge-priority-${priorityCode}">${escapeHTML(updatedPriority)}</span>
+                    <span>•</span>
+                    <span style="color: #38BDF8;">📁 ${escapeHTML(updatedCategory)}</span>
+                  </div>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                  <span style="font-size: 10.5px; font-weight: 600; color: #10B981; background: rgba(16, 185, 129, 0.15); padding: 3px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Guardada en Tareas</span>
+                  </span>
+                  <a href="#/tasks" style="font-size: 10.5px; color: #38BDF8; text-decoration: underline; cursor: pointer;">Ver en Tareas →</a>
+                </div>
               </div>
             `;
           }
