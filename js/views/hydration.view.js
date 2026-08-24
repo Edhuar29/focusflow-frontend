@@ -19,6 +19,18 @@ export class HydrationView extends BaseView {
     this.unsubscribeHydration = null;
   }
 
+  mount() {
+    super.mount();
+    if (store.isAuthenticated()) {
+      store.syncWaterConfigFromCloud().then(() => {
+        if (this.isMounted && this.container) {
+          this.render();
+          this.bindEvents();
+        }
+      }).catch(() => {});
+    }
+  }
+
   render() {
     if (!this.container) return;
 

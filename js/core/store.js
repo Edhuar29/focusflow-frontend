@@ -521,8 +521,39 @@ class Store {
     eventBus.emit('pomodoro:updated', this.state.pomodoro);
     eventBus.emit('emailPreferences:updated', this.state.emailPreferences);
 
-    // Cargar y sincronizar tareas guardadas en la base de datos en la nube (PostgreSQL)
+    // Cargar y sincronizar tareas y configuración de hidratación en la nube (PostgreSQL)
     this.syncTasksFromCloud().catch(() => {});
+    this.syncWaterConfigFromCloud().catch(() => {});
+  }
+
+  async syncWaterConfigFromCloud() {
+    if (!this.isAuthenticated()) return;
+    try {
+      const email = this.state.user?.email;
+      if (!email) return;
+      const res = await apiService.getWaterReminderConfig(email);
+      if (res && res.data && res.data.intervalMinutes) {
+        const config = res.data;
+        const intervalHours = (Number(config.intervalMinutes) || 120) / 60;
+        
+        if (!this.state.hydration) {
+          this.state.hydration = normalizeHydration(null, email);
+        }
+        
+        this.state.hydration.reminder = {
+          ...this.state.hydration.reminder,
+          startTime: config.startTime || this.state.hydration.reminder.startTime || '08:00',
+          endTime: config.endTime || this.state.hydration.reminder.endTime || '22:00',
+          intervalHours: intervalHours,
+          enabled: config.enabled !== false,
+          email: config.email || email
+        };
+        
+        this._persistAndNotify('hydration', this.state.hydration, 'hydration:updated');
+      }
+    } catch (e) {
+      console.warn('[Store] Error sincronizando config de agua desde la nube:', e);
+    }
   }
 
   async syncTasksFromCloud() {
