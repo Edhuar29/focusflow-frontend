@@ -166,16 +166,19 @@ export class AuthModal {
     return null;
   }
 
-  saveSavedProfile(user) {
+  saveSavedProfile(user, token) {
     if (!user || !user.email) return;
     const profile = {
       id: user.id,
       name: user.name,
       email: user.email,
-      avatarUrl: user.avatar_url,
+      avatarUrl: user.avatar_url || user.avatarUrl,
       lastLogin: Date.now()
     };
     localStorage.setItem('edhuflow_saved_google_profile', JSON.stringify(profile));
+    if (token) {
+      localStorage.setItem('edhuflow_saved_quick_token', token);
+    }
   }
 
   renderSavedAccountCard() {
@@ -217,19 +220,22 @@ export class AuthModal {
 
   async loginWithSavedProfile() {
     const profile = this.getSavedProfile() || StorageService.get('user', null);
-    if (profile && profile.email) {
+    const quickToken = localStorage.getItem('edhuflow_saved_quick_token') || localStorage.getItem('focusflow_auth_token');
+
+    // 1. Intento de Acceso Instantáneo en 1 Clic (0.1s sin popups)
+    if (profile && profile.email && quickToken) {
       try {
         const firstName = (profile.name || profile.email).split(' ')[0];
         toast.info(`Iniciando sesión como ${firstName}...`);
 
-        const data = await apiService.googleLogin({
-          email: profile.email,
-          name: profile.name,
-          avatar_url: profile.avatarUrl || profile.avatar_url,
-        });
+        const data = await apiService.quickLogin(profile.email, quickToken);
 
         if (data && data.user) {
-          this.saveSavedProfile(data.user);
+          if (data.token) {
+            localStorage.setItem('edhuflow_saved_quick_token', data.token);
+            apiService.setToken(data.token);
+          }
+          this.saveSavedProfile(data.user, data.token);
           store.setUser(data.user);
           this.updateTopbarUser(data.user);
           this.hide();
@@ -237,11 +243,12 @@ export class AuthModal {
           return;
         }
       } catch (err) {
-        console.warn('[AuthModal] Fast continue error, fallback to prompt:', err);
+        console.warn('[AuthModal] Token rápido expirado, reautenticando con Google:', err);
       }
     }
 
-    await this.triggerGoogleSignIn();
+    // 2. Si el token expiró, reautenticar con Google seleccionando a Danny automáticamente
+    await this.triggerGoogleSignIn(profile ? profile.email : undefined);
   }
 
   initGoogleIdentityServices() {
@@ -272,12 +279,12 @@ export class AuthModal {
     }
   }
 
-  async triggerGoogleSignIn() {
+  async triggerGoogleSignIn(loginHint) {
     this.clearAllErrors();
 
     const clientId = window.EDHUFLOW_GOOGLE_CLIENT_ID || '71935301075-58jenh2gfnk43ng0n3rqhip81hq088kc.apps.googleusercontent.com';
 
-    // 1. Google OAuth2 Token Client (Ventana emergente estándar de selección de cuenta, inmune a bloqueos móviles)
+    // 1. Google OAuth2 Token Client (Con login_hint para omitir la lista de selección)
     if (window.google && window.google.accounts && window.google.accounts.oauth2) {
       try {
         const tokenClient = window.google.accounts.oauth2.initTokenClient({
@@ -292,7 +299,7 @@ export class AuthModal {
                 });
 
                 if (data && data.user) {
-                  this.saveSavedProfile(data.user);
+                  this.saveSavedProfile(data.user, data.token);
                   store.setUser(data.user);
                   this.updateTopbarUser(data.user);
                   this.hide();
@@ -306,7 +313,8 @@ export class AuthModal {
           }
         });
 
-        tokenClient.requestAccessToken({ prompt: 'select_account' });
+        const requestOptions = loginHint ? { hint: loginHint } : { prompt: 'select_account' };
+        tokenClient.requestAccessToken(requestOptions);
         return;
       } catch (oauthErr) {
         console.warn('[AuthModal] oauth2 tokenClient error, fallback to One Tap:', oauthErr);
@@ -373,7 +381,7 @@ export class AuthModal {
       });
 
       if (data && data.user) {
-        this.saveSavedProfile(data.user);
+        this.saveSavedProfile(data.user, data.token);
         store.setUser(data.user);
         this.updateTopbarUser(data.user);
         this.hide();
@@ -536,6 +544,7 @@ export class AuthModal {
       const data = await apiService.login(email, password);
 
       if (data && data.user) {
+        this.saveSavedProfile(data.user, data.token);
         store.setUser(data.user);
         this.updateTopbarUser(data.user);
         this.hide();
@@ -606,6 +615,7 @@ export class AuthModal {
       const data = await apiService.register({ name, email, password });
 
       if (data && data.user) {
+        this.saveSavedProfile(data.user, data.token);
         store.setUser(data.user);
         this.updateTopbarUser(data.user);
         this.hide();

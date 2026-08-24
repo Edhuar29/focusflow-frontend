@@ -106,6 +106,19 @@ class ApiService {
     return null;
   }
 
+  async quickLogin(email, token) {
+    const res = await this._request('/auth/quick-login', {
+      method: 'POST',
+      body: JSON.stringify({ email, token }),
+    });
+
+    if (res && res.data && res.data.token) {
+      this.setToken(res.data.token);
+      return res.data;
+    }
+    return null;
+  }
+
   /* --- Tareas --- */
   async getTasks() {
     try {
