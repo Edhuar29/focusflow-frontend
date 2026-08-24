@@ -36,6 +36,7 @@ export class AuthModal {
 
     this.toggleLoginPass = document.getElementById('toggle-login-pass');
     this.toggleRegisterPass = document.getElementById('toggle-register-pass');
+    this.toggleRegisterConfirmPass = document.getElementById('toggle-register-confirm-pass');
     this.btnForgotPassword = document.getElementById('btn-forgot-password');
 
     this.init();
@@ -83,6 +84,15 @@ export class AuthModal {
     if (this.toggleRegisterPass) {
       this.toggleRegisterPass.addEventListener('click', () => {
         const input = document.getElementById('register-password-input');
+        if (input) {
+          input.type = input.type === 'password' ? 'text' : 'password';
+        }
+      });
+    }
+
+    if (this.toggleRegisterConfirmPass) {
+      this.toggleRegisterConfirmPass.addEventListener('click', () => {
+        const input = document.getElementById('register-confirm-password-input');
         if (input) {
           input.type = input.type === 'password' ? 'text' : 'password';
         }

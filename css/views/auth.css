@@ -439,10 +439,30 @@
   color: #94A3B8;
 }
 
+/* Desactivar iconos nativos redundantes del navegador que colisionan con el botón del ojo */
+.auth-input-control::-ms-reveal,
+.auth-input-control::-ms-clear {
+  display: none !important;
+}
+
+.auth-input-control::-webkit-credentials-auto-fill-button,
+.auth-input-control::-webkit-contacts-auto-fill-button {
+  visibility: hidden !important;
+  display: none !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  right: 0 !important;
+}
+
 .auth-input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
+}
+
+.auth-input-wrapper .auth-input-control {
+  padding-right: 44px !important;
 }
 
 .auth-input-control {
@@ -471,20 +491,32 @@
 
 .auth-password-toggle {
   position: absolute;
-  right: 12px;
-  background: none;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  background: transparent;
   border: none;
-  color: #64748B;
+  color: #94A3B8;
   cursor: pointer;
-  padding: 4px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.15s;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  z-index: 5;
 }
 
 .auth-password-toggle:hover {
   color: #F8FAFC;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.auth-password-toggle svg {
+  display: block;
+  pointer-events: none;
 }
 
 /* Feedback de Error e Inputs Inválidos */
