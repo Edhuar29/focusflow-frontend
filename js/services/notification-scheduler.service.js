@@ -272,8 +272,22 @@ class NotificationSchedulerService {
               requireInteraction: false
             });
 
-            // Nota: El despacho de correo a Gmail es gestionado de forma centralizada por el servicio en la nube (Backend)
-            // para garantizar exactamente 1 solo correo puntual sin duplicados incluso con varias pestañas abiertas o sesión cerrada.
+            // 4. Despacho de Correo Electrónico Automático (Gmail SMTP vía Pestaña Líder)
+            const emailPrefs = store.getEmailPreferences() || {};
+            const currentUser = store.getUser() || {};
+            const targetEmail = hydration.reminder.email || (currentUser && currentUser.email) || (emailPrefs && emailPrefs.notificationEmail);
+            const isEmailEnabled = hydration.reminder.emailNotification !== false;
+
+            if (targetEmail && isEmailEnabled && leaderElectionService.isLeader()) {
+              console.log(`💧 [NotificationScheduler] Despachando correo de hidratación a ${targetEmail}...`);
+              apiService.sendHydrationEmailReminder(targetEmail)
+                .then(() => {
+                  console.log(`💧 [NotificationScheduler] Correo de hidratación enviado con éxito a ${targetEmail}`);
+                })
+                .catch((err) => {
+                  console.warn('[NotificationScheduler] Error enviando correo de agua:', err);
+                });
+            }
           }
         }
       }
