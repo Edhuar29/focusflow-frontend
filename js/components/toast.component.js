@@ -22,6 +22,16 @@ class ToastComponent {
     }
   }
 
+  clear() {
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+      this.timeoutId = null;
+    }
+    if (this.currentToast && this.container && this.container.contains(this.currentToast)) {
+      this._dismissCurrent();
+    }
+  }
+
   show(message, type = 'info', duration = 3000) {
     this._ensureContainer();
 

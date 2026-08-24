@@ -571,8 +571,8 @@ function initTopBarTools(router) {
     confirmLogoutBtn.addEventListener('click', () => {
       soundService.playClick();
       closeLogoutModal();
+      toast.clear();
       store.logout();
-      toast.info('Has cerrado sesión correctamente.');
     });
   }
 
