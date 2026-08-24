@@ -287,25 +287,17 @@ export class AuthModal {
             if (tokenResponse && tokenResponse.access_token) {
               toast.info('Obteniendo perfil de Google...');
               try {
-                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                  headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                const data = await apiService.googleLogin({
+                  accessToken: tokenResponse.access_token,
                 });
-                const googleUser = await res.json();
-                if (googleUser && googleUser.email) {
-                  const data = await apiService.googleLogin({
-                    email: googleUser.email,
-                    name: googleUser.name || googleUser.given_name,
-                    avatar_url: googleUser.picture,
-                  });
 
-                  if (data && data.user) {
-                    this.saveSavedProfile(data.user);
-                    store.setUser(data.user);
-                    this.updateTopbarUser(data.user);
-                    this.hide();
-                    toast.success(`¡Bienvenido a EdhuFlow, ${data.user.name.split(' ')[0]}!`);
-                    return;
-                  }
+                if (data && data.user) {
+                  this.saveSavedProfile(data.user);
+                  store.setUser(data.user);
+                  this.updateTopbarUser(data.user);
+                  this.hide();
+                  toast.success(`¡Bienvenido a EdhuFlow, ${data.user.name.split(' ')[0]}!`);
+                  return;
                 }
               } catch (fetchErr) {
                 console.error('[AuthModal] Google userinfo fetch error:', fetchErr);
