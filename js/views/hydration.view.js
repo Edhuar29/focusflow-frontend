@@ -375,10 +375,7 @@ export class HydrationView extends BaseView {
     if (drinkBtn) {
       drinkBtn.onclick = () => {
         soundService.playTaskComplete();
-        const data = store.getState().hydration;
-        data.currentMl = (data.currentMl || 0) + 250;
-        data.logsToday = (data.logsToday || 0) + 1;
-        store._persistAndNotify('hydration', data, 'hydration:updated');
+        const data = store.logWater(250);
         toast.success(`Tomaste 250 ml. Total consumido: ${data.currentMl} ml`);
         this._updateBottleUI();
       };

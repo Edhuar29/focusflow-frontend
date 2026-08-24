@@ -442,12 +442,25 @@ class Store {
     eventBus.emit('theme:accentChanged', accentName);
   }
 
-  /* Métodos de Sinergia e Integración para Asistente */
+  /* Métodos de Sinergia e Integración para Asistente y Vistas */
   logWater(amountMl = 250) {
     const data = this.state.hydration;
     data.currentMl = (data.currentMl || 0) + amountMl;
     data.logsToday = (data.logsToday || 0) + 1;
+    if (!data.history) data.history = [];
+    
+    const now = new Date();
+    data.history.push({
+      amount: amountMl,
+      timestamp: now.toISOString(),
+      timeFormatted: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      date: getTodayISO()
+    });
+
     this._persistAndNotify('hydration', data, 'hydration:updated');
+    if (apiService && apiService.logWater) {
+      apiService.logWater(amountMl).catch(() => {});
+    }
     return data;
   }
 
