@@ -32,7 +32,16 @@ class ToastComponent {
     }
   }
 
-  show(message, type = 'info', duration = 3000) {
+  show(message, type = 'info', duration = 3000, force = false) {
+    // Solo mostrar notificaciones flotantes en pantalla cuando el usuario está dentro de la app
+    const isAuthenticated = document.documentElement.classList.contains('authenticated-boot') ||
+      !!localStorage.getItem('focusflow_auth_token') ||
+      (typeof window !== 'undefined' && window.store && typeof window.store.isAuthenticated === 'function' && window.store.isAuthenticated());
+
+    if (!isAuthenticated && !force) {
+      return;
+    }
+
     this._ensureContainer();
 
     // Si ya existe un toast visible, actualizamos su contenido y reiniciamos el temporizador suavemente

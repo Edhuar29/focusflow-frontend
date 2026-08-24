@@ -26,18 +26,10 @@ class NotificationSchedulerService {
 
     // Escuchar notificaciones emitidas por la pestaña Líder
     leaderElectionService.on('SYNC_NOTIFICATION', (notif) => {
-      if (!leaderElectionService.isLeader() && store.isAuthenticated()) {
+      if (!leaderElectionService.isLeader()) {
         store.addNotification(notif);
       }
     });
-
-    // Limpieza total al cerrar sesión
-    import('../core/event-bus.js').then(({ eventBus }) => {
-      eventBus.on('user:loggedOut', () => {
-        this.firedAlarms.clear();
-        toast.clear();
-      });
-    }).catch(() => {});
 
     if (this.checkInterval) clearInterval(this.checkInterval);
     // Verificación precisa cada 1 segundo (1000ms)
@@ -145,7 +137,6 @@ class NotificationSchedulerService {
   }
 
   addNotification(notif) {
-    if (!store.isAuthenticated()) return null;
     const saved = store.addNotification(notif);
     this._dispatchAlert(saved);
     leaderElectionService.broadcast('SYNC_NOTIFICATION', notif);
@@ -161,9 +152,6 @@ class NotificationSchedulerService {
   }
 
   checkSchedules() {
-    // Las notificaciones flotantes y alarmas web solo deben dispararse dentro de la sesión activa
-    if (!store.isAuthenticated()) return;
-
     // Solo la pestaña Líder activa evalúa y despacha alarmas para evitar colisiones
     if (!leaderElectionService.isLeader()) return;
 
@@ -310,7 +298,7 @@ class NotificationSchedulerService {
    * Despacho sensorial diferenciado según prioridad
    */
   _dispatchAlert(notif) {
-    if (!store.isAuthenticated() || !notif) return;
+    if (!notif) return;
     if (notif.type === 'hydration') {
       toast.info(`[Hidratación] ${notif.title}: ${notif.description}`);
       return;
