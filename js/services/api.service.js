@@ -188,13 +188,19 @@ class ApiService {
 
   /* --- Gemini AI Assistant --- */
   async askGemini(prompt, history = []) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
     try {
       const res = await this._request('/ai/chat', {
         method: 'POST',
         body: JSON.stringify({ message: prompt, history }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
       return res;
-    } catch {
+    } catch (err) {
+      clearTimeout(timeoutId);
       return null;
     }
   }

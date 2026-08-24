@@ -36,48 +36,58 @@ class SpeechService {
   }
 
   _cleanTextForSpeech(text) {
-    if (!text) return '';
-    return text
-      .replace(/•/g, ', ')
-      .replace(/—/g, ', ')
-      .replace(/[Prioridads+w+]/gi, '')
-      .replace(/[📅⏰📁⚡🔔✉️✏️✓•*#_]/g, '')
-      .replace(/https?://S+/g, '')
-      .replace(/s+/g, ' ')
-      .trim();
+    if (!text || typeof text !== 'string') return '';
+    try {
+      return text
+        .replace(/•/g, ', ')
+        .replace(/—/g, ', ')
+        .replace(/\[Prioridad\s+\w+\]/gi, '')
+        .replace(/[📅⏰📁⚡🔔✉️✏️✓•*#_]/g, '')
+        .replace(/https?:\/\/\S+/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    } catch {
+      return text.replace(/[•—]/g, ' ').trim();
+    }
   }
 
   speak(text, onEndCallback = null) {
     if (!this.synth || !this.isEnabled) return;
-    this.stop();
+    try {
+      this.stop();
 
-    const clean = this._cleanTextForSpeech(text);
-    if (!clean) return;
+      const clean = this._cleanTextForSpeech(text);
+      if (!clean) return;
 
-    const utterance = new SpeechSynthesisUtterance(clean);
-    utterance.lang = 'es-ES';
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
+      const utterance = new SpeechSynthesisUtterance(clean);
+      utterance.lang = 'es-ES';
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
 
-    if (this.preferredVoice) {
-      utterance.voice = this.preferredVoice;
+      if (this.preferredVoice) {
+        utterance.voice = this.preferredVoice;
+      }
+
+      utterance.onstart = () => {
+        this.isSpeaking = true;
+      };
+
+      utterance.onend = () => {
+        this.isSpeaking = false;
+        if (typeof onEndCallback === 'function') onEndCallback();
+      };
+
+      utterance.onerror = () => {
+        this.isSpeaking = false;
+        if (typeof onEndCallback === 'function') onEndCallback();
+      };
+
+      this.synth.speak(utterance);
+    } catch (e) {
+      console.warn('[SpeechService] Error al sintetizar voz:', e);
+      this.isSpeaking = false;
+      if (typeof onEndCallback === 'function') onEndCallback();
     }
-
-    utterance.onstart = () => {
-      this.isSpeaking = true;
-    };
-
-    utterance.onend = () => {
-      this.isSpeaking = false;
-      if (typeof onEndCallback === 'function') onEndCallback();
-    };
-
-    utterance.onerror = () => {
-      this.isSpeaking = false;
-      if (typeof onEndCallback === 'function') onEndCallback();
-    };
-
-    this.synth.speak(utterance);
   }
 
   stop() {

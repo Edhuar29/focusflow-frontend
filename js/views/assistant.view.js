@@ -1007,6 +1007,8 @@ export class AssistantView extends BaseView {
   }
 
   async _sendMessage(userText, isVoice = false) {
+    if (!userText || this.isThinking) return;
+
     soundService.playClick();
     this.messages.push({ sender: 'user', text: userText });
     this._saveHistory();
@@ -1014,182 +1016,176 @@ export class AssistantView extends BaseView {
     this.render();
     this.bindEvents();
 
-    const lower = userText.toLowerCase().trim();
+    try {
+      const lower = userText.toLowerCase().trim();
 
-    // 1. CONSULTA DE ESTADO: Tareas de Hoy
-    if (/(?:tareas?|pendientes?|actividades?)\s*(?:de\s+)?(?:hoy|para hoy)|qu[eé]\s+tengo\s+(?:hoy|para hoy|pendiente)|agenda\s+de\s+hoy/i.test(lower)) {
-      const todayISO = getTodayISO();
-      const todayTasks = (store.state.tasks || []).filter(t => (t.date || '').startsWith(todayISO));
-      
-      let replyMsg = '';
-      if (todayTasks.length === 0) {
-        replyMsg = `¡No tienes tareas programadas para hoy (${todayISO})! 🎉\n\nPuedes pedirme: *"Planificar mi semana con 5 actividades"* o *"Estudiar física a las 4:00 PM"* para agendar tu jornada.`;
-      } else {
-        const completed = todayTasks.filter(t => t.completed).length;
-        const pending = todayTasks.length - completed;
-        const bullets = todayTasks.map(t => {
-          const statusIcon = t.completed ? '✅' : '⏳';
-          const p = t.priorities && t.priorities[0] ? t.priorities[0] : 'medium';
-          const pLabel = p === 'high' ? 'Alta' : (p === 'low' ? 'Baja' : 'Media');
-          return `• ${statusIcon} **${t.time || '12:00 PM'}** — ${t.title} [Prioridad ${pLabel}] ${t.completed ? '*(Completada)*' : ''}`;
-        }).join('\n');
+      // 1. CONSULTA DE ESTADO: Tareas de Hoy
+      if (/(?:tareas?|pendientes?|actividades?)\s*(?:de\s+)?(?:hoy|para hoy)|qu[eé]\s+tengo\s+(?:hoy|para hoy|pendiente)|agenda\s+de\s+hoy/i.test(lower)) {
+        const todayISO = getTodayISO();
+        const todayTasks = (store.state.tasks || []).filter(t => (t.date || '').startsWith(todayISO));
+        
+        let replyMsg = '';
+        if (todayTasks.length === 0) {
+          replyMsg = `¡No tienes tareas programadas para hoy (${todayISO})! 🎉\n\nPuedes pedirme: *"Planificar mi semana con 5 actividades"* o *"Estudiar física a las 4:00 PM"* para agendar tu jornada.`;
+        } else {
+          const completed = todayTasks.filter(t => t.completed).length;
+          const pending = todayTasks.length - completed;
+          const bullets = todayTasks.map(t => {
+            const statusIcon = t.completed ? '✅' : '⏳';
+            const p = t.priorities && t.priorities[0] ? t.priorities[0] : 'medium';
+            const pLabel = p === 'high' ? 'Alta' : (p === 'low' ? 'Baja' : 'Media');
+            return `• ${statusIcon} **${t.time || '12:00 PM'}** — ${t.title} [Prioridad ${pLabel}] ${t.completed ? '*(Completada)*' : ''}`;
+          }).join('\n');
 
-        replyMsg = `📋 **Tus Tareas para Hoy (${todayISO}):**\nLlevas **${completed} completadas** y **${pending} pendientes** de un total de ${todayTasks.length}:\n\n${bullets}\n\n¿Deseas iniciar una sesión de enfoque o agregar alguna tarea adicional?`;
-      }
+          replyMsg = `📋 **Tus Tareas para Hoy (${todayISO}):**\nLlevas **${completed} completadas** y **${pending} pendientes** de un total de ${todayTasks.length}:\n\n${bullets}\n\n¿Deseas iniciar una sesión de enfoque o agregar alguna tarea adicional?`;
+        }
 
-      this.isThinking = false;
-      soundService.playSoftChime();
-      this.messages.push({ sender: 'assistant', text: replyMsg });
-      this._saveHistory();
-      this.render();
-      this.bindEvents();
-      if (isVoice) speechService.speak(replyMsg);
-      return;
-    }
-
-    // 2. CONSULTA DE ESTADO: Progreso de Hidratación
-    if (/cu[aá]nta\s+agua|meta\s+de\s+agua|mi\s+hidrataci[oó]n|agua\s+tomad[oa]|registro\s+de\s+agua|c[oó]mo\s+va\s+mi\s+agua/i.test(lower)) {
-      const hData = store.getState().hydration || { currentMl: 0, goalMl: 2000 };
-      const current = hData.currentMl || 0;
-      const goal = hData.goalMl || 2000;
-      const percent = Math.min(100, Math.round((current / goal) * 100));
-      const remaining = Math.max(0, goal - current);
-
-      const msg = `💧 **Tu Progreso de Hidratación:**\nHas tomado **${current} ml** de tu meta diaria de **${goal} ml** (**${percent}%**).\n${remaining > 0 ? `Te faltan **${remaining} ml** para completar tu meta del día.` : '🎉 ¡Felicidades! Has alcanzado tu meta diaria de agua.'}\n\nPuedes decirme: *"Tomé un vaso de 250ml de agua"* cuando bebas agua para registrarlo al instante.`;
-      
-      this.isThinking = false;
-      soundService.playWaterDrop();
-      this.messages.push({ sender: 'assistant', text: msg });
-      this._saveHistory();
-      this.render();
-      this.bindEvents();
-      if (isVoice) speechService.speak(msg);
-      return;
-    }
-
-    // 3. CONSULTA DE ESTADO: Tiempo de Enfoque / Pomodoro
-    if (/cu[aá]nto\s+tiempo\s+llevo|cu[aá]ntos\s+pomodoros|tiempo\s+de\s+enfoque|sesiones\s+de\s+estudio|mi\s+productividad\s+de\s+hoy/i.test(lower)) {
-      const pomo = store.getState().pomodoro || { cyclesCompletedToday: 0, totalFocusMinutes: 0 };
-      const cycles = pomo.cyclesCompletedToday || 0;
-      const minutes = pomo.totalFocusMinutes || 0;
-
-      const msg = `⏱️ **Tu Enfoque Hoy:**\nHas completado **${cycles} ciclos Pomodoro** con un total de **${minutes} minutos de trabajo profundo**.\n\n¿Listo para otra sesión? Puedes decirme: *"Iniciar pomodoro de 25 minutos"* para comenzar.`;
-
-      this.isThinking = false;
-      soundService.playSoftChime();
-      this.messages.push({ sender: 'assistant', text: msg });
-      this._saveHistory();
-      this.render();
-      this.bindEvents();
-      if (isVoice) speechService.speak(msg);
-      return;
-    }
-
-    // 4. ACCIÓN DIRECTA: Iniciar Pomodoro
-    const pomoStartMatch = lower.match(/(?:inicia|iniciar|arranca|arrancar|comenzar|pon|ponme)\s+(?:un\s+)?(?:pomodoro|temporizador|sesi[oó]n\s+de\s+enfoque)(?:\s+de\s+(\d+)\s*(?:minutos?|mins?))?/i);
-    if (pomoStartMatch) {
-      const minutes = parseInt(pomoStartMatch[1], 10) || 25;
-      const replyMsg = `🚀 ¡Excelente! Preparando tu sesión Pomodoro de **${minutes} minutos**. Navegando al temporizador...`;
-      
-      this.isThinking = false;
-      soundService.playTaskComplete();
-      this.messages.push({ sender: 'assistant', text: replyMsg });
-      this._saveHistory();
-      this.render();
-      this.bindEvents();
-      if (isVoice) speechService.speak(replyMsg);
-
-      setTimeout(() => {
-        window.location.hash = '#/pomodoro';
-      }, 1200);
-      return;
-    }
-
-    // 5. ACCIÓN DIRECTA: Registrar Agua
-    const waterLogMatch = lower.match(/(?:tom[eé]|bebi|beber|tomar|registrar|a[ñn]adir|sumar)\s+(?:un\s+vaso\s+de\s+)?(\d+)?\s*(?:ml|vaso|vasos)?\s*(?:de\s+)?agua/i) ||
-                          lower.match(/(?:acabo\s+de\s+tomar|me\s+tom[eé])\s+(?:un\s+vaso|agua)/i);
-    if (waterLogMatch) {
-      let amount = 250;
-      if (waterLogMatch[1] && /\d+/.test(waterLogMatch[1])) {
-        amount = parseInt(waterLogMatch[1], 10);
-      }
-      const updated = store.logWater(amount);
-      soundService.playWaterDrop();
-      toast.success(`💧 Registrados +${amount}ml de agua`);
-
-      const replyMsg = `💧 ¡Registrado con éxito! Agregué **+${amount}ml** a tu progreso. Vas en total con **${updated.currentMl}ml** de tu meta de **${updated.goalMl}ml** (${Math.min(100, Math.round((updated.currentMl / updated.goalMl) * 100))}%).`;
-
-      this.isThinking = false;
-      this.messages.push({ sender: 'assistant', text: replyMsg });
-      this._saveHistory();
-      this.render();
-      this.bindEvents();
-      if (isVoice) speechService.speak(replyMsg);
-      return;
-    }
-
-    // 6. ACCIÓN DIRECTA: Completar Tarea
-    const completeTaskMatch = lower.match(/(?:marca|marcar|completar|complet[eé]|termin[eé]|lista)\s+(?:la\s+)?(?:tarea|actividad|pendiente)?\s*(?:de\s+|con\s+)?(.+)/i);
-    if (completeTaskMatch && completeTaskMatch[1]) {
-      const searchTitle = completeTaskMatch[1].trim().toLowerCase();
-      const matchedTask = (store.state.tasks || []).find(t => 
-        !t.completed && t.title.toLowerCase().includes(searchTitle)
-      );
-
-      if (matchedTask) {
-        store.toggleTaskCompletion(matchedTask.id);
-        soundService.playCelebration();
-        toast.success(`🎉 Tarea "${matchedTask.title}" marcada como completada`);
-
-        const replyMsg = `🎉 ¡Fantástico! He marcado como completada tu tarea **"${matchedTask.title}"**. ¡Sigue así!`;
-        this.isThinking = false;
+        soundService.playSoftChime();
         this.messages.push({ sender: 'assistant', text: replyMsg });
-        this._saveHistory();
-        this.render();
-        this.bindEvents();
-        if (isVoice) speechService.speak(replyMsg);
+        if (isVoice) {
+          try { speechService.speak(replyMsg); } catch {}
+        }
         return;
       }
-    }
 
-    try {
-      const response = await apiService.sendChatMessage(userText);
+      // 2. CONSULTA DE ESTADO: Progreso de Hidratación
+      if (/cu[aá]nta\s+agua|meta\s+de\s+agua|mi\s+hidrataci[oó]n|agua\s+tomad[oa]|registro\s+de\s+agua|c[oó]mo\s+va\s+mi\s+agua/i.test(lower)) {
+        const hData = store.getState().hydration || { currentMl: 0, goalMl: 2000 };
+        const current = hData.currentMl || 0;
+        const goal = hData.goalMl || 2000;
+        const percent = Math.min(100, Math.round((current / goal) * 100));
+        const remaining = Math.max(0, goal - current);
 
-      this.isThinking = false;
-      soundService.playSoftChime();
-
-      if (response && response.data && response.data.message) {
-        const detected = response.data.detected_tasks || [];
-        this.messages.push({
-          sender: 'assistant',
-          text: response.data.message,
-          detectedTasks: detected
-        });
-        if (isVoice) speechService.speak(response.data.message);
-      } else {
-        // Motor conversacional y de extracción inteligente local
-        const localReply = this._processLocalAssistant(userText);
-        this.messages.push({
-          sender: 'assistant',
-          text: localReply.text,
-          detectedTasks: localReply.detectedTasks || []
-        });
-        if (isVoice) speechService.speak(localReply.text);
+        const msg = `💧 **Tu Progreso de Hidratación:**\nHas tomado **${current} ml** de tu meta diaria de **${goal} ml** (**${percent}%**).\n${remaining > 0 ? `Te faltan **${remaining} ml** para completar tu meta del día.` : '🎉 ¡Felicidades! Has alcanzado tu meta diaria de agua.'}\n\nPuedes decirme: *"Tomé un vaso de 250ml de agua"* cuando bebas agua para registrarlo al instante.`;
+        
+        soundService.playWaterDrop();
+        this.messages.push({ sender: 'assistant', text: msg });
+        if (isVoice) {
+          try { speechService.speak(msg); } catch {}
+        }
+        return;
       }
-    } catch (e) {
-      this.isThinking = false;
-      const localReply = this._processLocalAssistant(userText);
+
+      // 3. CONSULTA DE ESTADO: Tiempo de Enfoque / Pomodoro
+      if (/cu[aá]nto\s+tiempo\s+llevo|cu[aá]ntos\s+pomodoros|tiempo\s+de\s+enfoque|sesiones\s+de\s+estudio|mi\s+productividad\s+de\s+hoy/i.test(lower)) {
+        const pomo = store.getState().pomodoro || { cyclesCompletedToday: 0, totalFocusMinutes: 0 };
+        const cycles = pomo.cyclesCompletedToday || 0;
+        const minutes = pomo.totalFocusMinutes || 0;
+
+        const msg = `⏱️ **Tu Enfoque Hoy:**\nHas completado **${cycles} ciclos Pomodoro** con un total de **${minutes} minutos de trabajo profundo**.\n\n¿Listo para otra sesión? Puedes decirme: *"Iniciar pomodoro de 25 minutos"* para comenzar.`;
+
+        soundService.playSoftChime();
+        this.messages.push({ sender: 'assistant', text: msg });
+        if (isVoice) {
+          try { speechService.speak(msg); } catch {}
+        }
+        return;
+      }
+
+      // 4. ACCIÓN DIRECTA: Iniciar Pomodoro
+      const pomoStartMatch = lower.match(/(?:inicia|iniciar|arranca|arrancar|comenzar|pon|ponme)\s+(?:un\s+)?(?:pomodoro|temporizador|sesi[oó]n\s+de\s+enfoque)(?:\s+de\s+(\d+)\s*(?:minutos?|mins?))?/i);
+      if (pomoStartMatch) {
+        const minutes = parseInt(pomoStartMatch[1], 10) || 25;
+        const replyMsg = `🚀 ¡Excelente! Preparando tu sesión Pomodoro de **${minutes} minutos**. Navegando al temporizador...`;
+        
+        soundService.playTaskComplete();
+        this.messages.push({ sender: 'assistant', text: replyMsg });
+        if (isVoice) {
+          try { speechService.speak(replyMsg); } catch {}
+        }
+
+        setTimeout(() => {
+          window.location.hash = '#/pomodoro';
+        }, 1200);
+        return;
+      }
+
+      // 5. ACCIÓN DIRECTA: Registrar Agua
+      const waterLogMatch = lower.match(/(?:tom[eé]|bebi|beber|tomar|registrar|a[ñn]adir|sumar)\s+(?:un\s+vaso\s+de\s+)?(\d+)?\s*(?:ml|vaso|vasos)?\s*(?:de\s+)?agua/i) ||
+                            lower.match(/(?:acabo\s+de\s+tomar|me\s+tom[eé])\s+(?:un\s+vaso|agua)/i);
+      if (waterLogMatch) {
+        let amount = 250;
+        if (waterLogMatch[1] && /\d+/.test(waterLogMatch[1])) {
+          amount = parseInt(waterLogMatch[1], 10);
+        }
+        const updated = store.logWater(amount);
+        soundService.playWaterDrop();
+        toast.success(`💧 Registrados +${amount}ml de agua`);
+
+        const replyMsg = `💧 ¡Registrado con éxito! Agregué **+${amount}ml** a tu progreso. Vas en total con **${updated.currentMl}ml** de tu meta de **${updated.goalMl}ml** (${Math.min(100, Math.round((updated.currentMl / updated.goalMl) * 100))}%).`;
+
+        this.messages.push({ sender: 'assistant', text: replyMsg });
+        if (isVoice) {
+          try { speechService.speak(replyMsg); } catch {}
+        }
+        return;
+      }
+
+      // 6. ACCIÓN DIRECTA: Completar Tarea
+      const completeTaskMatch = lower.match(/(?:marca|marcar|completar|complet[eé]|termin[eé]|lista)\s+(?:la\s+)?(?:tarea|actividad|pendiente)?\s*(?:de\s+|con\s+)?(.+)/i);
+      if (completeTaskMatch && completeTaskMatch[1]) {
+        const searchTitle = completeTaskMatch[1].trim().toLowerCase();
+        const matchedTask = (store.state.tasks || []).find(t => 
+          !t.completed && t.title.toLowerCase().includes(searchTitle)
+        );
+
+        if (matchedTask) {
+          store.toggleTaskCompletion(matchedTask.id);
+          soundService.playCelebration();
+          toast.success(`🎉 Tarea "${matchedTask.title}" marcada como completada`);
+
+          const replyMsg = `🎉 ¡Fantástico! He marcado como completada tu tarea **"${matchedTask.title}"**. ¡Sigue así!`;
+          this.messages.push({ sender: 'assistant', text: replyMsg });
+          if (isVoice) {
+            try { speechService.speak(replyMsg); } catch {}
+          }
+          return;
+        }
+      }
+
+      // 7. Consulta al Servidor con Fallback Local Defensivo
+      let assistantText = '';
+      let detectedTasks = [];
+
+      try {
+        const response = await apiService.sendChatMessage(userText);
+        if (response && response.data && response.data.message) {
+          assistantText = response.data.message;
+          detectedTasks = response.data.detected_tasks || [];
+        }
+      } catch (apiErr) {
+        console.warn('[AssistantView] API response error, falling back locally:', apiErr);
+      }
+
+      if (!assistantText) {
+        const localReply = this._processLocalAssistant(userText);
+        assistantText = localReply.text;
+        detectedTasks = localReply.detectedTasks || [];
+      }
+
+      soundService.playSoftChime();
       this.messages.push({
         sender: 'assistant',
-        text: localReply.text,
-        detectedTasks: localReply.detectedTasks || []
+        text: assistantText,
+        detectedTasks: detectedTasks
       });
-      if (isVoice) speechService.speak(localReply.text);
-    }
 
-    this._saveHistory();
-    this.render();
-    this.bindEvents();
+      if (isVoice) {
+        try { speechService.speak(assistantText); } catch {}
+      }
+    } catch (unexpectedError) {
+      console.error('[AssistantView] Error en _sendMessage:', unexpectedError);
+      this.messages.push({
+        sender: 'assistant',
+        text: '¡Hola! He procesado tu solicitud. Cuéntame si deseas que planifique tus tareas, revise tu agua o ajuste algún recordatorio.',
+        detectedTasks: []
+      });
+    } finally {
+      this.isThinking = false;
+      this._saveHistory();
+      this.render();
+      this.bindEvents();
+    }
   }
 
   _processLocalAssistant(userText) {
