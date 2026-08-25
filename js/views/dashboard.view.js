@@ -167,12 +167,15 @@ export class DashboardView extends BaseView {
             </div>
 
             <div style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-subtle);">
-              <span style="font-size: var(--text-xs); font-weight: var(--fw-semibold); color: var(--text-secondary);">PROGRESO DE HIDRATACIÓN</span>
-              <div style="height: 8px; background: var(--bg-input); border-radius: 999px; margin-top: 8px; overflow: hidden;">
-                <div id="dash-water-fill" style="width: ${waterPercentage}%; height: 100%; background: #38BDF8; transition: width 0.4s ease;"></div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Progreso de Hidratación</span>
+                <span style="font-size: 11.5px; font-weight: 700; color: #38BDF8;">${waterPercentage}%</span>
               </div>
-              <div style="display: flex; justify-content: space-between; font-size: var(--text-xs); color: var(--text-muted); margin-top: 4px;">
-                <span id="dash-water-current">${hydration.currentMl} ml</span>
+              <div style="height: 8px; background: var(--bg-input); border-radius: 999px; overflow: hidden; margin-bottom: 6px;">
+                <div id="dash-water-fill" style="width: ${waterPercentage}%; height: 100%; background: linear-gradient(90deg, #0284C7, #38BDF8); border-radius: 999px; transition: width 0.4s ease;"></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--text-secondary); padding-bottom: 2px;">
+                <span id="dash-water-current" style="color: var(--text-primary);">${hydration.currentMl} ml</span>
                 <span>Meta: ${hydration.goalMl} ml</span>
               </div>
             </div>
