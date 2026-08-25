@@ -17,10 +17,17 @@ export function createElement(tag, { className = '', attributes = {}, innerHTML 
 }
 
 /**
- * Sanitiza texto para evitar inyecciones XSS
+ * Sanitiza texto de manera robusta y segura para prevenir inyecciones XSS (en contenido y atributos HTML)
  */
 export function escapeHTML(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+  if (str === null || str === undefined) return '';
+  const s = typeof str === 'string' ? str : String(str);
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return s.replace(/[&<>"']/g, (m) => map[m]);
 }
