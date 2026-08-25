@@ -23,7 +23,8 @@
   pointer-events: auto;
 }
 
-.modal-container {
+.modal-container,
+.modal-card {
   background-color: var(--bg-card);
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-xl);
@@ -37,10 +38,24 @@
   transform: translateY(12px) scale(0.96);
   transition: transform var(--transition-spring);
   overflow: hidden;
+  position: relative;
 }
 
-.modal-backdrop.open .modal-container {
+.modal-backdrop.open .modal-container,
+.modal-backdrop.open .modal-card {
   transform: translateY(0) scale(1);
+}
+
+/* Cualquier formulario dentro de modal-container o modal-card debe flexear verticalmente para permitir scroll y footer fijo */
+.modal-container > form,
+.modal-card > form,
+.modal-container form,
+.modal-card form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
 .modal-header {
@@ -59,7 +74,8 @@
   color: var(--text-primary);
 }
 
-.modal-close-btn {
+.modal-close-btn,
+.btn-modal-close {
   background: transparent;
   border: none;
   color: var(--text-muted);
@@ -67,10 +83,13 @@
   padding: 4px;
   border-radius: var(--radius-sm);
   display: flex;
+  align-items: center;
+  justify-content: center;
   transition: color var(--transition-fast);
 }
 
-.modal-close-btn:hover {
+.modal-close-btn:hover,
+.btn-modal-close:hover {
   color: var(--text-primary);
 }
 
@@ -80,7 +99,10 @@
   flex-direction: column;
   gap: 0.75rem;
   overflow-y: auto;
-  max-height: calc(100vh - 140px);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  flex: 1;
+  min-height: 0;
 }
 
 .modal-body::-webkit-scrollbar {
@@ -99,8 +121,9 @@
   align-items: center;
   justify-content: flex-end;
   gap: var(--space-3);
-  background-color: rgba(0, 0, 0, 0.25);
+  background-color: var(--bg-card);
   flex-shrink: 0;
+  z-index: 2;
 }
 
 /* Reducción armónica de campos */
@@ -412,6 +435,99 @@
 
 .clock-quick-chip:hover {
   background-color: var(--bg-card-hover);
-  color: var(--text-primary);
+  color: var(--accent-primary);
   border-color: var(--border-medium);
+}
+
+/* ====================================================================
+   Smartphone & Reduced Screen Responsiveness
+   ==================================================================== */
+@media (max-width: 640px) {
+  .modal-backdrop {
+    padding: 10px 10px calc(10px + env(safe-area-inset-bottom, 0px)) 10px;
+    align-items: flex-end;
+  }
+
+  .modal-container,
+  .modal-card {
+    max-height: calc(100dvh - 20px);
+    max-height: calc(100vh - 20px);
+    border-radius: 20px 20px 14px 14px;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .modal-header {
+    padding: 10px 14px;
+  }
+
+  .modal-body {
+    padding: 12px 14px 16px 14px;
+    gap: 10px;
+  }
+
+  .modal-footer {
+    padding: 10px 14px calc(12px + env(safe-area-inset-bottom, 0px)) 14px;
+    background-color: var(--bg-card);
+    border-top: 1px solid var(--border-subtle);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
+    display: flex;
+    gap: 8px;
+  }
+
+  .modal-footer .btn {
+    flex: 1;
+    padding: 11px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Widgets de calendario compactos en móvil */
+  .modal-calendar-widget {
+    padding: 6px 8px;
+    gap: 3px;
+  }
+
+  .cal-day-btn {
+    height: 24px;
+    font-size: 11px;
+  }
+
+  .calendar-selected-label {
+    font-size: 10px;
+    padding-top: 3px;
+    margin-top: 2px;
+  }
+
+  /* Selector de reloj compacto en móvil */
+  .mobile-clock-container {
+    padding: 6px 10px;
+    gap: 4px;
+  }
+
+  .mobile-clock-select {
+    height: 34px;
+    font-size: 17px;
+    padding: 2px 8px;
+    width: 58px;
+  }
+
+  .ampm-segmented-control {
+    height: 34px;
+  }
+
+  .ampm-btn {
+    height: 28px;
+    padding: 0 9px;
+    font-size: 11.5px;
+  }
+
+  /* Tarjeta de alerta de correo compacta */
+  .task-email-alert-card {
+    padding: 10px 12px !important;
+    margin-top: 6px !important;
+  }
 }
