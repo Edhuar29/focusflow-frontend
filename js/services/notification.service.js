@@ -4,6 +4,17 @@ class NotificationService {
   constructor() {
     this.hasPermission = false;
     this.checkPermission();
+    this.initServiceWorker();
+  }
+
+  initServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      try {
+        navigator.serviceWorker.register('/sw.js').catch((err) => {
+          console.info('[NotificationService] Modo estándar sin Service Worker:', err?.message);
+        });
+      } catch (e) {}
+    }
   }
 
   checkPermission() {
@@ -39,19 +50,45 @@ class NotificationService {
       return null;
     }
 
+    // Vibración física en dispositivos móviles
+    if ('vibrate' in navigator) {
+      try {
+        navigator.vibrate([200, 100, 200]);
+      } catch (e) {}
+    }
+
     this.checkPermission();
     if (this.hasPermission && 'Notification' in window) {
       try {
         const notifOptions = {
           body: options.body || '',
-          tag: options.tag || `edhuflow-${Date.now()}`
+          tag: options.tag || `edhuflow-${Date.now()}`,
+          vibrate: [200, 100, 200],
+          requireInteraction: options.requireInteraction || false,
         };
 
-        // Solo agregar icon si no es Safari estricto para evitar fallos de renderizado
+        // Icono seguro
         try {
           notifOptions.icon = new URL('./assets/images/logo.png', window.location.href).href;
+          notifOptions.badge = notifOptions.icon;
         } catch (e) {}
 
+        // 1. En móviles (Android Chrome) usar ServiceWorkerRegistration.showNotification()
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.ready.then((reg) => {
+            if (reg && typeof reg.showNotification === 'function') {
+              return reg.showNotification(title, notifOptions);
+            }
+            return new Notification(title, notifOptions);
+          }).catch(() => {
+            try {
+              return new Notification(title, notifOptions);
+            } catch (err) {}
+          });
+          return true;
+        }
+
+        // 2. En computadoras de escritorio usar Notification constructor directo
         const notif = new Notification(title, notifOptions);
 
         notif.onclick = () => {
@@ -61,11 +98,11 @@ class NotificationService {
 
         return notif;
       } catch (e) {
-        console.warn('[NotificationService] Reintentando con opciones básicas:', e);
+        // Fallback defensivo
         try {
           return new Notification(title, { body: options.body || '' });
         } catch (err2) {
-          console.warn('[NotificationService] No fue posible emitir notificación nativa:', err2);
+          console.warn('[NotificationService] Notificación del sistema no soportada en este entorno:', err2?.message);
         }
       }
     }
@@ -78,8 +115,8 @@ class NotificationService {
       return { success: false, reason: 'permission_denied' };
     }
 
-    const notif = this.send('EdhuFlow — Notificación de Escritorio', {
-      body: '¡Excelente! Las notificaciones en tu computadora están activas y funcionando correctamente.',
+    const notif = this.send('EdhuFlow — Notificación del Sistema', {
+      body: 'Las notificaciones en tu dispositivo están activas y funcionando correctamente.',
       tag: 'edhuflow-test-alert',
       requireInteraction: false
     });
