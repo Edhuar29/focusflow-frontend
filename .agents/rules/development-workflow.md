@@ -10,7 +10,15 @@ Estas reglas son de cumplimiento obligatorio para cualquier cambio, mejora, resp
 
 ---
 
-## 2. Flujo de Trabajo con Ramas Git (Git Branching)
+## 2. Protocolo de Integridad Total y Cero Regresiones (Pre-Deploy Checklist)
+* **Auditoría de Git Status:** Antes de cualquier despliegue o fusión a `main`, ejecutar `git status` para certificar que NO queden archivos modificados, esquemas o dependencias huérfanas en el árbol de trabajo local.
+* **Verificación de Compilación Limpia:** Ejecutar siempre `npm run build` en el backend para validar que TypeScript compile con 0 errores y que el cliente de Prisma esté 100% generado y sincronizado con el esquema.
+* **Pruebas de Humo Post-Despliegue (Smoke Tests):** Inmediatamente después de cada despliegue a Vercel, ejecutar verificaciones en vivo (`/api/health`, `/api/reminders/cron`) para comprobar que el entorno de producción esté verde y saludable.
+* **Blindaje Integral:** Cuidar la estabilidad del sistema en todos sus frentes (frontend, backend, base de datos en Supabase, cron 24/7 y pasarela de correos) para prevenir roturas o fallos colaterales.
+
+---
+
+## 3. Flujo de Trabajo con Ramas Git (Git Branching)
 * **Trabajar siempre en ramas secundarias:**  
   Todos los cambios, refactorizaciones o nuevas características deben desarrollarse en una rama secundaria (ej: `feat/nombre-funcion`, `fix/descripcion-error`, `refactor/modulo`).
 * **Protección de `main`:**  
@@ -20,7 +28,7 @@ Estas reglas son de cumplimiento obligatorio para cualquier cambio, mejora, resp
 
 ---
 
-## 3. Programación Defensiva Obligatoria
+## 4. Programación Defensiva Obligatoria
 * **Manejo de Errores con `try/catch`:**  
   Toda operación asíncrona, consulta a base de datos (Prisma / Supabase), llamada a APIs externas (Gemini, Google OAuth) y envíos de correo (SMTP) DEBE estar encapsulada en bloques `try/catch` con logging detallado y respuestas de fallback seguras.
 * **Encadenamiento Opcional y Valores por Defecto (`?.` y `??`):**  
@@ -30,8 +38,6 @@ Estas reglas son de cumplimiento obligatorio para cualquier cambio, mejora, resp
 
 ---
 
-## 4. Verificación de Compilación y Calidad
-* **Compilación Previa:**  
-  Antes de dar por concluida una tarea o preparar un despliegue, ejecutar siempre la compilación del backend (`npm run build` en `backend/`) para certificar que TypeScript compile con 0 errores y el cliente de Prisma esté sincronizado.
+## 5. Verificación de Compatibilidad Multiplataforma
 * **Compatibilidad Multiplataforma:**  
-  Verificar que los correos y componentes visuales mantengan alto contraste y compatibilidad con modo oscuro en dispositivos móviles (iOS/Android) y computadoras.
+  Verificar que los correos y componentes visuales mantengan alto contraste y legibilidad óptima en dispositivos móviles (iOS/Android) y computadoras.
