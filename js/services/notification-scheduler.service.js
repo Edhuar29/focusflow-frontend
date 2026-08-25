@@ -195,7 +195,7 @@ class NotificationSchedulerService {
             console.warn('[NotificationScheduler] Error en addNotification:', e);
           }
 
-          // Etapa B: Disparar Notificación Nativa de Escritorio (PC / Mac)
+          // Etapa B: Disparar Notificación Nativa de Escritorio o Smartphone (con vibración)
           try {
             const perm = notificationService.getPermissionStatus();
             if (perm === 'granted') {
@@ -206,25 +206,7 @@ class NotificationSchedulerService {
               });
             }
           } catch (e) {
-            console.warn('[NotificationScheduler] Error en notificación de escritorio:', e);
-          }
-
-          // Etapa C: Despacho de Correo Electrónico para Tareas a Gmail
-          const emailPrefs = store.getEmailPreferences() || {};
-          const currentUser = store.getUser() || {};
-          const targetEmail = (currentUser && currentUser.email) || (emailPrefs && emailPrefs.notificationEmail) || 'edhuflow.official@gmail.com';
-          const isAlarmOn = task.is_alarm_enabled !== false && task.alarm !== false;
-
-          if (targetEmail && isAlarmOn) {
-            console.log(`[NotificationScheduler] Enviando correo de tarea "${task.title}" a ${targetEmail}...`);
-            apiService.sendTaskEmailReminder(targetEmail, task.title, task.time, task.category || 'General')
-              .then((res) => {
-                console.log(`[NotificationScheduler] Correo de tarea entregado a ${targetEmail}:`, res);
-                toast.success(`Recordatorio de tarea enviado a tu correo (${targetEmail})`);
-              })
-              .catch((err) => {
-                console.warn('[NotificationScheduler] Error enviando correo de tarea:', err);
-              });
+            console.warn('[NotificationScheduler] Error en notificación nativa:', e);
           }
         }
       }
@@ -250,7 +232,7 @@ class NotificationSchedulerService {
             this.firedAlarms.add(alarmKey);
             StorageService.set('last_water_dispatched_key', alarmKey);
 
-            console.log(`💧 [NotificationScheduler] ¡Hora programada de hidratación cumplida (${formattedCurrentTime})!`);
+            console.log(`[NotificationScheduler] Hora programada de hidratación cumplida (${formattedCurrentTime})`);
 
             // 1. Sonido especial de hidratación
             soundService.playWaterChime();
@@ -265,29 +247,12 @@ class NotificationSchedulerService {
               time: formattedCurrentTime
             });
 
-            // 3. Notificación Nativa en Pantalla (PC / Mac)
+            // 3. Notificación Nativa en Pantalla / Smartphone (con vibración)
             notificationService.send('💧 EdhuFlow: Hora de Hidratarte', {
               body: `Momento de tomar un vaso de agua (+250 ml) para mantener tu concentración (${formattedCurrentTime}).`,
               tag: `edhuflow-water-${formattedCurrentTime}`,
               requireInteraction: false
             });
-
-            // 4. Despacho de Correo Electrónico Automático (Gmail SMTP vía Pestaña Líder)
-            const emailPrefs = store.getEmailPreferences() || {};
-            const currentUser = store.getUser() || {};
-            const targetEmail = hydration.reminder.email || (currentUser && currentUser.email) || (emailPrefs && emailPrefs.notificationEmail);
-            const isEmailEnabled = hydration.reminder.emailNotification !== false;
-
-            if (targetEmail && isEmailEnabled && leaderElectionService.isLeader()) {
-              console.log(`💧 [NotificationScheduler] Despachando correo de hidratación a ${targetEmail}...`);
-              apiService.sendHydrationEmailReminder(targetEmail)
-                .then(() => {
-                  console.log(`💧 [NotificationScheduler] Correo de hidratación enviado con éxito a ${targetEmail}`);
-                })
-                .catch((err) => {
-                  console.warn('[NotificationScheduler] Error enviando correo de agua:', err);
-                });
-            }
           }
         }
       }
