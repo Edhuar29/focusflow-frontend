@@ -10,7 +10,14 @@ Estas reglas son de cumplimiento obligatorio para cualquier cambio, mejora, resp
 
 ---
 
-## 2. Protocolo de Integridad Total y Cero Regresiones (Pre-Deploy Checklist)
+## 2. Confidencialidad y Privacidad Absoluta de Credenciales
+* **Privacidad Estricta:** Las contraseñas de cuentas principales, accesos administrativos y credenciales maestras del usuario son de uso exclusivo y confidencial entre el usuario y el asistente.
+* **Protección contra Fugas:** NUNCA incluir contraseñas maestras en archivos públicos, repositorios de código abierto, commits públicos ni compartirlas con terceros bajo ningún motivo.
+* **Manejo Seguro:** Las variables de entorno con credenciales técnicas se gestionan de forma aislada en archivos locales `.env` protegidos por `.gitignore` y en los paneles seguros de producción en la nube.
+
+---
+
+## 3. Protocolo de Integridad Total y Cero Regresiones (Pre-Deploy Checklist)
 * **Auditoría de Git Status:** Antes de cualquier despliegue o fusión a `main`, ejecutar `git status` para certificar que NO queden archivos modificados, esquemas o dependencias huérfanas en el árbol de trabajo local.
 * **Verificación de Compilación Limpia:** Ejecutar siempre `npm run build` en el backend para validar que TypeScript compile con 0 errores y que el cliente de Prisma esté 100% generado y sincronizado con el esquema.
 * **Pruebas de Humo Post-Despliegue (Smoke Tests):** Inmediatamente después de cada despliegue a Vercel, ejecutar verificaciones en vivo (`/api/health`, `/api/reminders/cron`) para comprobar que el entorno de producción esté verde y saludable.
@@ -18,7 +25,7 @@ Estas reglas son de cumplimiento obligatorio para cualquier cambio, mejora, resp
 
 ---
 
-## 3. Flujo de Trabajo con Ramas Git (Git Branching)
+## 4. Flujo de Trabajo con Ramas Git (Git Branching)
 * **Trabajar siempre en ramas secundarias:**  
   Todos los cambios, refactorizaciones o nuevas características deben desarrollarse en una rama secundaria (ej: `feat/nombre-funcion`, `fix/descripcion-error`, `refactor/modulo`).
 * **Protección de `main`:**  
@@ -28,7 +35,7 @@ Estas reglas son de cumplimiento obligatorio para cualquier cambio, mejora, resp
 
 ---
 
-## 4. Programación Defensiva Obligatoria
+## 5. Programación Defensiva Obligatoria
 * **Manejo de Errores con `try/catch`:**  
   Toda operación asíncrona, consulta a base de datos (Prisma / Supabase), llamada a APIs externas (Gemini, Google OAuth) y envíos de correo (SMTP) DEBE estar encapsulada en bloques `try/catch` con logging detallado y respuestas de fallback seguras.
 * **Encadenamiento Opcional y Valores por Defecto (`?.` y `??`):**  
@@ -38,6 +45,6 @@ Estas reglas son de cumplimiento obligatorio para cualquier cambio, mejora, resp
 
 ---
 
-## 5. Verificación de Compatibilidad Multiplataforma
+## 6. Verificación de Compatibilidad Multiplataforma
 * **Compatibilidad Multiplataforma:**  
-  Verificar que los correos y componentes visuales mantengan alto contraste y legibilidad óptima en dispositivos móviles (iOS/Android) y computadoras.
+  Verificar que los correos y componentes visuales mantengan alto contraste, adaptabilidad a pantallas móviles reducidas y compatibilidad completa con navegadores modernos.
