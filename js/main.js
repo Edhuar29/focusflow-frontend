@@ -73,6 +73,32 @@ document.addEventListener('DOMContentLoaded', () => {
   // 9. Inicializar selector de prioridades visuales en modal
   initModalPrioritySelector();
 
+  // 10. Sincronización en vivo cuando el usuario regresa a la pestaña o ventana (celular <-> computadora)
+  const syncLiveState = () => {
+    if (store.isAuthenticated()) {
+      store.syncTasksFromCloud().catch(() => {});
+      store.syncWaterLogsFromCloud().catch(() => {});
+      store.syncWaterConfigFromCloud().catch(() => {});
+    }
+  };
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      syncLiveState();
+    }
+  });
+
+  window.addEventListener('focus', () => {
+    syncLiveState();
+  });
+
+  // Sincronización periódica automática cada 30 segundos si la pestaña está visible
+  setInterval(() => {
+    if (document.visibilityState === 'visible' && store.isAuthenticated()) {
+      syncLiveState();
+    }
+  }, 30000);
+
   console.log('EdhuFlow inicializado correctamente.');
 });
 
