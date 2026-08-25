@@ -450,16 +450,23 @@ class Store {
     if (!data.history) data.history = [];
     
     const now = new Date();
+    const todayISO = getTodayISO();
     data.history.push({
       amount: amountMl,
       timestamp: now.toISOString(),
       timeFormatted: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      date: getTodayISO()
+      date: todayISO
     });
 
     this._persistAndNotify('hydration', data, 'hydration:updated');
     if (apiService && apiService.logWater) {
-      apiService.logWater(amountMl).catch(() => {});
+      apiService.logWater(amountMl, todayISO).then((res) => {
+        if (res && res.stats && typeof res.stats.total_consumed_ml === 'number') {
+          this.state.hydration.currentMl = res.stats.total_consumed_ml;
+          this.state.hydration.logsToday = res.stats.logs_count ?? this.state.hydration.logsToday;
+          this._persistAndNotify('hydration', this.state.hydration, 'hydration:updated');
+        }
+      }).catch(() => {});
     }
     return data;
   }
@@ -521,9 +528,32 @@ class Store {
     eventBus.emit('pomodoro:updated', this.state.pomodoro);
     eventBus.emit('emailPreferences:updated', this.state.emailPreferences);
 
-    // Cargar y sincronizar tareas y configuración de hidratación en la nube (PostgreSQL)
+    // Cargar y sincronizar tareas, hidratación y configuración en la nube (PostgreSQL)
     this.syncTasksFromCloud().catch(() => {});
+    this.syncWaterLogsFromCloud().catch(() => {});
     this.syncWaterConfigFromCloud().catch(() => {});
+  }
+
+  async syncWaterLogsFromCloud() {
+    if (!this.isAuthenticated()) return;
+    try {
+      const todayISO = getTodayISO();
+      const stats = await apiService.getTodayWater(todayISO);
+      if (stats && typeof stats.total_consumed_ml === 'number') {
+        if (!this.state.hydration) {
+          const email = this.state.user?.email || 'edhuflow.official@gmail.com';
+          this.state.hydration = normalizeHydration(null, email);
+        }
+        this.state.hydration.currentMl = stats.total_consumed_ml;
+        if (stats.daily_goal_ml) {
+          this.state.hydration.goalMl = stats.daily_goal_ml;
+        }
+        this.state.hydration.logsToday = stats.logs_count ?? 0;
+        this._persistAndNotify('hydration', this.state.hydration, 'hydration:updated');
+      }
+    } catch (e) {
+      console.warn('[Store] Error sincronizando registros de agua desde la nube:', e);
+    }
   }
 
   async syncWaterConfigFromCloud() {

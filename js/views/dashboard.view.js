@@ -17,6 +17,18 @@ export class DashboardView extends BaseView {
     this.unsubscribers = [];
   }
 
+  mount() {
+    super.mount();
+    if (store.isAuthenticated()) {
+      store.syncWaterLogsFromCloud().then(() => {
+        if (this.isMounted && this.container) {
+          this.render();
+          this.bindEvents();
+        }
+      }).catch(() => {});
+    }
+  }
+
   render() {
     if (!this.container) return;
 

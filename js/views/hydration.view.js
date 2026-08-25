@@ -22,7 +22,10 @@ export class HydrationView extends BaseView {
   mount() {
     super.mount();
     if (store.isAuthenticated()) {
-      store.syncWaterConfigFromCloud().then(() => {
+      Promise.all([
+        store.syncWaterLogsFromCloud(),
+        store.syncWaterConfigFromCloud()
+      ]).then(() => {
         if (this.isMounted && this.container) {
           this.render();
           this.bindEvents();
@@ -402,6 +405,9 @@ export class HydrationView extends BaseView {
         data.currentMl = 0;
         data.logsToday = 0;
         store._persistAndNotify('hydration', data, 'hydration:updated');
+        if (apiService && apiService.resetTodayWater) {
+          apiService.resetTodayWater().catch(() => {});
+        }
         toast.info('Botella reiniciada a cuota completa (2000 ml)');
         this._updateBottleUI();
       };

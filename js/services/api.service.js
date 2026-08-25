@@ -187,11 +187,35 @@ class ApiService {
     }
   }
 
-  async logWater(amountMl) {
+  async getTodayWater(date) {
     try {
-      const res = await this._request('/water/logs', {
+      const query = date ? `?date=${encodeURIComponent(date)}` : '';
+      const res = await this._request(`/water/today${query}`);
+      return res ? res.data : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async logWater(amountMl, date) {
+    try {
+      const payload = { amount_ml: amountMl };
+      if (date) payload.date = date;
+      const res = await this._request('/water/log', {
         method: 'POST',
-        body: JSON.stringify({ amount_ml: amountMl }),
+        body: JSON.stringify(payload),
+      });
+      return res ? res.data : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async resetTodayWater(date) {
+    try {
+      const query = date ? `?date=${encodeURIComponent(date)}` : '';
+      const res = await this._request(`/water/reset${query}`, {
+        method: 'POST',
       });
       return res ? res.data : null;
     } catch {
