@@ -1159,7 +1159,7 @@ function initDesktopPermissionModal() {
     if (granted) {
       StorageService.set('edhuflow_desktop_notifs_enabled', true);
       soundService.playSoftChime();
-      toast.success('¡Notificaciones en pantalla activadas exitosamente!');
+      toast.success('Notificaciones del dispositivo activadas exitosamente');
     }
   };
 
@@ -1183,6 +1183,17 @@ function initDesktopPermissionModal() {
       modal.setAttribute('aria-hidden', 'false');
     }
   });
+
+  // Si el permiso está en 'default' y no se ha preguntado al usuario, invitarlo tras 2 segundos
+  if ('Notification' in window && Notification.permission === 'default' && !StorageService.get('edhuflow_desktop_perm_prompted', false)) {
+    setTimeout(() => {
+      const hasOpenModal = !!document.querySelector('.modal-backdrop.open');
+      if (!hasOpenModal && modal) {
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+      }
+    }, 2000);
+  }
 }
 
 
