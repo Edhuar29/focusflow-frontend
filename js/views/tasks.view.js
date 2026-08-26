@@ -33,6 +33,36 @@ export class TasksView extends BaseView {
     this.calendarStates = {}; // Estado de año/mes por widget
   }
 
+  mount() {
+    // 1. Posicionar automáticamente en el día actual (Hoy) al ingresar a la vista de tareas
+    store.setWeekOffset(0);
+    store.setSelectedDate(getTodayISO());
+
+    super.mount();
+
+    // 2. Sincronizar tareas de la nube si está autenticado
+    if (store.isAuthenticated()) {
+      store.syncTasksFromCloud().then(() => {
+        if (this.isMounted && this.container) {
+          this._updateWeeklyNav();
+          this._updateGrid();
+          this._scrollToActiveDay();
+        }
+      }).catch(() => {});
+    }
+
+    this._scrollToActiveDay();
+  }
+
+  _scrollToActiveDay() {
+    try {
+      const activeCard = $('.day-card.active', this.container);
+      if (activeCard) {
+        activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    } catch (e) {}
+  }
+
   render() {
     if (!this.container) return;
 
@@ -67,7 +97,7 @@ export class TasksView extends BaseView {
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
               </button>
-              <button class="btn btn-secondary" id="btn-today-week" style="padding: 0.35rem 0.75rem; font-size: var(--text-xs);">
+              <button class="btn btn-secondary" id="btn-today-week" style="padding: 0.35rem 0.75rem; font-size: var(--text-xs); font-weight: 600;">
                 Hoy
               </button>
               <button class="btn btn-secondary btn-icon" id="btn-next-week" title="Semana Siguiente" aria-label="Next Week">
@@ -186,17 +216,30 @@ export class TasksView extends BaseView {
   }
 
   _renderWeekDaysHTML(days, selectedDate) {
+    const todayISO = getTodayISO();
     return days.map(d => {
       const stats = store.getTaskStatsForDate(d.fullDate);
       const isActive = d.fullDate === selectedDate;
+      const isToday = d.fullDate === todayISO;
+
+      let cardClasses = ['day-card'];
+      if (isActive) cardClasses.push('active');
+      if (isToday) cardClasses.push('is-today');
+
+      const todayBadgeHTML = isToday 
+        ? `<span class="day-today-badge">HOY</span>` 
+        : '';
+
       return `
-        <div class="day-card ${isActive ? 'active' : ''}" data-date="${d.fullDate}">
+        <div class="${cardClasses.join(' ')}" data-date="${d.fullDate}" ${isActive ? 'aria-current="date"' : ''} title="${isToday ? 'Hoy: ' : ''}${d.dayName} ${d.dateLabel}">
+          ${todayBadgeHTML}
           <span class="day-name">${d.dayName}</span>
           <span class="day-date">${d.dateLabel}</span>
           <div class="day-dots">
             ${Array.from({ length: Math.min(4, stats.completed) }).map(() => `<span class="day-dot completed"></span>`).join('')}
             ${Array.from({ length: Math.min(4, stats.pending) }).map(() => `<span class="day-dot pending"></span>`).join('')}
           </div>
+          ${isActive ? '<span class="day-active-bar"></span>' : ''}
         </div>
       `;
     }).join('');
@@ -419,6 +462,7 @@ export class TasksView extends BaseView {
         store.setSelectedDate(getTodayISO());
         this._updateWeeklyNav();
         this._updateGrid();
+        this._scrollToActiveDay();
       };
     }
 

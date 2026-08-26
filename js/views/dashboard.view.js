@@ -69,7 +69,7 @@ export class DashboardView extends BaseView {
               </svg>
               <span>Iniciar Enfoque</span>
             </a>
-            <a href="#/tasks" class="btn btn-secondary">
+            <a href="#/tasks" class="btn btn-secondary" id="btn-dash-agenda">
               <span>Ver Agenda Completa</span>
             </a>
           </div>
@@ -275,15 +275,22 @@ export class DashboardView extends BaseView {
       };
     }
 
-    // Registrar agua rápido desde el Dashboard
+    // Navegar a la agenda posicionado en el día actual
+    const agendaBtn = $('#btn-dash-agenda', this.container);
+    if (agendaBtn) {
+      agendaBtn.onclick = () => {
+        soundService.playClick();
+        store.setWeekOffset(0);
+        store.setSelectedDate(getTodayISO());
+      };
+    }
+
+    // Registrar agua rápido desde el Dashboard con sincronización en la nube
     const waterBtn = $('#btn-dash-water', this.container);
     if (waterBtn) {
       waterBtn.onclick = () => {
         soundService.playTaskComplete();
-        const data = store.getState().hydration;
-        data.currentMl += 250;
-        data.logsToday += 1;
-        store._persistAndNotify('hydration', data, 'hydration:updated');
+        const data = store.logWater(250);
         toast.success(`+250 ml registrados (Total: ${data.currentMl} ml)`);
       };
     }
