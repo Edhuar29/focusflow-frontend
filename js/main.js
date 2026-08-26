@@ -341,9 +341,12 @@ function initTopBarTools(router) {
         store.removeNotification(notifId);
       } else if (action === 'done') {
         soundService.playTaskComplete();
-        if (taskId) store.toggleTask(taskId);
-        toast.success('Tarea marcada como completada');
+        const targetTaskId = taskId || (notifId ? notifId.replace(/^notif-task-/, '') : null);
+        if (targetTaskId) {
+          store.toggleTaskCompletion(targetTaskId);
+        }
         store.removeNotification(notifId);
+        toast.success('Tarea marcada como completada');
       } else if (action === 'drink') {
         soundService.playTaskComplete();
         const data = store.logWater(250);

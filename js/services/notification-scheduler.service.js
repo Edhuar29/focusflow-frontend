@@ -110,17 +110,25 @@ class NotificationSchedulerService {
         const endTotalMin = this._parseTimeToMinutes(hydration.reminder.endTime, 1320);
 
         if (currentTotalMin >= startTotalMin && currentTotalMin <= endTotalMin) {
-          const hasWaterNotif = store.getNotifications().some(n => n && n.type === 'hydration');
-          if (!hasWaterNotif) {
-            const formattedCurrentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-            store.addNotification({
-              id: `notif-water-active`,
-              title: 'Recordatorio de Hidratación',
-              description: `Son las ${formattedCurrentTime}. Momento de beber un vaso de agua (+250 ml) para mantener tu concentración.`,
-              priority: 'medium',
-              type: 'hydration',
-              time: formattedCurrentTime
-            });
+          const intervalMinutes = Math.max(1, Math.round(parseFloat(hydration.reminder.intervalHours || 1) * 60));
+          const lastLoggedTs = StorageService.get('last_water_logged_ts', 0);
+          const timeSinceLastWaterMs = Date.now() - Number(lastLoggedTs || 0);
+          const intervalMs = intervalMinutes * 60 * 1000;
+
+          // Solo mostrar la alerta si ya pasó el intervalo completo desde que se registró el último vaso
+          if (timeSinceLastWaterMs >= intervalMs) {
+            const hasWaterNotif = store.getNotifications().some(n => n && n.type === 'hydration');
+            if (!hasWaterNotif) {
+              const formattedCurrentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+              store.addNotification({
+                id: `notif-water-active`,
+                title: 'Recordatorio de Hidratación',
+                description: `Son las ${formattedCurrentTime}. Momento de beber un vaso de agua (+250 ml) para mantener tu concentración.`,
+                priority: 'medium',
+                type: 'hydration',
+                time: formattedCurrentTime
+              });
+            }
           }
         }
       }

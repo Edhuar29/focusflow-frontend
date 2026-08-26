@@ -348,11 +348,22 @@ class Store {
       this._persistAndNotify('tasks', this.state.tasks, 'tasks:updated');
       eventBus.emit('task:toggled', task);
 
+      if (task.completed) {
+        this.state.notifications = (this.state.notifications || []).filter(
+          n => n && n.taskId !== task.id && n.taskId !== task.backendId && n.id !== `notif-task-${task.id}`
+        );
+        this._persistAndNotify('notifications', this.state.notifications, 'notifications:updated');
+      }
+
       if (this.isAuthenticated()) {
         const backendTargetId = task.backendId || task.id;
         apiService.updateTask(backendTargetId, { is_completed: task.completed }).catch(() => {});
       }
     }
+  }
+
+  toggleTask(taskId) {
+    return this.toggleTaskCompletion(taskId);
   }
 
   /* Notificaciones en Campana */
@@ -457,6 +468,13 @@ class Store {
       timeFormatted: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       date: todayISO
     });
+
+    // 1. Guardar marca de tiempo para no repetir alerta inmediatamente
+    StorageService.set('last_water_logged_ts', Date.now());
+
+    // 2. Retirar notificación de hidratación activa de la campana
+    this.state.notifications = (this.state.notifications || []).filter(n => n && n.type !== 'hydration');
+    this._persistAndNotify('notifications', this.state.notifications, 'notifications:updated');
 
     this._persistAndNotify('hydration', data, 'hydration:updated');
     if (apiService && apiService.logWater) {
