@@ -38,7 +38,95 @@ class NotificationSchedulerService {
   }
 
   init() {
+    this.reconcileMissedNotifications();
     this.checkSchedules();
+  }
+
+  /**
+   * Reconcilia y sincroniza en la barra de notificaciones del usuario todas las alertas
+   * pendientes del día cuya hora ya llegó o pasó (incluso si estuvo fuera de la página o cerró sesión).
+   */
+  reconcileMissedNotifications() {
+    try {
+      const todayISO = getTodayISO();
+      const now = new Date();
+      const currentTotalMin = (now.getHours() * 60) + now.getMinutes();
+
+      const tasks = store.getTasks();
+      const activeTasks = tasks.filter(t => {
+        const taskDate = (t.date || '').trim().split('T')[0];
+        return (taskDate === todayISO || !taskDate) && !t.completed;
+      });
+
+      const currentNotifs = store.getNotifications();
+      const existingTaskIds = new Set(
+        currentNotifs
+          .filter(n => n && n.taskId)
+          .map(n => n.taskId)
+      );
+
+      // 1. Tareas de hoy no completadas cuya hora ya llegó o pasó
+      activeTasks.forEach(task => {
+        if (!task || !task.time || existingTaskIds.has(task.id)) return;
+
+        const parsed = this._parseTimeString(task.time);
+        if (parsed) {
+          const taskTotalMin = (parsed.hours * 60) + parsed.minutes;
+          if (taskTotalMin <= currentTotalMin) {
+            const priority = (task.priorities && task.priorities[0]) || task.priority || 'medium';
+            store.addNotification({
+              id: `notif-task-${task.id}`,
+              taskId: task.id,
+              title: task.title,
+              description: `Hora programada: ${task.time} (${task.category || 'General'})`,
+              priority: priority,
+              type: 'task',
+              time: task.time
+            });
+            existingTaskIds.add(task.id);
+          }
+        }
+      });
+
+      // 2. Limpiar de la campana notificaciones de tareas que el usuario ya completó
+      const freshNotifs = store.getNotifications();
+      const filteredNotifs = freshNotifs.filter(n => {
+        if (n && n.type === 'task' && n.taskId) {
+          const matchingTask = tasks.find(t => t.id === n.taskId);
+          if (!matchingTask || matchingTask.completed) return false;
+        }
+        return true;
+      });
+
+      if (filteredNotifs.length !== freshNotifs.length) {
+        store.state.notifications = filteredNotifs;
+        store._persistAndNotify('notifications', filteredNotifs, 'notifications:updated');
+      }
+
+      // 3. Hidratación: si los recordatorios están activos y estamos dentro del horario
+      const hydration = store.getState().hydration;
+      if (hydration && hydration.reminder && hydration.reminder.enabled) {
+        const startTotalMin = this._parseTimeToMinutes(hydration.reminder.startTime, 480);
+        const endTotalMin = this._parseTimeToMinutes(hydration.reminder.endTime, 1320);
+
+        if (currentTotalMin >= startTotalMin && currentTotalMin <= endTotalMin) {
+          const hasWaterNotif = store.getNotifications().some(n => n && n.type === 'hydration');
+          if (!hasWaterNotif) {
+            const formattedCurrentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            store.addNotification({
+              id: `notif-water-active`,
+              title: 'Recordatorio de Hidratación',
+              description: `Son las ${formattedCurrentTime}. Momento de beber un vaso de agua (+250 ml) para mantener tu concentración.`,
+              priority: 'medium',
+              type: 'hydration',
+              time: formattedCurrentTime
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[NotificationScheduler] Error reconciliando notificaciones:', err);
+    }
   }
 
   async requestDesktopPermission() {

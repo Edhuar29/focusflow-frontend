@@ -76,7 +76,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // 10. Sincronización en vivo cuando el usuario regresa a la pestaña o ventana (celular <-> computadora)
   const syncLiveState = () => {
     if (store.isAuthenticated()) {
-      store.syncTasksFromCloud().catch(() => {});
+      store.syncTasksFromCloud().then(() => {
+        notificationScheduler.reconcileMissedNotifications();
+      }).catch(() => {});
       store.syncWaterLogsFromCloud().catch(() => {});
       store.syncWaterConfigFromCloud().catch(() => {});
     }
@@ -339,15 +341,12 @@ function initTopBarTools(router) {
         store.removeNotification(notifId);
       } else if (action === 'done') {
         soundService.playTaskComplete();
-        if (taskId) store.toggleTaskCompletion(taskId);
+        if (taskId) store.toggleTask(taskId);
         toast.success('Tarea marcada como completada');
         store.removeNotification(notifId);
       } else if (action === 'drink') {
         soundService.playTaskComplete();
-        const data = store.getState().hydration;
-        data.currentMl = (data.currentMl || 0) + 250;
-        data.logsToday = (data.logsToday || 0) + 1;
-        store._persistAndNotify('hydration', data, 'hydration:updated');
+        const data = store.logWater(250);
         toast.success(`+250 ml registrados (Total: ${data.currentMl} ml)`);
         store.removeNotification(notifId);
       }

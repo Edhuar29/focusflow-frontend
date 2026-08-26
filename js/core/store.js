@@ -519,6 +519,8 @@ class Store {
         emailWaterAlerts: true,
         useCustomEmail: false
       });
+      const rawNotifs = StorageService.get(`user_${user.id}_notifications`, []);
+      this.state.notifications = Array.isArray(rawNotifs) ? rawNotifs : [];
     }
 
     eventBus.emit('user:changed', user);
@@ -527,6 +529,7 @@ class Store {
     eventBus.emit('hydration:updated', this.state.hydration);
     eventBus.emit('pomodoro:updated', this.state.pomodoro);
     eventBus.emit('emailPreferences:updated', this.state.emailPreferences);
+    eventBus.emit('notifications:updated', this.state.notifications);
 
     // Cargar y sincronizar tareas, hidratación y configuración en la nube (PostgreSQL)
     this.syncTasksFromCloud().catch(() => {});
