@@ -226,13 +226,8 @@ export class TasksView extends BaseView {
       if (isActive) cardClasses.push('active');
       if (isToday) cardClasses.push('is-today');
 
-      const todayBadgeHTML = isToday 
-        ? `<span class="day-today-badge">HOY</span>` 
-        : '';
-
       return `
         <div class="${cardClasses.join(' ')}" data-date="${d.fullDate}" ${isActive ? 'aria-current="date"' : ''} title="${isToday ? 'Hoy: ' : ''}${d.dayName} ${d.dateLabel}">
-          ${todayBadgeHTML}
           <span class="day-name">${d.dayName}</span>
           <span class="day-date">${d.dateLabel}</span>
           <div class="day-dots">
